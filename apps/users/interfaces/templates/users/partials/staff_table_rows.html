@@ -1,0 +1,60 @@
+{% for member in staff %}
+<tr class="hover:bg-slate-50/50 transition-colors group">
+    <!-- Checkbox para selección múltiple -->
+    <td class="p-5 w-10">
+        <input type="checkbox" value="{{ member.id }}" x-model="selectedUsers" class="w-4 h-4 text-sky-600 bg-slate-100 border-slate-300 rounded focus:ring-sky-500 cursor-pointer">
+    </td>
+    <td class="p-5">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center font-black text-lg border border-sky-100">
+                {{ member.first_name|default:member.dni|make_list|first|upper }}
+            </div>
+            <div>
+                <p class="text-sm font-black text-slate-900">{{ member.last_name }}, {{ member.first_name }}</p>
+                <p class="text-[10px] font-bold text-slate-400 mt-0.5"><i class="fa-solid fa-id-card mr-1"></i> {{ member.dni }}</p>
+            </div>
+        </div>
+    </td>
+    <td class="p-5 align-middle">
+        <span class="inline-block px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider
+            {% if member.role == 'DIRECTOR' or member.role == 'SUBDIRECTOR' %}bg-amber-100 text-amber-700 border border-amber-200
+            {% elif member.role == 'DOCENTE' %}bg-sky-100 text-sky-700 border border-sky-200
+            {% else %}bg-slate-100 text-slate-600 border border-slate-200{% endif %}">
+            {{ member.role }}
+        </span>
+        <p class="text-[10px] text-slate-500 font-bold mt-1">{{ member.support_role|default:"-" }}</p>
+    </td>
+    <td class="p-5 align-middle">
+        <div class="flex flex-wrap gap-1">
+            {% if not member.module_permissions %}
+                <span class="text-[9px] text-slate-400 font-bold uppercase">Sin módulos asignados</span>
+            {% else %}
+                {% for perm in member.module_permissions %}
+                    <span class="bg-slate-800 text-white text-[9px] px-2 py-0.5 rounded uppercase font-bold tracking-wider">{{ perm }}</span>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </td>
+    <td class="p-5 align-middle text-center">
+        {% if member.id == request.user.id or member.role == 'SUPERUSER' %}
+            <span class="text-slate-300 text-[10px] font-black uppercase tracking-wider"><i class="fa-solid fa-lock mr-1"></i> Protegido</span>
+        {% else %}
+            {% if member.is_active %}
+                <button hx-post="{% url 'users:toggle_status' member.id %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' hx-swap="outerHTML" class="bg-emerald-100 text-emerald-700 border border-emerald-200 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider hover:bg-rose-100 hover:text-rose-700 transition-colors">
+                    <i class="fa-solid fa-check mr-1"></i> Activo
+                </button>
+            {% else %}
+                <button hx-post="{% url 'users:toggle_status' member.id %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' hx-swap="outerHTML" class="bg-rose-100 text-rose-700 border border-rose-200 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider hover:bg-emerald-100 hover:text-emerald-700 transition-colors">
+                    <i class="fa-solid fa-ban mr-1"></i> Suspendido
+                </button>
+            {% endif %}
+        {% endif %}
+    </td>
+</tr>
+{% empty %}
+<tr>
+    <td colspan="5" class="p-10 text-center text-slate-400 font-bold">
+        No se encontraron usuarios con esos criterios.
+    </td>
+</tr>
+{% endfor %}

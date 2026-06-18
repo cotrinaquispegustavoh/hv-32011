@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}Historial de Incidencias — I.E. 32011{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-6 px-4 animate-in fade-in duration-500">
+    
+    <header class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+        <div>
+            <h1 class="text-3xl font-black text-slate-900 tracking-tight">Historial Disciplinario</h1>
+            <p class="text-slate-500 font-medium mt-1">Registro centralizado de incidencias y reportes de aula.</p>
+        </div>
+        <a href="{% url 'core:dashboard' %}" class="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-black text-xs px-6 py-3.5 rounded-xl uppercase tracking-wider transition-all shadow-sm active:scale-95">
+            <i class="fa-solid fa-arrow-left"></i> Volver al Panel
+        </a>
+    </header>
+
+    <div class="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50 border-b border-slate-100 text-[10px] text-slate-400 uppercase tracking-widest">
+                        <th class="p-5 font-black">Fecha y Reportante</th>
+                        <th class="p-5 font-black">Estudiante</th>
+                        <th class="p-5 font-black">Clasificación</th>
+                        <th class="p-5 font-black">Descripción del Suceso</th>
+                        <th class="p-5 font-black text-center">Evidencia</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    {% for incident in incidents %}
+                    <tr class="hover:bg-slate-50/50 transition-colors group">
+                        <td class="p-5 align-top">
+                            <p class="text-sm font-black text-slate-800">{{ incident.date_reported|date:"d M Y" }}</p>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase mt-1">{{ incident.date_reported|date:"h:i A" }}</p>
+                            <p class="text-xs text-sky-600 font-semibold mt-2"><i class="fa-solid fa-user-tie mr-1"></i> {{ incident.reporter_name }}</p>
+                        </td>
+                        <td class="p-5 align-top">
+                            <p class="text-sm font-black text-slate-900">{{ incident.student_name }}</p>
+                        </td>
+                        <td class="p-5 align-top space-y-2">
+                            <span class="inline-block px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider
+                                {% if incident.severity == 'GRAVE' %}bg-rose-100 text-rose-700 border border-rose-200
+                                {% elif incident.severity == 'MODERADA' %}bg-amber-100 text-amber-700 border border-amber-200
+                                {% else %}bg-slate-100 text-slate-600 border border-slate-200{% endif %}">
+                                {{ incident.severity }}
+                            </span>
+                            <span class="block text-xs font-bold text-slate-500"><i class="fa-solid fa-tag mr-1"></i> {{ incident.subtype }}</span>
+                        </td>
+                        <td class="p-5 align-top max-w-md">
+                            <p class="text-sm text-slate-600 font-medium leading-relaxed">{{ incident.description }}</p>
+                        </td>
+                        <td class="p-5 align-top text-center">
+                            {% if incident.evidences %}
+                                <a href="/media/{{ incident.evidences.0.file_path }}" target="_blank" class="inline-flex items-center justify-center w-10 h-10 bg-sky-50 text-sky-600 rounded-xl hover:bg-sky-600 hover:text-white transition-colors shadow-sm border border-sky-100" title="Ver Evidencia">
+                                    <i class="fa-solid fa-paperclip"></i>
+                                </a>
+                            {% else %}
+                                <span class="text-slate-300 text-sm"><i class="fa-solid fa-minus"></i></span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="p-12 text-center">
+                            <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fa-solid fa-shield-halved text-2xl text-slate-300"></i>
+                            </div>
+                            <p class="text-slate-500 font-bold">No hay incidencias registradas en el sistema.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Catálogo de Almacén - Intranet HV{% endblock %}
+
+{% block content %}
+<div class="p-4 lg:p-8 max-w-7xl mx-auto w-full animate-in fade-in duration-500">
+    
+    <header class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+        <div>
+            <h1 class="text-3xl font-black text-slate-900 tracking-tight">Catálogo de Materiales</h1>
+            <p class="text-slate-500 font-medium mt-1">Consulta y reserva de recursos didácticos.</p>
+        </div>
+    </header>
+
+    <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 mb-8">
+        <div class="relative">
+            <input type="text" name="q" 
+                   hx-get="{% url 'warehouse:catalog' %}" 
+                   hx-trigger="keyup changed delay:300ms, search" 
+                   hx-target="#grid-materiales" 
+                   placeholder="Buscar material por nombre o ubicación..." 
+                   class="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all text-sm font-semibold text-slate-800">
+            <span class="absolute left-4 top-4 text-slate-400 text-lg"><i class="fa-solid fa-magnifying-glass"></i></span>
+        </div>
+    </div>
+
+    <!-- CORRECCIÓN: hx-trigger="actualizarCatalogo from:body" recarga el grid cuando el pedido es exitoso -->
+    <div id="grid-materiales" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6"
+         hx-get="{% url 'warehouse:catalog' %}"
+         hx-trigger="actualizarCatalogo from:body">
+        {% include 'warehouse/partials/catalog_cards.html' %}
+    </div>
+</div>
+
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('loanModal', (maxStock) => ({
+            open: false,
+            step: 1,
+            quantity: 1,
+            maxStock: maxStock,
+            date: new Date().toISOString().split('T')[0],
+            today: new Date().toISOString().split('T')[0],
+            interval: null,
+            
+            hours: ['01','02','03','04','05','06','07','08','09','10','11','12'],
+            minutes: ['00','05','10','15','20','25','30','35','40','45','50','55'],
+            
+            // CORRECCIÓN: Horas vacías por defecto para obligar al usuario a elegir
+            p_hour: '', p_min: '', p_ampm: 'AM',
+            r_hour: '', r_min: '', r_ampm: 'AM',
+
+            startIncrease() {
+                if(this.quantity < this.maxStock) this.quantity++;
+                this.interval = setInterval(() => { if(this.quantity < this.maxStock) this.quantity++; }, 150);
+            },
+            startDecrease() {
+                if(this.quantity > 1) this.quantity--;
+                this.interval = setInterval(() => { if(this.quantity > 1) this.quantity--; }, 150);
+            },
+            stopAction() { clearInterval(this.interval); },
+
+            formatToISO(hour12, min, ampm) {
+                if(!this.date || !hour12 || !min) return '';
+                let h = parseInt(hour12);
+                if(ampm === 'PM' && h < 12) h += 12;
+                if(ampm === 'AM' && h === 12) h = 0;
+                let hStr = h.toString().padStart(2, '0');
+                return `${this.date}T${hStr}:${min}`;
+            },
+
+            getPickupDatetime() { return this.formatToISO(this.p_hour, this.p_min, this.p_ampm); },
+            getReturnDatetime() { return this.formatToISO(this.r_hour, this.r_min, this.r_ampm); },
+
+            hasTimeError() {
+                // CORRECCIÓN: Si falta algún dato, bloquea el botón
+                if(!this.date || !this.p_hour || !this.p_min || !this.r_hour || !this.r_min) return true;
+                const pickup = new Date(this.getPickupDatetime());
+                const ret = new Date(this.getReturnDatetime());
+                return ret <= pickup;
+            }
+        }))
+    })
+</script>
+{% endblock %}

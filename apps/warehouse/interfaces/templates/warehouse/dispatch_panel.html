@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Panel de Despacho - Intranet HV{% endblock %}
+
+{% block content %}
+
+
+<div class="p-8 max-w-7xl mx-auto w-full">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">Panel de Despacho</h2>
+        <span class="bg-blue-50 text-hv-blue text-xs font-bold px-3 py-1 rounded-lg uppercase">Pedidos Activos</span>
+    </div>
+
+    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-gray-50 border-b border-gray-100 text-xs text-gray-500 uppercase tracking-wide">
+                    <th class="p-4 font-bold">Docente</th>
+                    <th class="p-4 font-bold">Material Solicitado</th>
+                    <th class="p-4 font-bold">Para Cuándo</th>
+                    <th class="p-4 font-bold">Estado / Acción</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for loan in loans %}
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="p-4">
+                        <p class="font-bold text-gray-900">{{ loan.teacher_name }}</p>
+                        <p class="text-xs text-gray-500">Solicitado: {{ loan.request_date|date:"d/m/Y H:i" }}</p>
+                    </td>
+                    <td class="p-4">
+                        {% for detail in loan.details %}
+                            <p class="font-bold text-hv-blue">{{ detail.material_name }}</p>
+                            <p class="text-xs text-gray-600">Cant: {{ detail.quantity_requested }} {{ detail.material_unit }}</p>
+                        {% endfor %}
+                    </td>
+                    <td class="p-4">
+                        <p class="text-sm font-bold text-gray-900">{{ loan.required_for|date:"d/m/Y h:i A" }}</p>
+                        <p class="text-xs text-gray-500">Devolución: {{ loan.expected_return_date|date:"h:i A" }}</p>
+                    </td>
+                    <td class="p-4">
+                        {% if loan.status == 'PENDING' %}
+                            <form hx-post="{% url 'warehouse:update_loan_status' loan.id %}" hx-swap="outerHTML">
+                                {% csrf_token %}
+                                <input type="hidden" name="status" value="DISPATCHED">
+                                <button type="submit" class="bg-hv-dark text-white text-xs font-bold px-3 py-2 rounded-lg hover:bg-hv-blue transition-colors">
+                                    MARCAR DESPACHADO
+                                </button>
+                            </form>
+                        {% elif loan.status == 'DISPATCHED' %}
+                            <form hx-post="{% url 'warehouse:update_loan_status' loan.id %}" hx-swap="outerHTML">
+                                {% csrf_token %}
+                                <input type="hidden" name="status" value="RETURNED">
+                                <button type="submit" class="bg-green-600 text-white text-xs font-bold px-3 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                                    MARCAR DEVUELTO
+                                </button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="p-8 text-center text-gray-500">
+                        No hay pedidos pendientes ni en curso en este momento.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

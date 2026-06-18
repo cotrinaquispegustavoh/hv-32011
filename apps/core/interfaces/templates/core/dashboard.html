@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Intranet HV{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto w-full animate-in fade-in duration-500">
+    
+    <header class="mb-10 border-b border-slate-200/60 pb-6">
+        <h1 class="text-3xl font-black text-slate-900 tracking-tight">Resumen de Actividades</h1>
+        <p class="text-[10px] font-black text-sky-600 uppercase tracking-widest mt-1">
+            Portal Institucional / {{ user.get_role_display }}
+        </p>
+    </header>
+
+    {% if messages %}
+        <div class="mb-6 space-y-3">
+            {% for message in messages %}
+                <div class="p-4 rounded-2xl shadow-sm border text-sm font-medium
+                    {% if message.tags == 'error' %}bg-rose-50 text-rose-700 border-rose-100
+                    {% elif message.tags == 'success' %}bg-emerald-50 text-emerald-700 border-emerald-100
+                    {% else %}bg-sky-50 text-sky-700 border-sky-100{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Contenedor para Alertas en Tiempo Real (Toasts) -->
+    <div id="realtime-alerts" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
+
+    {% if role in 'DIRECTOR,SUBDIRECTOR,SUPERUSER' %}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        
+        <!-- Incidencias Hoy -->
+        <a href="{% url 'discipline:incident_list' %}" class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md hover:border-rose-200 transition-all relative overflow-hidden group block">
+            <div class="absolute -right-4 -top-4 text-rose-50 opacity-50 group-hover:scale-110 transition-transform duration-500">
+                <i class="fa-solid fa-triangle-exclamation text-8xl"></i>
+            </div>
+            <div class="flex items-center justify-between mb-4 relative z-10">
+                <span class="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center text-xl border border-rose-100">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </span>
+                <span id="badge-atencion" class="{% if metrics.incidents_today == 0 %}hidden{% endif %} text-[10px] font-black text-rose-500 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-100 uppercase tracking-wider animate-pulse">ATENCIÓN</span>
+            </div>
+            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest relative z-10 group-hover:text-rose-500 transition-colors">Incidencias Hoy</h3>
+            <p id="counter-incidencias" class="text-4xl font-black text-slate-800 mt-1 tracking-tight relative z-10 transition-all duration-300">{{ metrics.incidents_today }}</p>
+        </a>
+
+        <!-- Total Alumnos -->
+        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+            <div class="absolute -right-4 -top-4 text-sky-50 opacity-50 group-hover:scale-110 transition-transform duration-500">
+                <i class="fa-solid fa-user-graduate text-8xl"></i>
+            </div>
+            <div class="flex items-center justify-between mb-4 relative z-10">
+                <span class="w-12 h-12 bg-sky-50 text-sky-600 rounded-2xl flex items-center justify-center text-xl border border-sky-100">
+                    <i class="fa-solid fa-user-graduate"></i>
+                </span>
+            </div>
+            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest relative z-10">Total Alumnos</h3>
+            <p class="text-4xl font-black text-slate-800 mt-1 tracking-tight relative z-10">{{ metrics.total_students }}</p>
+        </div>
+
+        <!-- Stock Crítico -->
+        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+            <div class="absolute -right-4 -top-4 text-amber-50 opacity-50 group-hover:scale-110 transition-transform duration-500">
+                <i class="fa-solid fa-boxes-stacked text-8xl"></i>
+            </div>
+            <div class="flex items-center justify-between mb-4 relative z-10">
+                <span class="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-xl border border-amber-100">
+                    <i class="fa-solid fa-boxes-stacked"></i>
+                </span>
+            </div>
+            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest relative z-10">Stock Crítico</h3>
+            <p class="text-4xl font-black text-slate-800 mt-1 tracking-tight relative z-10">{{ metrics.critical_materials }}</p>
+        </div>
+
+    </div>
+    {% endif %}
+
+    <h2 class="text-lg font-black text-slate-800 mb-4 tracking-tight">Accesos Rápidos</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {% if role == 'DOCENTE' %}
+        <a href="{% url 'warehouse:catalog' %}" class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 hover:shadow-md hover:border-sky-300 transition-all block group">
+            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 group-hover:text-sky-500 transition-colors">Módulo de Almacén</h3>
+            <p class="text-slate-800 font-black text-lg">Ver Catálogo de Materiales</p>
+        </a>
+        <a href="{% url 'discipline:report_incident' %}" class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 hover:shadow-md hover:border-sky-300 transition-all block group">
+            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 group-hover:text-sky-500 transition-colors">Módulo de Disciplina</h3>
+            <p class="text-slate-800 font-black text-lg">Reportar Incidencia</p>
+        </a>
+        <a href="{% url 'portfolio:list' %}" class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 hover:shadow-md hover:border-sky-300 transition-all block group">
+            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 group-hover:text-sky-500 transition-colors">Módulo Académico</h3>
+            <p class="text-slate-800 font-black text-lg">Mi Portafolio</p>
+        </a>
+        {% endif %}
+
+        {% if role in 'DIRECTOR,SUBDIRECTOR,APOYO,SUPERUSER' %}
+        <a href="{% url 'warehouse:dispatch_panel' %}" class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 hover:shadow-md hover:border-sky-300 transition-all block group">
+            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 group-hover:text-sky-500 transition-colors">Gestión Operativa</h3>
+            <p class="text-slate-800 font-black text-lg">Panel de Despacho</p>
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 1. Pasamos el rol de Django a JS de forma segura (El editor ignora esto) -->
+{{ role|json_script:"user-role" }}
+
+<script>
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted) { window.location.reload(); }
+    });
+
+    // --- SCRIPT DE WEBSOCKETS (TIEMPO REAL) ---
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // 2. Leemos el rol en JS puro
+        const userRole = JSON.parse(document.getElementById('user-role').textContent);
+        const allowedRoles = ['DIRECTOR', 'SUBDIRECTOR', 'SUPERUSER'];
+
+        // 3. Hacemos el IF en JS puro (Adiós líneas rojas en VS Code)
+        if (allowedRoles.includes(userRole)) {
+            const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+            const wsUrl = protocol + window.location.host + '/ws/notificaciones/';
+            const socket = new WebSocket(wsUrl);
+
+            socket.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+                
+                if (data.type === 'new_incident') {
+                    // Aumentar el contador mágicamente
+                    const counterEl = document.getElementById('counter-incidencias');
+                    if (counterEl) {
+                        let count = parseInt(counterEl.innerText);
+                        counterEl.innerText = count + 1;
+                        
+                        // Efecto visual de rebote
+                        counterEl.classList.add('scale-150', 'text-rose-600');
+                        setTimeout(() => counterEl.classList.remove('scale-150', 'text-rose-600'), 300);
+                    }
+
+                    // Mostrar el badge de ATENCIÓN si estaba oculto
+                    const badgeEl = document.getElementById('badge-atencion');
+                    if (badgeEl) {
+                        badgeEl.classList.remove('hidden');
+                    }
+
+                    // Mostrar una alerta flotante (Toast)
+                    const toastContainer = document.getElementById('realtime-alerts');
+                    if (toastContainer) {
+                        const toast = document.createElement('div');
+                        toast.className = `bg-white border-l-4 ${data.severity === 'GRAVE' ? 'border-rose-500' : 'border-amber-500'} shadow-xl rounded-xl p-4 flex items-start gap-3 animate-in slide-in-from-right-8 duration-300`;
+                        toast.innerHTML = `
+                            <div class="mt-0.5 ${data.severity === 'GRAVE' ? 'text-rose-500' : 'text-amber-500'}">
+                                <i class="fa-solid fa-bell animate-bounce"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-black text-slate-800">Alerta en Tiempo Real</h4>
+                                <p class="text-xs font-bold text-slate-500 mt-1">${data.message}</p>
+                            </div>
+                        `;
+                        toastContainer.appendChild(toast);
+
+                        // Desaparecer el toast después de 5 segundos
+                        setTimeout(() => {
+                            toast.classList.add('opacity-0', 'translate-x-full');
+                            setTimeout(() => toast.remove(), 300);
+                        }, 5000);
+                    }
+                }
+            };
+
+            socket.onclose = function(e) {
+                console.error('WebSocket cerrado inesperadamente');
+            };
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block title %}Subir Ficha — I.E. 32011{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto py-6 px-4 animate-in fade-in duration-500">
+    
+    <div class="mb-6">
+        <a href="{% url 'portfolio:list' %}" class="inline-flex items-center gap-2 text-xs font-black text-slate-400 hover:text-slate-900 uppercase tracking-widest transition-colors">
+            <i class="fa-solid fa-arrow-left"></i> Volver al Portafolio
+        </a>
+    </div>
+
+    {% if messages %}
+        <div class="mb-6 space-y-3">
+            {% for message in messages %}
+                <div class="p-4 rounded-2xl text-xs font-bold flex items-center gap-2 border {% if message.tags == 'error' %}bg-rose-50 border-rose-100 text-rose-800{% else %}bg-emerald-50 border-emerald-100 text-emerald-800{% endif %}">
+                    <i class="fa-solid {% if message.tags == 'error' %}fa-circle-exclamation{% else %}fa-circle-check{% endif %}"></i>
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 overflow-hidden border border-slate-100">
+        <div class="bg-sky-700 p-8 text-white relative overflow-hidden">
+            <div class="absolute -right-10 -top-10 text-sky-600 opacity-50 text-9xl">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+            </div>
+            <h2 class="text-2xl font-black flex items-center gap-3 relative z-10">
+                <i class="fa-solid fa-file-arrow-up"></i> Cargar Material Educativo
+            </h2>
+            <p class="text-sky-100 text-sm mt-2 font-medium relative z-10">Sube tus fichas de trabajo o tareas para que queden resguardadas en tu portafolio institucional.</p>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data" class="p-8 space-y-6" id="uploadForm">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Título del Material</label>
+                    <input type="text" name="title" required placeholder="Ej: Ficha de Fracciones"
+                           class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Tipo de Ficha</label>
+                    <select name="item_type" required
+                            class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all cursor-pointer">
+                        <option value="TRABAJO">Ficha de Trabajo (Clase)</option>
+                        <option value="TAREA">Ficha de Tarea (Casa)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Descripción / Instrucciones (Opcional)</label>
+                <textarea name="description" rows="3" placeholder="Breve descripción del contenido..."
+                          class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all resize-none"></textarea>
+            </div>
+
+            <div class="relative border-2 border-dashed border-slate-300 rounded-3xl p-10 text-center hover:border-sky-400 hover:bg-sky-50 transition-colors group">
+                <i class="fa-solid fa-cloud-arrow-up text-4xl text-slate-300 group-hover:text-sky-500 transition-colors mb-4"></i>
+                
+                <!-- CORRECCIÓN: Validación Frontend en el input -->
+                <input type="file" name="file" id="fileInput" required accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                       onchange="validarArchivo(this)"
+                       class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-sky-600 file:text-white hover:file:bg-sky-700 transition-all cursor-pointer mx-auto">
+                
+                <p class="text-[10px] text-slate-400 mt-4 uppercase font-bold tracking-widest">PDF, Word o Imágenes claras (Máx 10MB)</p>
+                <p id="fileError" class="text-xs font-bold text-rose-600 mt-2 hidden"></p>
+            </div>
+
+            <button type="submit" id="submitBtn" class="w-full bg-slate-900 hover:bg-sky-600 text-white font-black py-4 rounded-2xl transition-all shadow-lg active:scale-95 uppercase tracking-widest text-xs flex justify-center items-center gap-2">
+                <i class="fa-solid fa-upload"></i> Publicar Material
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function validarArchivo(input) {
+        const file = input.files[0];
+        const errorMsg = document.getElementById('fileError');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        if(file) {
+            // 1. Validar Tamaño (10MB = 10485760 bytes)
+            if(file.size > 10485760) {
+                errorMsg.textContent = 'El archivo es demasiado pesado. Máximo 10MB.';
+                errorMsg.classList.remove('hidden');
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                return;
+            }
+            
+            // 2. Validar Extensión
+            const ext = file.name.split('.').pop().toLowerCase();
+            const allowed = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'];
+            if(!allowed.includes(ext)) {
+                errorMsg.textContent = 'Formato no permitido. Solo PDF, Word o Imágenes.';
+                errorMsg.classList.remove('hidden');
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                return;
+            }
+
+            // Si todo está bien, ocultar error y habilitar botón
+            errorMsg.classList.add('hidden');
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    }
+</script>
+{% endblock %}

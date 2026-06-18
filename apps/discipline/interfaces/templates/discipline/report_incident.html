@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Nueva Incidencia — I.E. 32011{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto animate-in fade-in duration-500">
+    
+    <div class="mb-6">
+        <a href="{% url 'core:dashboard' %}" class="inline-flex items-center gap-2 text-xs font-black text-slate-400 hover:text-slate-900 uppercase tracking-widest transition-colors">
+            <i class="fa-solid fa-arrow-left"></i> Volver al Panel
+        </a>
+    </div>
+
+    <div class="bg-white rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/50 p-8 md:p-10 relative overflow-hidden">
+        
+        <div class="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-sky-600 to-sky-900"></div>
+
+        <div class="flex items-center gap-4 mb-8">
+            <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-xl border border-amber-100 flex-shrink-0">
+                <i class="fa-solid fa-clipboard-list"></i>
+            </div>
+            <div>
+                <h2 class="text-2xl font-black text-slate-900 tracking-tight">Registro de Incidencia Escolar</h2>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">Reporte oficial para la dirección y tutoría</p>
+            </div>
+        </div>
+
+        <form action="{% url 'discipline:report_incident' %}" method="POST" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- Selector de Alumno -->
+                <div class="col-span-1 md:col-span-2">
+                    <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Estudiante involucrado</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                            <i class="fa-solid fa-graduation-cap text-sm"></i>
+                        </div>
+                        <select name="student_id" required
+                                class="block w-full pl-11 pr-10 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer">
+                            <option value="" disabled selected hidden>Selecciona un alumno...</option>
+                            {% for student in students %}
+                                <option value="{{ student.id }}">{{ student.last_name }}, {{ student.first_name }}</option>
+                            {% empty %}
+                                <option value="" disabled>No hay alumnos registrados en el sistema</option>
+                            {% endfor %}
+                        </select>
+                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-400">
+                            <i class="fa-solid fa-chevron-down text-xs"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gravedad -->
+                <div>
+                    <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Gravedad</label>
+                    <select name="severity" required
+                            class="block w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all cursor-pointer">
+                        <option value="LEVE">Leve</option>
+                        <option value="MODERADA">Moderada</option>
+                        <option value="GRAVE">Grave</option>
+                    </select>
+                </div>
+
+                <!-- Subtipo -->
+                <div>
+                    <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Tipo de caso</label>
+                    <select name="subtype" required
+                            class="block w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all cursor-pointer">
+                        <option value="CONDUCTA">Conducta / Disciplina</option>
+                        <option value="RENDIMIENTO">Rendimiento Académico</option>
+                        <option value="ASISTENCIA">Inasistencia / Tardanza</option>
+                        <option value="SALUD">Salud / Emergencia</option>
+                    </select>
+                </div>
+
+                <!-- Descripción -->
+                <div class="col-span-1 md:col-span-2">
+                    <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Descripción detallada de los hechos</label>
+                    <textarea name="description" rows="4" required
+                              placeholder="Describe de manera objetiva lo sucedido..."
+                              class="block w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all resize-none"></textarea>
+                </div>
+
+                <!-- Evidencia (Archivo) -->
+                <div class="col-span-1 md:col-span-2">
+                    <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Evidencia Adjunta (Opcional)</label>
+                    <input type="file" name="evidence" accept="image/*,.pdf"
+                           class="block w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100 transition-all cursor-pointer border border-slate-200 rounded-2xl bg-slate-50">
+                </div>
+
+            </div>
+
+            <div class="flex items-center justify-end gap-4 pt-4 border-t border-slate-100">
+                <button type="submit" class="inline-flex items-center gap-2 bg-slate-900 hover:bg-sky-700 text-white font-black text-xs px-8 py-3.5 rounded-xl uppercase tracking-wider transition-all shadow-md active:scale-95">
+                    <i class="fa-solid fa-cloud-arrow-up text-sm"></i> Registrar Caso
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+{% endblock %}

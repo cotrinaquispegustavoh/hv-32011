@@ -1,0 +1,1 @@
+from .incident_views import report_incident_view, incident_list_view

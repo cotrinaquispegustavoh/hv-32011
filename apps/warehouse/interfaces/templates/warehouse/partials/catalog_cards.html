@@ -1,0 +1,136 @@
+{% for item in materials %}
+<div x-data="loanModal({{ item.stock }})" class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 flex flex-col hover:shadow-md transition-shadow">
+    
+    <div class="flex-grow">
+        <span class="text-xs font-bold bg-gray-100 text-gray-600 px-2 py-1 rounded-lg uppercase">{{ item.cycle }}</span>
+        <h3 class="text-lg font-bold text-gray-900 mt-3">{{ item.name }}</h3>
+        <p class="text-sm text-gray-500 mt-1">Ubicación: {{ item.location }}</p>
+        <p class="text-sm text-gray-500">Estado: {{ item.state }}</p>
+    </div>
+    
+    <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
+        <span class="text-sm font-bold {% if item.stock > 0 %}text-green-600{% else %}text-red-600{% endif %}">
+            Stock: {{ item.stock }} {{ item.unit }}
+        </span>
+        <button @click="open = true" 
+                class="bg-hv-dark text-white text-xs font-bold px-3 py-2 rounded-xl hover:bg-hv-blue transition-colors disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
+                {% if item.stock == 0 %}disabled{% endif %}>
+            {% if item.stock == 0 %}AGOTADO{% else %}SOLICITAR{% endif %}
+        </button>
+    </div>
+
+    <!-- MODAL DE RESERVA -->
+    <div x-show="open" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
+        <div @click.away="open = false" class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
+            
+            <div class="bg-hv-dark text-white px-6 py-4 flex justify-between items-center">
+                <h3 class="font-bold tracking-wide uppercase text-sm" x-text="step === 1 ? 'Configurar Reserva' : 'Verificar Solicitud'"></h3>
+                <button @click="open = false; step = 1" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <form hx-post="{% url 'warehouse:request_material' item.id %}" class="p-6 space-y-6">
+                {% csrf_token %}
+                <input type="hidden" name="quantity" :value="quantity">
+                <input type="hidden" name="required_for" :value="getPickupDatetime()">
+                <input type="hidden" name="expected_return_date" :value="getReturnDatetime()">
+
+                <div x-show="step === 1" class="space-y-6">
+                    <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wide">Recurso Didáctico</p>
+                        <p class="text-xl font-bold text-gray-900 mt-1">{{ item.name }}</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Fecha del Préstamo</label>
+                        <input type="date" x-model="date" required :min="today"
+                               class="w-full border border-gray-200 rounded-xl px-4 py-3 text-gray-900 font-medium focus:outline-none focus:border-hv-blue">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Cantidad Requerida (Max: {{ item.stock }})</label>
+                        <div class="flex items-center space-x-4 bg-gray-50 border border-gray-200 rounded-xl p-1 w-max">
+                            <button type="button" @mousedown="startDecrease" @mouseup="stopAction" @mouseleave="stopAction" class="w-10 h-10 bg-white rounded-lg shadow-sm font-bold text-lg">-</button>
+                            <span class="w-8 text-center font-bold text-lg text-gray-900" x-text="quantity"></span>
+                            <button type="button" @mousedown="startIncrease" @mouseup="stopAction" @mouseleave="stopAction" class="w-10 h-10 bg-white rounded-lg shadow-sm font-bold text-lg">+</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-3">Planificación del Tiempo</label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-gray-50 p-3 rounded-xl border border-gray-200">
+                                <span class="block text-[10px] font-bold text-green-600 uppercase mb-2">RECOJO</span>
+                                <div class="flex space-x-1">
+                                    <!-- CORRECCIÓN: Opción vacía por defecto -->
+                                    <select x-model="p_hour" class="bg-white border border-gray-200 rounded-lg px-1 py-2 text-sm font-bold"><option value="" disabled selected>HH</option><template x-for="h in hours"><option :value="h" x-text="h"></option></template></select>
+                                    <span class="font-bold text-gray-400 self-center">:</span>
+                                    <select x-model="p_min" class="bg-white border border-gray-200 rounded-lg px-1 py-2 text-sm font-bold"><option value="" disabled selected>MM</option><template x-for="m in minutes"><option :value="m" x-text="m"></option></template></select>
+                                    <select x-model="p_ampm" class="bg-white border border-gray-200 rounded-lg px-1 py-2 text-sm font-bold"><option value="AM">AM</option><option value="PM">PM</option></select>
+                                </div>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded-xl border border-blue-200">
+                                <span class="block text-[10px] font-bold text-hv-blue uppercase mb-2">RETORNO</span>
+                                <div class="flex space-x-1">
+                                    <select x-model="r_hour" class="bg-white border border-blue-200 rounded-lg px-1 py-2 text-sm font-bold text-hv-blue"><option value="" disabled selected>HH</option><template x-for="h in hours"><option :value="h" x-text="h"></option></template></select>
+                                    <span class="font-bold text-blue-400 self-center">:</span>
+                                    <select x-model="r_min" class="bg-white border border-blue-200 rounded-lg px-1 py-2 text-sm font-bold text-hv-blue"><option value="" disabled selected>MM</option><template x-for="m in minutes"><option :value="m" x-text="m"></option></template></select>
+                                    <select x-model="r_ampm" class="bg-white border border-blue-200 rounded-lg px-1 py-2 text-sm font-bold text-hv-blue"><option value="AM">AM</option><option value="PM">PM</option></select>
+                                </div>
+                            </div>
+                        </div>
+                        <div x-show="hasTimeError() && p_hour && r_hour" class="mt-3 text-[11px] font-bold text-red-700 bg-red-50 border border-red-100 p-3 rounded-xl">
+                            <i class="fa-solid fa-circle-exclamation text-red-500 mr-1"></i> La hora de retorno debe ser posterior al recojo.
+                        </div>
+                    </div>
+
+                    <button type="button" @click="if(!hasTimeError() && date) step = 2" :disabled="hasTimeError() || !date" class="w-full bg-hv-dark text-white font-bold rounded-xl px-4 py-4 mt-2 hover:bg-hv-blue transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        VERIFICAR SOLICITUD <i class="fa-solid fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+
+                <div x-show="step === 2" style="display: none;" class="space-y-6 text-center">
+                    <div class="w-16 h-16 bg-amber-50 text-amber-500 border border-amber-100 rounded-full flex items-center justify-center text-2xl mx-auto shadow-inner">
+                        <i class="fa-solid fa-circle-question"></i>
+                    </div>
+                    
+                    <h4 class="font-black text-xl text-slate-900 tracking-tight uppercase">¿Confirmar Reserva?</h4>
+                    
+                    <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 text-left space-y-3 shadow-inner">
+                        <div class="flex justify-between border-b border-slate-200 pb-2">
+                            <span class="text-[10px] font-black text-slate-400 uppercase">Fecha:</span>
+                            <span class="text-xs font-black text-slate-800" x-text="date"></span>
+                        </div>
+                        <div class="flex justify-between border-b border-slate-200 pb-2">
+                            <span class="text-[10px] font-black text-slate-400 uppercase">Unidades:</span>
+                            <span class="text-xs font-black text-slate-900" x-text="quantity"></span>
+                        </div>
+                        <div class="flex justify-between border-b border-slate-200 pb-2">
+                            <span class="text-[10px] font-black text-slate-400 uppercase">Recojo:</span>
+                            <span class="text-xs font-black text-emerald-600" x-text="`${p_hour}:${p_min} ${p_ampm}`"></span>
+                        </div>
+                        <div class="flex justify-between pt-1">
+                            <span class="text-[10px] font-black text-slate-400 uppercase">Retorno:</span>
+                            <span class="text-xs font-black text-sky-600" x-text="`${r_hour}:${r_min} ${r_ampm}`"></span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <button type="button" @click="step = 1" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-black py-4 rounded-xl text-xs uppercase">
+                            Corregir
+                        </button>
+                        <button type="submit" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-black py-4 rounded-xl text-xs uppercase shadow-md">
+                            Confirmar <i class="fa-solid fa-check ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% empty %}
+<div class="col-span-full bg-white p-12 rounded-3xl shadow-sm border border-gray-100 text-center">
+    <h3 class="text-lg font-bold text-gray-900">No se encontraron materiales</h3>
+</div>
+{% endfor %}
