@@ -64,6 +64,9 @@ class AuditLog(models.Model):
         ('DELETE', 'Eliminación Lógica'),
         ('HARD_DELETE', 'Eliminación Física'),
         ('RESTORE', 'Restauración'),
+        ('LOGIN', 'Inicio de Sesión'),
+        ('LOGOUT', 'Cierre de Sesión'),
+        ('PERMISSIONS', 'Cambio de Permisos'),
     ]
     
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
