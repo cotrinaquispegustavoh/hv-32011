@@ -1,11 +1,12 @@
 from django.db.models.signals import post_save, post_delete
+from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.dispatch import receiver
 from apps.core.infrastructure.models import AuditLog
 from apps.core.interfaces.middlewares import get_current_user
 
-# Tablas que NO queremos auditar para evitar bucles infinitos o basura
 IGNORE_MODELS = ['AuditLog', 'InternalNotification', 'Session', 'LogEntry', 'ContentType', 'Permission']
 
+# --- 1. AUDITORÍA DE CRUD ---
 @receiver(post_save)
 def audit_post_save(sender, instance, created, **kwargs):
     if sender.__name__ in IGNORE_MODELS:
@@ -14,16 +15,12 @@ def audit_post_save(sender, instance, created, **kwargs):
     user = get_current_user()
     action = 'CREATE' if created else 'UPDATE'
     
-    # Detectar si fue un Soft Delete o una Restauración
     if hasattr(instance, 'is_deleted') and not created:
-        # Si el campo is_deleted acaba de cambiar (esto requeriría lógica extra para ser exacto, 
-        # pero por ahora asumimos el estado actual)
         if instance.is_deleted:
             action = 'DELETE'
-        elif getattr(instance, '_restored', False): # Bandera temporal opcional
+        elif getattr(instance, '_restored', False):
             action = 'RESTORE'
 
-    # Guardar el registro silenciosamente
     AuditLog.objects.create(
         user=user if user and user.is_authenticated else None,
         action=action,
@@ -45,3 +42,34 @@ def audit_post_delete(sender, instance, **kwargs):
         object_id=str(instance.pk),
         changes={'info': 'Registro eliminado físicamente de la base de datos'}
     )
+
+# --- 2. AUDITORÍA DE ACCESO (LOGIN / LOGOUT) ---
+@receiver(user_logged_in)
+def audit_user_login(sender, request, user, **kwargs):
+    # Obtenemos la IP del usuario (útil para seguridad)
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    ip = x_forwarded_for.split(',')[0] if x_forwarded_for else request.META.get('REMOTE_ADDR')
+    
+    AuditLog.objects.create(
+        user=user,
+        action='LOGIN',
+        model_name='User',
+        object_id=str(user.pk),
+        ip_address=ip,
+        changes={'info': 'El usuario inició sesión en el sistema.'}
+    )
+
+@receiver(user_logged_out)
+def audit_user_logout(sender, request, user, **kwargs):
+    if user:
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        ip = x_forwarded_for.split(',')[0] if x_forwarded_for else request.META.get('REMOTE_ADDR')
+        
+        AuditLog.objects.create(
+            user=user,
+            action='LOGOUT',
+            model_name='User',
+            object_id=str(user.pk),
+            ip_address=ip,
+            changes={'info': 'El usuario cerró su sesión.'}
+        )
