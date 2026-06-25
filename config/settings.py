@@ -53,6 +53,8 @@ MIDDLEWARE = [
     'apps.users.interfaces.middlewares.ForcePasswordChangeMiddleware',
     'apps.users.interfaces.middlewares.RoleGuardMiddleware',
     'apps.users.interfaces.middlewares.NoCacheAuthenticatedMiddleware',
+    
+    'apps.core.interfaces.middlewares.CurrentUserMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
