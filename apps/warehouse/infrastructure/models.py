@@ -1,13 +1,14 @@
 from django.db import models
 from django.conf import settings
+from apps.core.infrastructure.models import SoftDeleteModel
 
-class Material(models.Model):
+class Material(SoftDeleteModel):
     name = models.CharField('Nombre', max_length=200)
     stock = models.PositiveIntegerField('Stock Actual', default=0)
-    unit = models.CharField('Unidad de medida', max_length=50) # ej: Unidades, Cajas, Kits
-    state = models.CharField('Estado físico', max_length=50) # ej: Nuevo, Bueno, Regular
+    unit = models.CharField('Unidad de medida', max_length=50)
+    state = models.CharField('Estado físico', max_length=50)
     location = models.CharField('Ubicación en almacén', max_length=100)
-    cycle = models.CharField('Ciclo', max_length=50) # ej: Ciclo I, Ciclo II
+    cycle = models.CharField('Ciclo', max_length=50)
     pedagogical_use = models.TextField('Uso pedagógico', blank=True, null=True)
     manual = models.FileField('Manual opcional', upload_to='manuals/', blank=True, null=True)
 
@@ -27,7 +28,7 @@ class MaterialImage(models.Model):
     class Meta:
         app_label = 'warehouse'
 
-class LoanRequest(models.Model):
+class LoanRequest(SoftDeleteModel):
     STATUS_CHOICES = [
         ('PENDING', 'Pendiente'),
         ('DISPATCHED', 'Despachado'),

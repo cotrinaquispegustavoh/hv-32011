@@ -1,8 +1,9 @@
 from django.db import models
 from django.conf import settings
 from apps.academics.infrastructure.models import Student
+from apps.core.infrastructure.models import SoftDeleteModel
 
-class Incident(models.Model):
+class Incident(SoftDeleteModel):
     SEVERITY_CHOICES = [
         ('LEVE', 'Leve'),
         ('MODERADA', 'Moderada'),

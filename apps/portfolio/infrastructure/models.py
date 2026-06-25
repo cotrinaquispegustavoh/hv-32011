@@ -1,7 +1,8 @@
 from django.db import models
 from django.conf import settings
+from apps.core.infrastructure.models import SoftDeleteModel
 
-class PortfolioItem(models.Model):
+class PortfolioItem(SoftDeleteModel):
     TYPE_CHOICES = [
         ('TRABAJO', 'Ficha de Trabajo'),
         ('TAREA', 'Ficha de Tarea'),
