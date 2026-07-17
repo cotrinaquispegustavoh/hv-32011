@@ -15,6 +15,15 @@ class IMaterialRepository(ABC):
     def update_stock(self, material_id: int, new_stock: int) -> bool:
         pass
 
+    # --- NUEVAS FUNCIONES PARA IMPORTACIÓN ---
+    @abstractmethod
+    def get_by_name(self, name: str) -> Optional[MaterialEntity]:
+        pass
+
+    @abstractmethod
+    def save(self, material: MaterialEntity) -> MaterialEntity:
+        pass
+
 class ILoanRequestRepository(ABC):
     @abstractmethod
     def save(self, request: LoanRequestEntity) -> LoanRequestEntity:
@@ -26,7 +35,6 @@ class ILoanRequestRepository(ABC):
 
     @abstractmethod
     def get_all_active(self) -> List[LoanRequestEntity]:
-        """Obtiene todos los pedidos pendientes o despachados."""
         pass
 
     @abstractmethod

@@ -3,26 +3,24 @@ from .infrastructure.models import AuditLog, InternalNotification, Institutional
 
 @admin.register(AuditLog)
 class AuditLogAdmin(admin.ModelAdmin):
-    # Mostramos las columnas clave en la lista
-    list_display = ('action', 'model_name', 'user', 'timestamp', 'ip_address')
-    
-    # Filtros laterales muy útiles para auditoría
+    # CORRECCIÓN: Usamos un método personalizado en lugar de la palabra reservada 'action'
+    list_display = ('get_action_label', 'model_name', 'user', 'timestamp', 'ip_address')
     list_filter = ('action', 'model_name', 'timestamp')
-    
-    # Buscador por usuario o ID de objeto
     search_fields = ('user__first_name', 'user__last_name', 'user__dni', 'object_id')
-    
-    # La auditoría es de solo lectura (nadie debería poder alterar el historial)
     readonly_fields = ('user', 'action', 'model_name', 'object_id', 'changes', 'timestamp', 'ip_address')
     
+    @admin.display(description='Acción Realizada')
+    def get_action_label(self, obj):
+        return obj.get_action_display() # Esto mostrará "Inicio de Sesión" en lugar de "LOGIN"
+    
     def has_add_permission(self, request):
-        return False # Nadie puede crear logs a mano
+        return False 
         
     def has_change_permission(self, request, obj=None):
-        return False # Nadie puede editar logs
+        return False 
         
     def has_delete_permission(self, request, obj=None):
-        return False # Nadie puede borrar logs
+        return False 
 
 @admin.register(InstitutionalEvent)
 class InstitutionalEventAdmin(admin.ModelAdmin):

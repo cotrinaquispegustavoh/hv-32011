@@ -1,0 +1,1 @@
+from .document_views import document_list_view

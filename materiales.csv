@@ -1,0 +1,80 @@
+﻿nombre;categoria;cantidad_disponible;unidad_medida;estado;ubicacion;ciclo
+Base 10;Matematica;80;Envases;Operativo;Almacen;Todos
+Poliedros;Matematica;30;Envases;Operativo;Almacen;Todos
+Geoplano;Matematica;12;Unidades;Operativo;Almacen;Todos
+Cajones;Otros;12;Unidades;Operativo;Almacen;Todos
+Estacion de experimentos agua y aire;Ciencia y tecnologia;12;Cajas;Operativo;Almacen;Todos
+Tubos de ensayo;Ciencia y tecnologia;100;Unidades;Operativo;Almacen;Todos
+Mecheros;Ciencia y tecnologia;12;Unidades;Operativo;Almacen;Todos
+Tripode;Ciencia y tecnologia;12;Unidades;Operativo;Almacen;Todos
+Pinzas;Ciencia y tecnologia;20;Unidades;Operativo;Almacen;Todos
+Balanzas;Ciencia y tecnologia;6;Unidades;Operativo;Almacen;Todos
+Tapones;Ciencia y tecnologia;100;Unidades;Operativo;Almacen;Todos
+Lupas;Ciencia y tecnologia;8;Unidades;Operativo;Almacen;Todos
+Pesas;Ciencia y tecnologia;60;Unidades;Operativo;Almacen;Todos
+Cronometro;Ciencia y tecnologia;6;Unidades;Operativo;Almacen;Todos
+Brujula;Ciencia y tecnologia;6;Unidades;Operativo;Almacen;Todos
+Rejilla;Ciencia y tecnologia;10;Unidades;Operativo;Almacen;Todos
+Envases de medida;Ciencia y tecnologia;25;Unidades;Operativo;Almacen;Todos
+Granilla;Ciencia y tecnologia;8;Unidades;Operativo;Almacen;Todos
+Razonamiento logico;Matematica;12;Cajas;Operativo;Almacen;Todos
+Encontremos los errores;Comunicacion;12;Cajas;Operativo;Almacen;Todos
+Domino;Matematica;15;Envases;Operativo;Almacen;Todos
+Dados numericos;Matematica;7;Envases;Operativo;Almacen;Todos
+Bloques logicos;Matematica;41;Unidades;Operativo;Almacen;Todos
+Abaco;Matematica;41;Unidades;Operativo;Almacen;Todos
+Mascaras;Comunicacion;7;Unidades;Operativo;Almacen;Todos
+Triangulos;Matematica;6;Unidades;Operativo;Almacen;Todos
+Caja china;Otros;3;Unidades;Operativo;Almacen;Todos
+Tablillas sonoras;Otros;3;Pares;Operativo;Almacen;Todos
+Hito;Personal social;6;Unidades;Operativo;Almacen;Todos
+Maracas;Otros;10;Unidades;Operativo;Almacen;Todos
+Panderetas;Otros;7;Unidades;Operativo;Almacen;Todos
+Tambores rojos;Otros;8;Unidades rotos;Operativo;Almacen;Todos
+Pentabloques;Matematica;6;Envases;Operativo;Almacen;Todos
+Regletas;Matematica;2;Baldes;Operativo;Almacen;Todos
+Bloques logicos baldes;Matematica;3;Baldes;Operativo;Almacen;Todos
+Palabras en distintos tipos de letra;Comunicacion;3;Envase madera;Operativo;Almacen;Todos
+Regletas de colores;Matematica;4;Envase madera;Operativo;Almacen;Todos
+Letras moviles grandes;Comunicacion;5;Envases;Operativo;Almacen;Todos
+Tablero de numero y fichas;Matematica;2;Envases;Operativo;Almacen;Todos
+Ruleta;Matematica;6;Envase madera;Operativo;Almacen;Todos
+Piezas imantadas animales;Ciencia y tecnologia;3;Unidades;Operativo;Almacen;Todos
+Piezas imantadas alimentos;Ciencia y tecnologia;3;Unidades;Operativo;Almacen;Todos
+Piezas imantadas cuerpo humano;Ciencia y tecnologia;3;Unidades;Operativo;Almacen;Todos
+Maqueta del cuerpo humano;Ciencia y tecnologia;1;Unidad;Operativo;Almacen;Todos
+Juegos de investigacion lupas;Ciencia y tecnologia;4;Envases;Operativo;Almacen;Todos
+Maquetas ciclo del agua;Ciencia y tecnologia;2;Unidades;Operativo;Almacen;Todos
+Tableros imantados;Otros;3;Unidades;Operativo;Almacen;Todos
+Kit laboratorio basico;Ciencia y tecnologia;5;Envases;Operativo;Almacen;Todos
+Kit peso volumen y medidas;Ciencia y tecnologia;5;Envases;Operativo;Almacen;Todos
+Envases fracciones rectangulares;Matematica;12;Unidades;Operativo;Almacen;Todos
+Tiras de fracciones;Matematica;20;Envases;Operativo;Almacen;Todos
+Letras moviles pequeñas;Comunicacion;0;N/a;Operativo;Almacen;Todos
+Esqueleto;Ciencia y tecnologia;3;Unidades;Operativo;Almacen;Todos
+Libros kayway 5to;Comunicacion;52;Unidades;Operativo;Almacen;Todos
+Nuqanchik 5to y 6to;Personal social;104;Unidades;Operativo;Almacen;Todos
+Vida y ciencia 6to;Ciencia y tecnologia;52;Unidades;Operativo;Almacen;Todos
+Textos m puid;Comunicacion;5;Unidades;Operativo;Almacen;Todos
+Folletos de religion;Personal social;60;Unidades;Operativo;Almacen;Todos
+Libros prevencion de desastres;Personal social;8;Unidades;Operativo;Almacen;Todos
+Libros deberes y derechos;Personal social;4;Unidades;Operativo;Almacen;Todos
+Enciclopedia juegos inteligencia;Matematica;7;Unidades;Operativo;Almacen;Todos
+Consultor psicologia infantil;Otros;3;Unidades;Operativo;Almacen;Todos
+Libros de historia;Personal social;44;Unidades;Operativo;Almacen;Todos
+Libros geografia y atlas;Personal social;58;Unidades;Operativo;Almacen;Todos
+Libros ciencia y naturales;Ciencia y tecnologia;134;Unidades;Operativo;Almacen;Todos
+Libros quimica experimentos;Ciencia y tecnologia;110;Unidades;Operativo;Almacen;Todos
+Formacion laboral y arte;Comunicacion;88;Unidades;Operativo;Almacen;Todos
+Obras literarias;Comunicacion;150;Unidades;Operativo;Almacen;Todos
+Tesoro de la juventud;Comunicacion;15;Unidades;Operativo;Almacen;Todos
+Textos matematicas;Matematica;80;Unidades;Operativo;Almacen;Todos
+Textos comunicacion y otros;Comunicacion;201;Unidades;Operativo;Almacen;Todos
+Diccionarios varios;Comunicacion;31;Unidades;Operativo;Almacen;Todos
+Laminas de planisferio;Personal social;7;Unidades;Operativo;Almacen;Todos
+Rotafolios;Comunicacion;5;Unidades;Operativo;Almacen;Todos
+Mesas;Otros;16;Unidades;Operativo;Almacen;Todos
+Sillas;Otros;16;Unidades;Operativo;Almacen;Todos
+Estantes dexion;Otros;12;Unidades;Operativo;Almacen;Todos
+Escritorios;Otros;2;Unidades;Operativo;Almacen;Todos
+Bolsas de laminas;Otros;27;Unidades;Operativo;Almacen;Todos

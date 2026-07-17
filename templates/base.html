@@ -93,6 +93,10 @@
                     <div class="w-5 flex justify-center"><i class="fa-solid fa-truck-ramp-box text-lg"></i></div>
                     <span>Despachos</span>
                 </a>
+                <a href="{% url 'documents:list' %}" class="flex items-center gap-4 px-4 py-3 rounded-2xl font-bold text-sm transition-all {% if 'documentos' in request.path %}bg-sky-600 text-white shadow-lg shadow-sky-900/50{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
+                    <div class="w-5 flex justify-center"><i class="fa-solid fa-file-lines text-lg"></i></div>
+                    <span>Documentos</span>
+                </a>
             {% endif %}
 
         </nav>

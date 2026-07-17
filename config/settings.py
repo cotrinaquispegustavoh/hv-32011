@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'apps.discipline',
     'apps.portfolio',
     'apps.assignments',
+    'apps.documents'
 ]
 
 MIDDLEWARE = [
@@ -73,6 +74,7 @@ TEMPLATES = [
             BASE_DIR / 'apps' / 'discipline' / 'interfaces' / 'templates',
             BASE_DIR / 'apps' / 'portfolio' / 'interfaces' / 'templates',
             BASE_DIR / 'apps' / 'assignments' / 'interfaces' / 'templates',
+            BASE_DIR / 'apps' / 'documents' / 'interfaces' / 'templates',
         ],
         'APP_DIRS': True,
         'OPTIONS': {

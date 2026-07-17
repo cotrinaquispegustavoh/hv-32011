@@ -17,6 +17,29 @@ class DjangoMaterialRepository(IMaterialRepository):
     def update_stock(self, material_id: int, new_stock: int) -> bool:
         return Material.objects.filter(id=material_id).update(stock=new_stock) > 0
 
+    # --- NUEVAS FUNCIONES PARA IMPORTACIÓN ---
+    def get_by_name(self, name: str) -> Optional[MaterialEntity]:
+        try:
+            # iexact ignora mayúsculas/minúsculas para evitar duplicados
+            return self._to_entity(Material.objects.get(name__iexact=name))
+        except Material.DoesNotExist:
+            return None
+
+    def save(self, material: MaterialEntity) -> MaterialEntity:
+        model, _ = Material.objects.update_or_create(
+            id=material.id,
+            defaults={
+                'name': material.name,
+                'stock': material.stock,
+                'unit': material.unit,
+                'state': material.state,
+                'location': material.location,
+                'cycle': material.cycle,
+                'pedagogical_use': material.pedagogical_use
+            }
+        )
+        return self._to_entity(model)
+
     def _to_entity(self, model: Material) -> MaterialEntity:
         return MaterialEntity(
             id=model.id, name=model.name, stock=model.stock, unit=model.unit,
