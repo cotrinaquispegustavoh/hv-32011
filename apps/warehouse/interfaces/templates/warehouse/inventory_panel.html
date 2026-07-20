@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestión de Inventario - Intranet HV{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 animate-in fade-in duration-300" x-data="{ modalManual: false, modalCsv: false }">
+    
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+        <div>
+            <h1 class="text-2xl font-black text-blue-900 uppercase tracking-wide">Gestión de Inventario</h1>
+            <p class="text-sm font-medium text-gray-500 mt-1">Administración del catálogo de materiales y recursos didácticos.</p>
+        </div>
+        
+        <div class="flex items-center gap-3">
+            <button @click="modalCsv = true" class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-bold py-2.5 px-4 rounded-lg shadow-sm transition-colors flex items-center gap-2">
+                <i class="fa-solid fa-file-csv text-emerald-600"></i> Importar CSV
+            </button>
+            <button @click="modalManual = true" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2.5 px-4 rounded-lg shadow-sm transition-colors flex items-center gap-2">
+                <i class="fa-solid fa-plus"></i> Nuevo Material
+            </button>
+        </div>
+    </div>
+
+    {% if messages %}
+        <div class="mb-6 space-y-3">
+            {% for message in messages %}
+                <div class="p-4 rounded-lg text-sm font-bold border {% if message.tags == 'error' %}bg-red-50 text-red-700 border-red-200{% else %}bg-green-50 text-green-700 border-green-200{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- TABLA DE INVENTARIO -->
+    <div class="bg-white shadow-sm border border-gray-200 rounded-2xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-left">
+                <thead>
+                    <tr class="border-b-2 border-gray-100 bg-gray-50">
+                        <th scope="col" class="px-6 py-3 text-xs font-bold text-gray-900">Material</th>
+                        <th scope="col" class="px-6 py-3 text-xs font-bold text-gray-900">Ubicación</th>
+                        <th scope="col" class="px-6 py-3 text-xs font-bold text-gray-900">Ciclo</th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-bold text-gray-900">Stock</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-bold text-gray-900">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for item in materials %}
+                    <tr class="hover:bg-gray-50 transition-colors" id="row-{{ item.id }}">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-black text-gray-900">{{ item.name }}</div>
+                            <div class="text-[10px] font-bold text-gray-500 uppercase mt-0.5">Estado: {{ item.state }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-600">
+                            <i class="fa-solid fa-location-dot text-gray-400 mr-1"></i> {{ item.location }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-3 py-1 inline-flex text-[10px] font-black uppercase tracking-wider rounded-lg bg-blue-50 text-blue-700 border border-blue-200">
+                                {{ item.cycle }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                            <span class="text-lg font-black {% if item.stock > 0 %}text-emerald-600{% else %}text-red-600{% endif %}">{{ item.stock }}</span>
+                            <span class="text-[10px] font-bold text-gray-400 uppercase block">{{ item.unit }}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <a href="{% url 'warehouse:edit_material' item.id %}" class="w-8 h-8 flex items-center justify-center rounded-lg bg-white text-gray-400 hover:bg-amber-50 hover:text-amber-600 transition-colors border border-gray-200 hover:border-amber-200 shadow-sm" title="Editar">
+                                    <i class="fa-solid fa-pen"></i>
+                                </a>
+                                <button hx-post="{% url 'warehouse:delete_material' item.id %}" 
+                                        hx-target="#row-{{ item.id }}" 
+                                        hx-swap="outerHTML"
+                                        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                        hx-confirm="¿Mover este material a la papelera?"
+                                        class="w-8 h-8 flex items-center justify-center rounded-lg bg-white text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors border border-gray-200 hover:border-red-200 shadow-sm" title="Eliminar">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-12 text-center text-gray-500 text-sm">
+                            <i class="fa-solid fa-box-open text-3xl mb-2 text-gray-300 block"></i>
+                            No hay materiales registrados en el inventario.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- MODAL: CREACIÓN MANUAL -->
+    <div x-show="modalManual" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+        <div @click.away="modalManual = false" class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+            <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center">
+                <h3 class="font-black tracking-wide uppercase text-sm"><i class="fa-solid fa-box text-sky-400 mr-2"></i> Nuevo Material</h3>
+                <button @click="modalManual = false" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            
+            <form method="POST" action="{% url 'warehouse:inventory_panel' %}" class="p-6 space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="manual">
+                
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Nombre del Material</label>
+                    <input type="text" name="name" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Stock Inicial</label>
+                        <input type="number" name="stock" min="0" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Unidad de Medida</label>
+                        <input type="text" name="unit" placeholder="Ej: Unidades, Cajas" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Estado Físico</label>
+                        <select name="state" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
+                            <option value="OPERATIVO">Operativo / Nuevo</option>
+                            <option value="DETERIORADO">Deteriorado</option>
+                            <option value="MANTENIMIENTO">En Mantenimiento</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Ciclo</label>
+                        <select name="cycle" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
+                            <option value="TODOS">Todos los Ciclos</option>
+                            <option value="III">Ciclo III (1ro y 2do)</option>
+                            <option value="IV">Ciclo IV (3ro y 4to)</option>
+                            <option value="V">Ciclo V (5to y 6to)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Ubicación</label>
+                    <input type="text" name="location" placeholder="Ej: Almacén Central, Estante A" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                </div>
+
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl transition-all shadow-md active:scale-95 text-xs uppercase tracking-wider mt-4">
+                    Guardar Material
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: CARGA MASIVA CSV -->
+    <div x-show="modalCsv" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+        <div @click.away="modalCsv = false" class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+            <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center">
+                <h3 class="font-black tracking-wide uppercase text-sm"><i class="fa-solid fa-file-csv text-emerald-400 mr-2"></i> Importar Inventario</h3>
+                <button @click="modalCsv = false" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            
+            <form method="POST" action="{% url 'warehouse:inventory_panel' %}" enctype="multipart/form-data" class="p-6 space-y-5">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="csv_upload">
+                
+                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                    <p class="text-xs font-bold text-blue-800 mb-2">El archivo CSV debe tener estas columnas (separadas por punto y coma):</p>
+                    <code class="text-[10px] bg-white px-2 py-1 rounded border border-blue-200 text-blue-600 font-black block">nombre; stock; unidad; estado; ubicacion; ciclo</code>
+                </div>
+
+                <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-500 hover:bg-blue-50 transition-colors">
+                    <i class="fa-solid fa-file-excel text-3xl text-gray-400 mb-3"></i>
+                    <input type="file" name="csv_file" required accept=".csv"
+                           class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer mx-auto">
+                </div>
+
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 rounded-xl transition-all shadow-md active:scale-95 text-xs uppercase tracking-wider">
+                    Procesar Archivo CSV
+                </button>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% for doc in documents %}
+<tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+    <td class="px-4 sm:px-6 py-4">
+        <div class="flex items-center gap-3">
+            <div class="flex-shrink-0 h-10 w-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center border border-blue-100/50">
+                <i class="fa-solid fa-file-pdf text-lg"></i>
+            </div>
+            <div>
+                <div class="text-sm font-bold text-gray-800 leading-tight">{{ doc.title }}</div>
+                <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-1"><i class="fa-solid fa-tags mr-1"></i> {{ doc.tags|default:"General" }}</div>
+            </div>
+        </div>
+    </td>
+    <td class="hidden sm:table-cell px-6 py-4 whitespace-nowrap">
+        <span class="px-3 py-1 inline-flex text-[10px] font-black uppercase tracking-wider rounded-lg bg-gray-100 text-gray-600 border border-gray-200">
+            {{ doc.category_name }}
+        </span>
+    </td>
+    <td class="hidden md:table-cell px-6 py-4 whitespace-nowrap text-xs font-bold text-gray-500">
+        {{ doc.updated_at|date:"d/m/Y" }}
+    </td>
+    <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-right">
+        <!-- Contenedor Flex para alinear botones perfectamente en móvil y PC -->
+        <div class="flex items-center justify-end gap-2">
+            <a href="/media/{{ doc.current_file_path }}" target="_blank" class="w-8 h-8 flex items-center justify-center rounded-lg bg-white text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition-colors border border-gray-200 hover:border-blue-200 shadow-sm" title="Descargar">
+                <i class="fa-solid fa-download"></i>
+            </a>
+            
+            {% if user.role in 'DIRECTOR,SUPERUSER' %}
+            <a href="{% url 'documents:edit' doc.id %}" class="w-8 h-8 flex items-center justify-center rounded-lg bg-white text-gray-500 hover:bg-amber-50 hover:text-amber-600 transition-colors border border-gray-200 hover:border-amber-200 shadow-sm" title="Editar">
+                <i class="fa-solid fa-pen"></i>
+            </a>
+            <button hx-post="{% url 'documents:delete' doc.id %}" 
+                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' 
+                    hx-confirm="¿Estás seguro de eliminar este documento?" 
+                    hx-target="closest tr" 
+                    hx-swap="outerHTML" 
+                    class="w-8 h-8 flex items-center justify-center rounded-lg bg-white text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors border border-gray-200 hover:border-red-200 shadow-sm" title="Eliminar">
+                <i class="fa-solid fa-trash"></i>
+            </button>
+            {% endif %}
+        </div>
+    </td>
+</tr>
+{% empty %}
+<tr>
+    <td colspan="4" class="px-6 py-12 text-center text-gray-500 text-sm">
+        <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
+            <i class="fa-regular fa-folder-open text-2xl text-gray-400"></i>
+        </div>
+        <p class="font-bold text-gray-600">No hay documentos en esta categoría.</p>
+    </td>
+</tr>
+{% endfor %}

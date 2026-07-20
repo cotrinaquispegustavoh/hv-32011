@@ -51,6 +51,15 @@
                 <div class="w-5 flex justify-center"><i class="fa-solid fa-house text-lg"></i></div>
                 <span>Inicio</span>
             </a>
+            
+            {% if user.role == 'APODERADO' %}
+                <div class="pt-6 pb-2 px-4 text-[10px] font-black text-slate-600 uppercase tracking-widest">Familia</div>
+                
+                <a href="{% url 'academics:parent_dashboard' %}" class="flex items-center gap-4 px-4 py-3 rounded-2xl font-bold text-sm transition-all {% if 'apoderado' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
+                    <div class="w-5 flex justify-center"><i class="fa-solid fa-children text-lg"></i></div>
+                    <span>Mis Hijos</span>
+                </a>
+            {% endif %}
 
             <!-- Menú Docente (Controlado por Permisos de la BD) -->
             {% if user.role == 'DOCENTE' %}
@@ -97,7 +106,25 @@
                     <div class="w-5 flex justify-center"><i class="fa-solid fa-file-lines text-lg"></i></div>
                     <span>Documentos</span>
                 </a>
+
+                <a href="{% url 'assignments:panel' %}" class="flex items-center gap-4 px-4 py-3 rounded-2xl font-bold text-sm transition-all {% if 'asignaciones' in request.path %}bg-sky-600 text-white shadow-lg shadow-sky-900/50{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
+                    <div class="w-5 flex justify-center"><i class="fa-solid fa-chalkboard-user text-lg"></i></div>
+                    <span>Asignar Aulas</span>
+                </a>
+                
+                <a href="{% url 'warehouse:inventory_panel' %}" class="flex items-center gap-4 px-4 py-3 rounded-2xl font-bold text-sm transition-all {% if 'inventario' in request.path %}bg-sky-600 text-white shadow-lg shadow-sky-900/50{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
+                    <div class="w-5 flex justify-center"><i class="fa-solid fa-boxes-packing text-lg"></i></div>
+                    <span>Inventario</span>
+                </a>
+
             {% endif %}
+
+            {% if user.role in 'DIRECTOR,SUPERUSER' %}
+                <a href="{% url 'portfolio:review_panel' %}" class="flex items-center gap-4 px-4 py-3 rounded-2xl font-bold text-sm transition-all {% if 'revision' in request.path %}bg-sky-600 text-white shadow-lg shadow-sky-900/50{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
+                    <div class="w-5 flex justify-center"><i class="fa-solid fa-magnifying-glass-chart text-lg"></i></div>
+                    <span>Revisión Académica</span>
+                </a>
+                {% endif %}
 
         </nav>
 

@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Subir Documento - Intranet HV{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto py-6 px-4 sm:px-6 lg:px-8 animate-in fade-in duration-300">
+    
+    <div class="mb-6">
+        <a href="{% url 'documents:list' %}" class="text-sm text-gray-500 hover:text-blue-600 transition-colors flex items-center gap-2">
+            <i class="fa-solid fa-arrow-left"></i> Volver a Documentos
+        </a>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-bold text-gray-900">Publicar Nuevo Documento</h2>
+            <p class="text-xs text-gray-500 mt-1">Sube normativas, oficios o formatos para la comunidad educativa.</p>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data" class="p-6 space-y-6">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-700 uppercase tracking-wider">Título del Documento</label>
+                    <input type="text" name="title" required placeholder="Ej: Reglamento Interno 2026"
+                           class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-700 uppercase tracking-wider">Categoría</label>
+                    <select name="category_id" required class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white">
+                        <option value="" disabled selected>Selecciona una categoría...</option>
+                        {% for cat in categories %}
+                            <option value="{{ cat.id }}">{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-700 uppercase tracking-wider">Nivel de Acceso</label>
+                    <select name="access_level" required class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white">
+                        <option value="PUBLIC">Público (Docentes y Apoderados)</option>
+                        <option value="STAFF" selected>Interno (Solo Docentes y Directivos)</option>
+                        <option value="DIRECTIVE">Confidencial (Solo Directivos)</option>
+                    </select>
+                </div>
+                
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-700 uppercase tracking-wider">Etiquetas (Opcional)</label>
+                        <input type="text" name="tags" placeholder="Ej: Normas, 2026, Convivencia"
+                           class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            </div>
+
+            <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-500 hover:bg-blue-50 transition-colors">
+                <i class="fa-solid fa-file-arrow-up text-3xl text-gray-400 mb-3"></i>
+                <input type="file" name="file" required accept=".pdf,.doc,.docx"
+                       class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer mx-auto">
+                <p class="text-xs text-gray-400 mt-3">Formatos permitidos: PDF, DOC, DOCX (Máx. 15MB)</p>
+            </div>
+
+            <div class="flex justify-end pt-4 border-t border-gray-100">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-6 rounded-lg shadow-sm transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-check"></i> Publicar Documento
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

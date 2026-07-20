@@ -1,1 +1,1 @@
-from .portfolio_views import portfolio_list_view, upload_item_view
+from .portfolio_views import portfolio_list_view, upload_item_view, portfolio_review_view, add_observation_view

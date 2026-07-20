@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Material - Intranet HV{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto py-6 px-4 sm:px-6 lg:px-8 animate-in fade-in duration-300">
+    
+    <div class="mb-6">
+        <a href="{% url 'warehouse:inventory_panel' %}" class="text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors flex items-center gap-2">
+            <i class="fa-solid fa-arrow-left"></i> Volver al Inventario
+        </a>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center gap-3">
+            <div class="w-8 h-8 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center">
+                <i class="fa-solid fa-pen"></i>
+            </div>
+            <div>
+                <h2 class="text-lg font-black text-gray-900 tracking-tight">Editar Material</h2>
+                <p class="text-xs font-bold text-gray-500 mt-0.5 uppercase tracking-wider">Actualizando: {{ material.name }}</p>
+            </div>
+        </div>
+
+        <form method="POST" action="{% url 'warehouse:edit_material' material.id %}" class="p-6 space-y-6">
+            {% csrf_token %}
+            
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Nombre del Material</label>
+                <input type="text" name="name" required value="{{ material.name }}"
+                       class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Stock Actual</label>
+                    <input type="number" name="stock" min="0" required value="{{ material.stock }}"
+                           class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Unidad de Medida</label>
+                    <input type="text" name="unit" required value="{{ material.unit }}"
+                           class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Estado Físico</label>
+                    <select name="state" required class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white transition-all cursor-pointer">
+                        <option value="OPERATIVO" {% if material.state == 'OPERATIVO' %}selected{% endif %}>Operativo / Nuevo</option>
+                        <option value="DETERIORADO" {% if material.state == 'DETERIORADO' %}selected{% endif %}>Deteriorado</option>
+                        <option value="MANTENIMIENTO" {% if material.state == 'MANTENIMIENTO' %}selected{% endif %}>En Mantenimiento</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Ciclo</label>
+                    <select name="cycle" required class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white transition-all cursor-pointer">
+                        <option value="TODOS" {% if material.cycle == 'TODOS' %}selected{% endif %}>Todos los Ciclos</option>
+                        <option value="III" {% if material.cycle == 'III' %}selected{% endif %}>Ciclo III (1ro y 2do)</option>
+                        <option value="IV" {% if material.cycle == 'IV' %}selected{% endif %}>Ciclo IV (3ro y 4to)</option>
+                        <option value="V" {% if material.cycle == 'V' %}selected{% endif %}>Ciclo V (5to y 6to)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Ubicación</label>
+                <input type="text" name="location" required value="{{ material.location }}"
+                       class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+            </div>
+
+            <div class="flex justify-end pt-4 border-t border-gray-100">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-black py-3 px-8 rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-2 text-xs uppercase tracking-wider">
+                    <i class="fa-solid fa-floppy-disk"></i> Guardar Cambios
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

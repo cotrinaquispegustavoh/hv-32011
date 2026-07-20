@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Panel de Familia - Intranet HV{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto py-6 px-4 sm:px-6 lg:px-8 animate-in fade-in duration-300">
+    
+    <div class="mb-8">
+        <h1 class="text-2xl font-black text-blue-900 uppercase tracking-wide">Portal de Familia</h1>
+        <p class="text-sm font-medium text-gray-500 mt-1">Bienvenido/a, {{ user.first_name }}. Selecciona a tu hijo/a para ver su información académica y conductual.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {% for child in children %}
+        <a href="{% url 'academics:child_detail' child.id %}" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:border-blue-400 hover:shadow-md transition-all group block relative overflow-hidden">
+            <div class="absolute -right-4 -top-4 text-blue-50 opacity-50 group-hover:scale-110 transition-transform duration-500">
+                <i class="fa-solid fa-child-reaching text-8xl"></i>
+            </div>
+            
+            <div class="flex items-center gap-5 relative z-10">
+                <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-2xl font-black border border-blue-100">
+                    {{ child.first_name|make_list|first }}
+                </div>
+                <div>
+                    <h3 class="text-xl font-black text-gray-900 group-hover:text-blue-600 transition-colors">{{ child.first_name }} {{ child.last_name }}</h3>
+                    <p class="text-xs font-bold text-gray-500 uppercase mt-1 tracking-wider">
+                        <i class="fa-solid fa-chalkboard-user mr-1"></i> {{ child.section.grade }} "{{ child.section.letter }}" - {{ child.section.name }}
+                    </p>
+                </div>
+            </div>
+            
+            <div class="mt-6 pt-4 border-t border-gray-100 flex justify-between items-center relative z-10">
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Ver expediente completo</span>
+                <i class="fa-solid fa-arrow-right text-blue-500 group-hover:translate-x-1 transition-transform"></i>
+            </div>
+        </a>
+        {% empty %}
+        <div class="col-span-full bg-white p-12 rounded-2xl shadow-sm border border-gray-200 text-center">
+            <i class="fa-solid fa-link-slash text-4xl text-gray-300 mb-3"></i>
+            <h3 class="text-lg font-bold text-gray-900">Sin alumnos vinculados</h3>
+            <p class="text-sm text-gray-500 mt-1">Acércate a la dirección para vincular el DNI de tu hijo/a a tu cuenta.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

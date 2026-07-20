@@ -39,6 +39,14 @@ class DjangoMaterialRepository(IMaterialRepository):
             }
         )
         return self._to_entity(model)
+    
+    def delete(self, material_id: int) -> bool:
+        try:
+            material = Material.objects.get(id=material_id)
+            material.delete() # Ejecuta el Soft Delete
+            return True
+        except Material.DoesNotExist:
+            return False
 
     def _to_entity(self, model: Material) -> MaterialEntity:
         return MaterialEntity(

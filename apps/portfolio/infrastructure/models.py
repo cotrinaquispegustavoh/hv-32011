@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from apps.core.infrastructure.models import SoftDeleteModel
+from apps.academics.infrastructure.models import Section # <-- IMPORTAR SECCIÓN
 
 class PortfolioItem(SoftDeleteModel):
     TYPE_CHOICES = [
@@ -9,6 +10,10 @@ class PortfolioItem(SoftDeleteModel):
     ]
     
     teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='portfolio_items', verbose_name='Docente')
+    
+    # --- NUEVO CAMPO: Vinculamos la ficha a un aula ---
+    section = models.ForeignKey(Section, on_delete=models.CASCADE, related_name='portfolio_items', null=True, blank=True, verbose_name='Sección')
+    
     item_type = models.CharField('Tipo de Ficha', max_length=10, choices=TYPE_CHOICES)
     title = models.CharField('Título', max_length=200)
     description = models.TextField('Descripción', blank=True, null=True)

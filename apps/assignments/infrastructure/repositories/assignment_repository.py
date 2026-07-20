@@ -21,3 +21,18 @@ class DjangoTeacherAssignmentRepository(ITeacherAssignmentRepository):
     def get_by_section(self, section_id: int, year: int) -> List[TeacherAssignmentEntity]:
         models = TeacherAssignment.objects.filter(section_id=section_id, academic_year=year)
         return [self._to_entity(m) for m in models]
+
+    def save(self, assignment: TeacherAssignmentEntity) -> TeacherAssignmentEntity:
+        model, _ = TeacherAssignment.objects.update_or_create(
+            id=assignment.id,
+            defaults={
+                'teacher_id': assignment.teacher_id,
+                'section_id': assignment.section_id,
+                'area': assignment.area,
+                'academic_year': assignment.academic_year
+            }
+        )
+        return self._to_entity(model)
+
+    def delete(self, assignment_id: int) -> bool:
+        return TeacherAssignment.objects.filter(id=assignment_id).delete()[0] > 0

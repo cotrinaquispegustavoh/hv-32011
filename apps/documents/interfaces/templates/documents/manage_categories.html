@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestionar Categorías - Intranet HV{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-6 px-4 animate-in fade-in duration-300" x-data="{ editMode: false, editId: '', editName: '' }">
+    
+    <div class="mb-6">
+        <a href="{% url 'documents:list' %}" class="text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors flex items-center gap-2">
+            <i class="fa-solid fa-arrow-left"></i> Volver a Documentos
+        </a>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <h2 class="text-lg font-black text-blue-900 uppercase tracking-wide">Gestión de Categorías</h2>
+        </div>
+
+        {% if messages %}
+            <div class="p-4">
+                {% for message in messages %}
+                    <div class="p-3 rounded-lg text-sm font-bold border {% if message.tags == 'error' %}bg-red-50 text-red-700 border-red-200{% else %}bg-green-50 text-green-700 border-green-200{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
+            
+            <!-- Formulario (Crear / Editar) -->
+            <div class="md:col-span-1">
+                <form method="POST" action="{% url 'documents:manage_categories' %}" class="space-y-4 bg-gray-50 p-5 rounded-xl border border-gray-200">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" :value="editMode ? 'edit' : 'create'">
+                    <input type="hidden" name="category_id" :value="editId">
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-2" x-text="editMode ? 'Editar Categoría' : 'Nueva Categoría'"></label>
+                        <input type="text" name="name" x-model="editName" required placeholder="Ej: Resoluciones"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <div class="flex gap-2">
+                        <button type="submit" class="flex-grow bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg transition-colors text-sm" x-text="editMode ? 'Guardar Cambios' : 'Crear'"></button>
+                        
+                        <button type="button" x-show="editMode" @click="editMode = false; editId = ''; editName = '';" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-3 rounded-lg transition-colors text-sm">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Lista de Categorías -->
+            <div class="md:col-span-2">
+                <table class="min-w-full text-left">
+                    <thead>
+                        <tr class="border-b-2 border-gray-100">
+                            <th class="px-4 py-2 text-xs font-bold text-gray-900">Nombre de la Categoría</th>
+                            <th class="px-4 py-2 text-right text-xs font-bold text-gray-900">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cat in categories %}
+                        <tr class="border-b border-gray-100 hover:bg-gray-50">
+                            <td class="px-4 py-3 text-sm font-bold text-gray-800">{{ cat.name }}</td>
+                            <td class="px-4 py-3 text-right space-x-2">
+                                <!-- Botón Editar (Activa Alpine.js) -->
+                                <button @click="editMode = true; editId = '{{ cat.id }}'; editName = '{{ cat.name|escapejs }}';" class="text-gray-400 hover:text-blue-600 transition-colors" title="Editar">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                
+                                <!-- Botón Eliminar -->
+                                <form method="POST" action="{% url 'documents:manage_categories' %}" class="inline" onsubmit="return confirm('¿Seguro que deseas eliminar esta categoría?');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="delete">
+                                    <input type="hidden" name="category_id" value="{{ cat.id }}">
+                                    <button type="submit" class="text-gray-400 hover:text-red-600 transition-colors" title="Eliminar">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="2" class="px-4 py-8 text-center text-gray-500 text-sm font-bold">No hay categorías creadas.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+        </div>
+    </div>
+</div>
+{% endblock %}

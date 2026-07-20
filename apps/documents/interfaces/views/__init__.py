@@ -1,1 +1,1 @@
-from .document_views import document_list_view
+from .document_views import document_list_view, upload_document_view, search_documents_view, manage_categories_view, edit_document_view, delete_document_view

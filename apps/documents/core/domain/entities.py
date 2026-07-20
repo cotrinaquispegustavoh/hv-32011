@@ -3,6 +3,12 @@ from typing import Optional, List
 from datetime import datetime
 
 @dataclass
+class DocumentCategoryEntity:
+    id: Optional[int]
+    name: str
+    description: Optional[str] = None
+
+@dataclass
 class DocumentVersionEntity:
     id: Optional[int]
     document_id: int

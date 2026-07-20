@@ -1,5 +1,5 @@
 from django.urls import path
-from .interfaces.views import catalog_views, loan_views, dispatch_views
+from .interfaces.views import catalog_views, loan_views, dispatch_views, inventory_views
 
 app_name = 'warehouse'
 
@@ -9,4 +9,9 @@ urlpatterns = [
     
     path('despacho/', dispatch_views.dispatch_panel_view, name='dispatch_panel'),
     path('despacho/actualizar/<int:loan_id>/', dispatch_views.update_loan_status_view, name='update_loan_status'),
+
+    # --- NUEVAS RUTAS DE INVENTARIO ---
+    path('inventario/', inventory_views.inventory_panel_view, name='inventory_panel'),
+    path('inventario/editar/<int:material_id>/', inventory_views.edit_material_view, name='edit_material'),
+    path('inventario/eliminar/<int:material_id>/', inventory_views.delete_material_view, name='delete_material'),
 ]
