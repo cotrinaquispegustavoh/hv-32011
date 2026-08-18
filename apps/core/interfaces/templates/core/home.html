@@ -1,120 +1,117 @@
 {% extends 'public_base.html' %}
+{% load static %}
+
+{% block title %}Inicio — I.E. Hermilio Valdizán 32011{% endblock %}
 
 {% block content %}
-<div id="inicio" class="scroll-mt-24"></div>
 
-<section class="container mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-4">
-    <div class="w-full bg-gradient-to-br from-sky-950 via-slate-900 to-sky-900 rounded-[2.5rem] p-8 md:p-16 text-center shadow-xl shadow-slate-900/10 relative overflow-hidden border border-slate-800/40">
+<!-- HERO SECTION (Fondo Azul Institucional) -->
+<section id="institucion" class="relative bg-blue-900 pt-16 pb-32 lg:pt-24 lg:pb-40 overflow-hidden">
+    <!-- Patrón de fondo sutil (opcional para darle textura) -->
+    <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 24px 24px;"></div>
+    
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="max-w-2xl">
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight mb-6">
+                I.E. N.º 32011<br>
+                <span class="text-blue-300">Hermilio Valdizán</span><br>
+                de Huánuco
+            </h1>
+            <p class="text-lg text-blue-100 font-medium mb-8 max-w-xl leading-relaxed">
+                Innovación, disciplina y excelencia para un futuro mejor. Formamos líderes con valores y visión tecnológica.
+            </p>
+            <a href="{% url 'users:login' %}" class="inline-flex items-center gap-2 bg-white text-blue-900 hover:bg-blue-50 font-black text-sm px-8 py-4 rounded-xl uppercase tracking-wider transition-all shadow-lg active:scale-95">
+                Acceder a la Intranet <i class="fa-solid fa-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Logo Flotante a la derecha en pantallas grandes -->
+    <div class="hidden lg:block absolute right-20 top-1/2 transform -translate-y-1/2 z-10">
+        <div class="inline-flex p-4 bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/50 transition-transform duration-500 hover:scale-105">
+            <img src="{% static 'img/logo_hv_32011.png' %}" alt="Insignia Hermilio Valdizán" class="w-48 h-48 object-contain select-none">
+        </div>
+    </div>
+</section>
+
+<!-- TARJETAS DE SERVICIOS (Superpuestas al Hero) -->
+<section id="servicios" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20 -mt-16 lg:-mt-20 mb-16">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         
-        <div class="absolute -right-20 -top-20 text-white/[0.02] text-[20rem] font-black pointer-events-none select-none">
-            <i class="fa-solid fa-graduation-cap"></i>
+        <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 hover:-translate-y-1 transition-transform duration-300">
+            <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-2xl mb-6">
+                <i class="fa-solid fa-laptop-file"></i>
+            </div>
+            <h3 class="text-lg font-black text-gray-900 mb-3">Gestión Integrada</h3>
+            <p class="text-sm text-gray-500 font-medium leading-relaxed">Centralizamos los procesos institucionales para una gestión más eficiente y rápida.</p>
         </div>
 
-        <div class="max-w-3xl mx-auto space-y-8 relative z-10">
-            <div class="inline-flex p-4 bg-white rounded-[2.5rem] shadow-2xl shadow-sky-950/50 transition-transform duration-500 hover:scale-105">
-                <div class="w-28 h-28 md:w-32 md:h-32 bg-sky-50 rounded-2xl flex items-center justify-center text-sky-600 text-6xl">
-                    <i class="fa-solid fa-school"></i>
-                </div>
+        <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 hover:-translate-y-1 transition-transform duration-300">
+            <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-2xl mb-6">
+                <i class="fa-solid fa-shield-halved"></i>
             </div>
-
-            <div class="space-y-4">
-                <p class="text-xs font-black text-sky-400 uppercase tracking-[0.25em]">Plataforma de Gestión Interna</p>
-                <h1 class="text-3xl md:text-5xl font-black text-white tracking-tight leading-none">
-                    I.E. 32011 Hermilio Valdizán
-                </h1>
-                <p class="text-slate-400 text-xs md:text-sm font-medium leading-relaxed max-w-2xl mx-auto pt-2">
-                    Bienvenidos al portal tecnológico de nuestra institución en Huánuco. Un entorno centralizado concebido para modernizar los flujos de inventarios pedagógicos, el resguardo de portafolios docentes y la comunicación de nuestra comunidad escolar.
-                </p>
-            </div>
-
-            <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-                <a href="{% url 'users:login' %}" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-slate-900 hover:bg-sky-400 hover:text-slate-950 font-black text-xs px-8 py-4 rounded-2xl uppercase tracking-wider transition-all shadow-md active:scale-95">
-                    <i class="fa-solid fa-user-shield text-sm"></i> Ingresar al Portal
-                </a>
-                
-                <a href="#identidad" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-transparent hover:bg-white/10 text-white border border-white/20 font-black text-xs px-8 py-4 rounded-2xl uppercase tracking-wider transition-all active:scale-95">
-                    Conocer Institución <i class="fa-solid fa-arrow-down text-xs animate-bounce ml-1"></i>
-                </a>
-            </div>
+            <h3 class="text-lg font-black text-gray-900 mb-3">Información Segura</h3>
+            <p class="text-sm text-gray-500 font-medium leading-relaxed">Protegemos los datos de nuestra comunidad educativa con los más altos estándares.</p>
         </div>
+
+        <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 hover:-translate-y-1 transition-transform duration-300">
+            <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-2xl mb-6">
+                <i class="fa-solid fa-clock"></i>
+            </div>
+            <h3 class="text-lg font-black text-gray-900 mb-3">Acceso 24/7</h3>
+            <p class="text-sm text-gray-500 font-medium leading-relaxed">Plataforma disponible desde cualquier dispositivo, cuando lo necesites.</p>
+        </div>
+
+        <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 hover:-translate-y-1 transition-transform duration-300">
+            <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-2xl mb-6">
+                <i class="fa-solid fa-users"></i>
+            </div>
+            <h3 class="text-lg font-black text-gray-900 mb-3">Comunidad Educativa</h3>
+            <p class="text-sm text-gray-500 font-medium leading-relaxed">Conectamos a docentes, estudiantes y padres para el éxito de nuestros estudiantes.</p>
+        </div>
+
     </div>
 </section>
 
-<section id="identidad" class="py-24 bg-slate-50 scroll-mt-24">
-    <div class="container mx-auto px-6">
-        <div class="text-center mb-16">
-            <h2 class="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">Nuestra Identidad</h2>
-            <div class="w-16 h-1.5 bg-sky-500 mx-auto mt-6 rounded-full"></div>
+<!-- NOTICIAS Y ANUNCIOS (Agenda Institucional) -->
+<section id="novedades" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-24">
+    <div class="bg-white rounded-3xl shadow-sm border border-gray-200 p-8 lg:p-10">
+        
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 border-b border-gray-100 pb-6">
+            <h2 class="text-2xl font-black text-gray-900 tracking-tight">Noticias y Anuncios</h2>
+            <button class="bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold px-5 py-2.5 rounded-lg transition-colors uppercase tracking-wider">
+                Ver todos
+            </button>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            <div class="bg-white p-10 md:p-12 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden group hover:-translate-y-1 transition-transform duration-300">
-                <div class="absolute -right-4 -top-4 text-slate-50 opacity-50 group-hover:scale-110 transition-transform duration-500">
-                    <i class="fa-solid fa-bullseye text-[10rem]"></i>
-                </div>
-                <div class="w-16 h-16 bg-sky-100 rounded-2xl flex items-center justify-center mb-8 relative z-10">
-                    <i class="fa-solid fa-bullseye text-sky-600 text-3xl"></i>
-                </div>
-                <h3 class="text-2xl font-black text-slate-800 mb-4 relative z-10">Misión</h3>
-                <p class="text-slate-600 leading-relaxed font-medium relative z-10 text-lg">
-                    Brindar una educación integral y de calidad a los estudiantes de la I.E. 32011, fomentando el pensamiento crítico, la práctica de valores y el uso responsable de la tecnología, asegurando que cada alumno alcance su máximo potencial.
-                </p>
-            </div>
-
-            <div class="bg-white p-10 md:p-12 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden group hover:-translate-y-1 transition-transform duration-300">
-                <div class="absolute -right-4 -top-4 text-slate-50 opacity-50 group-hover:scale-110 transition-transform duration-500">
-                    <i class="fa-solid fa-eye text-[10rem]"></i>
-                </div>
-                <div class="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mb-8 relative z-10">
-                    <i class="fa-solid fa-eye text-emerald-600 text-3xl"></i>
-                </div>
-                <h3 class="text-2xl font-black text-slate-800 mb-4 relative z-10">Visión</h3>
-                <p class="text-slate-600 leading-relaxed font-medium relative z-10 text-lg">
-                    Ser reconocidos para el año 2028 como la Institución Educativa líder en Huánuco, destacando por nuestra excelencia académica, innovación digital en los procesos de enseñanza y el sólido compromiso de nuestra comunidad escolar.
-                </p>
-            </div>
-        </div>
-    </div>
-</section>
-
-<section id="agenda" class="py-24 bg-white scroll-mt-24">
-    <div class="container mx-auto px-6 max-w-4xl">
-        <div class="flex items-center gap-5 mb-12">
-            <div class="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center shadow-inner">
-                <i class="fa-regular fa-calendar-star text-amber-600 text-2xl"></i>
-            </div>
-            <div>
-                <h2 class="text-3xl font-black text-slate-900 tracking-tight">Agenda Institucional</h2>
-                <p class="text-slate-500 font-bold mt-1 text-sm uppercase tracking-widest">Efemérides y eventos de Huánuco</p>
-            </div>
-        </div>
-
-        <div class="bg-slate-50 rounded-[2.5rem] border border-slate-100 p-8 md:p-10 shadow-sm">
-            {% if eventos %}
-                <div class="space-y-6">
-                    {% for evento in eventos %}
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col sm:flex-row sm:items-center gap-6 hover:border-sky-200 transition-colors">
-                        <div class="flex-shrink-0 w-20 h-20 bg-sky-50 rounded-2xl flex flex-col items-center justify-center text-sky-600 border border-sky-100">
-                            <span class="text-2xl font-black leading-none">{{ evento.event_date|date:"d" }}</span>
-                            <span class="text-[10px] font-bold uppercase tracking-widest mt-1">{{ evento.event_date|date:"M" }}</span>
-                        </div>
-                        <div>
-                            <h4 class="text-xl font-black text-slate-800 mb-2">{{ evento.title }}</h4>
-                            <p class="text-sm text-slate-600 font-medium leading-relaxed">{{ evento.description }}</p>
-                        </div>
+        {% if eventos %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for evento in eventos %}
+                <div class="flex items-start gap-4 p-4 rounded-2xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100">
+                    <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 border border-blue-100">
+                        <i class="fa-regular fa-calendar-check text-xl"></i>
                     </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="text-center py-16">
-                    <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <i class="fa-regular fa-calendar-check text-3xl text-slate-400"></i>
+                    <div>
+                        <h4 class="text-sm font-bold text-gray-900 leading-tight mb-1">{{ evento.title }}</h4>
+                        <p class="text-xs font-semibold text-gray-500">{{ evento.event_date|date:"d \d\e F, Y" }}</p>
+                        {% if evento.is_holiday %}
+                            <span class="inline-block mt-2 px-2 py-0.5 bg-red-50 text-red-600 text-[10px] font-black uppercase tracking-wider rounded border border-red-100">Feriado</span>
+                        {% endif %}
                     </div>
-                    <h3 class="text-xl font-black text-slate-700 mb-2">Día sin programaciones cívicas</h3>
-                    <p class="text-slate-500 font-medium max-w-md mx-auto">No hay eventos institucionales ni efemérides programadas para los próximos días en nuestra agenda escolar.</p>
                 </div>
-            {% endif %}
-        </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-12">
+                <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fa-regular fa-newspaper text-2xl text-gray-400"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-700">Sin novedades recientes</h3>
+                <p class="text-sm text-gray-500 mt-1">Mantente atento a nuestras próximas publicaciones.</p>
+            </div>
+        {% endif %}
+        
     </div>
 </section>
+
 {% endblock %}

@@ -14,7 +14,7 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('role', 'SUPERUSER')
-        extra_fields.setdefault('password_changed', True) # El superuser no necesita forzar cambio inicial
+        extra_fields.setdefault('password_changed', True)
 
         if extra_fields.get('is_staff') is not True:
             raise ValueError('Superuser debe tener is_staff=True.')
@@ -23,12 +23,8 @@ class UserManager(BaseUserManager):
 
         return self.create_user(dni, password, **extra_fields)
 
-
 class User(AbstractUser):
-    # Eliminamos el campo username por defecto de Django
     username = None 
-    
-    # Campos requeridos por el PRD
     dni = models.CharField('DNI', max_length=8, unique=True)
     
     ROLE_CHOICES = [
@@ -40,23 +36,17 @@ class User(AbstractUser):
         ('SUPERUSER', 'Superuser Técnico'),
     ]
     role = models.CharField('Rol', max_length=20, choices=ROLE_CHOICES)
+    support_role = models.CharField('Cargo Específico', max_length=50, blank=True, null=True)
     
-    support_role = models.CharField(
-        'Cargo Específico', 
-        max_length=50, 
-        blank=True, 
-        null=True, 
-        help_text='Ej: Psicólogo, Auxiliar, Encargado de Almacén'
-    )
+    birth_date = models.DateField('Fecha de Nacimiento', null=True, blank=True)
+    phone = models.CharField('Teléfono', max_length=20, null=True, blank=True) # <-- NUEVO CAMPO
     
     password_changed = models.BooleanField('Contraseña cambiada', default=False)
     module_permissions = models.JSONField('Permisos de Módulos', default=list, blank=True)
 
-    # Configuramos DNI como identificador principal
     USERNAME_FIELD = 'dni'
     REQUIRED_FIELDS = ['first_name', 'last_name']
 
-    # Asignamos el manager personalizado
     objects = UserManager()
 
     class Meta:
@@ -66,7 +56,6 @@ class User(AbstractUser):
 
     def __str__(self):
         base_role = self.get_role_display() or self.role
-        # Si tiene un cargo específico, lo mostramos (Ej: Personal de Apoyo - Psicólogo)
         if self.role == 'APOYO' and self.support_role:
             return f"{self.dni} - {base_role} ({self.support_role})"
         return f"{self.dni} - {base_role}"

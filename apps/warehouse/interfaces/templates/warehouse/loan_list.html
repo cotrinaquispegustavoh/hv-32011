@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block header_title %}Mis Solicitudes de Material{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 animate-in fade-in duration-300">
+    
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+        <div>
+            <h1 class="text-2xl font-black text-blue-900 uppercase tracking-wide">Mis Solicitudes</h1>
+            <p class="text-sm font-medium text-gray-500 mt-1">Historial de materiales pedidos al almacén institucional.</p>
+        </div>
+        
+        <!-- BOTÓN PARA IR AL CATÁLOGO -->
+        <a href="{% url 'warehouse:catalog' %}" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2.5 px-5 rounded-xl shadow-sm transition-colors flex items-center gap-2">
+            <i class="fa-solid fa-plus"></i> Solicitar Material
+        </a>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-left border-collapse">
+                <thead class="bg-gray-50">
+                    <tr class="border-b-2 border-gray-100 text-[10px] text-gray-500 uppercase tracking-widest">
+                        <th class="px-6 py-4 font-black">Fecha de Solicitud</th>
+                        <th class="px-6 py-4 font-black">Materiales</th>
+                        <th class="px-6 py-4 font-black">Planificación</th>
+                        <th class="px-6 py-4 font-black text-right">Estado</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for loan in loans %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <p class="text-sm font-black text-gray-900">{{ loan.request_date|date:"d M Y" }}</p>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase mt-0.5">{{ loan.request_date|date:"h:i A" }}</p>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% for detail in loan.details %}
+                                <p class="font-black text-blue-700 text-sm">{{ detail.material_name }}</p>
+                                <p class="text-xs font-bold text-gray-500 mt-0.5"><i class="fa-solid fa-cubes text-gray-400 mr-1"></i> Cant: {{ detail.quantity_requested }} {{ detail.material_unit }}</p>
+                            {% endfor %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="space-y-1">
+                                <p class="text-xs font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded border border-emerald-100 inline-block"><i class="fa-solid fa-sign-in-alt mr-1"></i> Recojo: {{ loan.required_for|date:"d/m/Y h:i A" }}</p>
+                                <br>
+                                <p class="text-xs font-black text-sky-600 bg-sky-50 px-2 py-1 rounded border border-sky-100 inline-block"><i class="fa-solid fa-sign-out-alt mr-1"></i> Retorno: {{ loan.expected_return_date|date:"h:i A" }}</p>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                            <span class="px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider border shadow-sm inline-block
+                                {% if loan.status == 'PENDING' %}bg-amber-50 text-amber-700 border-amber-200
+                                {% elif loan.status == 'DISPATCHED' %}bg-blue-50 text-blue-700 border-blue-200
+                                {% elif loan.status == 'RETURNED' %}bg-emerald-50 text-emerald-700 border-emerald-200
+                                {% else %}bg-red-50 text-red-700 border-red-200{% endif %}">
+                                {{ loan.get_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="px-6 py-12 text-center text-gray-500">
+                            <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fa-solid fa-box-open text-2xl text-gray-400"></i>
+                            </div>
+                            <p class="font-bold text-sm">No has realizado ninguna solicitud.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

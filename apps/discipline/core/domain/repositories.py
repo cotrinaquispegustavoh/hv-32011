@@ -15,3 +15,8 @@ class IIncidentRepository(ABC):
     def get_all(self) -> List[IncidentEntity]:
         """Obtiene todas las incidencias ordenadas por fecha (Para el Director)."""
         pass
+    
+    @abstractmethod
+    def get_by_reporter(self, reporter_id: int) -> List[IncidentEntity]:
+        """Obtiene las incidencias reportadas por un docente específico."""
+        pass

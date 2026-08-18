@@ -1,266 +1,327 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Intranet HV{% endblock %}</title>
+    <title>{% block title %}I.E. 32011 Hermilio Valdizán{% endblock %}</title>
     
-    <!-- Tailwind CSS (CDN para desarrollo) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- HTMX para interacciones dinámicas sin recargar -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    
-    <!-- Alpine.js para interactividad ligera (modales, menús) -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
-    <!-- FontAwesome para Iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <!-- Configuración de Tailwind y Fuentes -->
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8FAFC; }
         [x-cloak] { display: none !important; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
     <script>
         tailwind.config = {
-            theme: { extend: { colors: { hv: { dark: '#0f172a', blue: '#0284c7', gray: '#f8fafc' } } } }
+            theme: { extend: { colors: { hv: { dark: '#0B1727', blue: '#2563EB', gray: '#F3F4F6' } } } }
         }
     </script>
 </head>
-<body class="bg-slate-50 text-slate-900 antialiased min-h-screen flex" x-data="{ mobileMenuOpen: false }">
+<body class="text-gray-800 antialiased min-h-screen flex overflow-hidden" x-data="{ mobileMenuOpen: false, sidebarCollapsed: false, profileMenuOpen: false, notifMenuOpen: false }">
 
     <!-- ========================================== -->
-    <!-- SIDEBAR DESKTOP (Oculto en móviles)        -->
+    <!-- INICIO: SIDEBAR DESKTOP                    -->
     <!-- ========================================== -->
-    <aside class="hidden lg:flex flex-col w-72 bg-slate-900 text-white h-screen sticky top-0 border-r border-slate-800 flex-shrink-0">
+    <aside :class="sidebarCollapsed ? 'w-20' : 'w-64'" class="hidden lg:flex flex-col bg-[#0B1727] text-white h-screen sticky top-0 border-r border-slate-800 flex-shrink-0 transition-all duration-300 z-50">
         
-        <!-- Logo / Header Sidebar -->
-        <div class="p-6 flex items-center gap-3 border-b border-slate-800/50">
-            <div class="w-10 h-10 bg-sky-600 rounded-xl flex items-center justify-center shadow-lg shadow-sky-900/20">
-                <i class="fa-solid fa-graduation-cap text-white text-xl"></i>
+        <!-- INICIO: Header Sidebar -->
+        <div class="h-20 border-b border-gray-800 flex items-center transition-all duration-300 relative" :class="sidebarCollapsed ? 'justify-center' : 'justify-between px-6'">
+            <div class="flex items-center gap-3 overflow-hidden" x-show="!sidebarCollapsed">
+                <div class="min-w-[40px] w-10 h-10 bg-white rounded-lg flex items-center justify-center p-1">
+                    <img src="{% static 'img/logo_hv_32011.png' %}" alt="Logo" class="w-full h-full object-contain">
+                </div>
+                <span class="font-black text-lg tracking-tight uppercase whitespace-nowrap">I.E. 32011</span>
             </div>
-            <span class="font-black text-xl tracking-tighter italic">Intranet_<span class="text-sky-400">HV</span></span>
+            <button x-show="!sidebarCollapsed" @click="sidebarCollapsed = true" class="text-gray-500 hover:text-white transition-colors flex-shrink-0">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <button x-show="sidebarCollapsed" @click="sidebarCollapsed = false" class="w-10 h-10 bg-white rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors p-1">
+                <img src="{% static 'img/logo_hv_32011.png' %}" alt="Logo" class="w-full h-full object-contain">
+            </button>
         </div>
+        <!-- FIN: Header Sidebar -->
 
-        <!-- Navegación Principal -->
-        <nav class="flex-grow p-4 space-y-2 overflow-y-auto">
+        <!-- INICIO: Navegación Principal -->
+        <nav class="flex-grow px-4 py-2 space-y-1 overflow-y-auto scrollbar-hide">
             
-            <a href="{% url 'core:dashboard' %}" class="flex items-center gap-4 px-4 py-3 rounded-2xl font-bold text-sm transition-all {% if request.resolver_match.url_name == 'dashboard' %}bg-sky-600 text-white shadow-lg shadow-sky-900/50{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
-                <div class="w-5 flex justify-center"><i class="fa-solid fa-house text-lg"></i></div>
-                <span>Inicio</span>
+            <div x-show="!sidebarCollapsed" class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 mt-4 px-2 whitespace-nowrap">Principal</div>
+            <div x-show="sidebarCollapsed" class="text-center text-gray-600 mt-4 mb-2"><i class="fa-solid fa-ellipsis"></i></div>
+            
+            <a href="{% url 'core:dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if request.resolver_match.url_name == 'dashboard' %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
+                <i class="fa-solid fa-house w-5 text-center"></i>
+                <span x-show="!sidebarCollapsed" class="whitespace-nowrap">Dashboard</span>
             </a>
-            
-            {% if user.role == 'APODERADO' %}
-                <div class="pt-6 pb-2 px-4 text-[10px] font-black text-slate-600 uppercase tracking-widest">Familia</div>
-                
-                <a href="{% url 'academics:parent_dashboard' %}" class="flex items-center gap-4 px-4 py-3 rounded-2xl font-bold text-sm transition-all {% if 'apoderado' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
-                    <div class="w-5 flex justify-center"><i class="fa-solid fa-children text-lg"></i></div>
-                    <span>Mis Hijos</span>
-                </a>
-            {% endif %}
 
-            <!-- Menú Docente (Controlado por Permisos de la BD) -->
             {% if user.role == 'DOCENTE' %}
-                <div class="pt-6 pb-2 px-4 text-[10px] font-black text-slate-600 uppercase tracking-widest">Docencia</div>
+                <div x-show="!sidebarCollapsed" class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 mt-6 px-2 whitespace-nowrap">Módulos</div>
+                <div x-show="sidebarCollapsed" class="text-center text-gray-600 mt-6 mb-2"><i class="fa-solid fa-ellipsis"></i></div>
                 
                 {% if 'almacen' in user.module_permissions %}
-                <a href="{% url 'warehouse:catalog' %}" class="flex items-center gap-4 px-4 py-3 rounded-2xl font-bold text-sm transition-all {% if 'almacen' in request.path %}bg-sky-600 text-white shadow-lg shadow-sky-900/50{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
-                    <div class="w-5 flex justify-center"><i class="fa-solid fa-boxes-stacked text-lg"></i></div>
-                    <span>Inventario</span>
+                <a href="{% url 'warehouse:catalog' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'almacen' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
+                    <i class="fa-solid fa-boxes-stacked w-5 text-center"></i>
+                    <span x-show="!sidebarCollapsed" class="whitespace-nowrap">Almacén</span>
                 </a>
                 {% endif %}
-
                 {% if 'disciplina' in user.module_permissions %}
-                <a href="{% url 'discipline:report_incident' %}" class="flex items-center gap-4 px-4 py-3 rounded-2xl font-bold text-sm transition-all {% if 'disciplina' in request.path %}bg-sky-600 text-white shadow-lg shadow-sky-900/50{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
-                    <div class="w-5 flex justify-center"><i class="fa-solid fa-hand-holding-hand text-lg"></i></div>
-                    <span>Incidencias</span>
+                <a href="{% url 'discipline:report_incident' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'disciplina' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
+                    <i class="fa-solid fa-triangle-exclamation w-5 text-center"></i>
+                    <span x-show="!sidebarCollapsed" class="whitespace-nowrap">Incidencias</span>
                 </a>
                 {% endif %}
-
                 {% if 'portafolio' in user.module_permissions %}
-                <a href="{% url 'portfolio:list' %}" class="flex items-center gap-4 px-4 py-3 rounded-2xl font-bold text-sm transition-all {% if 'portafolio' in request.path %}bg-sky-600 text-white shadow-lg shadow-sky-900/50{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
-                    <div class="w-5 flex justify-center"><i class="fa-solid fa-cloud-arrow-up text-lg"></i></div>
-                    <span>Portafolio</span>
+                <a href="{% url 'portfolio:list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'portafolio' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
+                    <i class="fa-solid fa-folder-open w-5 text-center"></i>
+                    <span x-show="!sidebarCollapsed" class="whitespace-nowrap">Portafolio Docente</span>
                 </a>
                 {% endif %}
             {% endif %}
 
-            <!-- Menú Directivo / Apoyo -->
+            {% if user.role == 'APODERADO' %}
+                <div x-show="!sidebarCollapsed" class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 mt-6 px-2 whitespace-nowrap">Familia</div>
+                <div x-show="sidebarCollapsed" class="text-center text-gray-600 mt-6 mb-2"><i class="fa-solid fa-ellipsis"></i></div>
+                
+                <a href="{% url 'academics:parent_dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'apoderado' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
+                    <i class="fa-solid fa-children w-5 text-center"></i>
+                    <span x-show="!sidebarCollapsed" class="whitespace-nowrap">Mis Hijos</span>
+                </a>
+            {% endif %}
+
             {% if user.role in 'DIRECTOR,SUBDIRECTOR,APOYO,SUPERUSER' %}
-                <div class="pt-6 pb-2 px-4 text-[10px] font-black text-slate-600 uppercase tracking-widest">Gestión Operativa</div>
+                <div x-show="!sidebarCollapsed" class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 mt-6 px-2 whitespace-nowrap">Gestión Operativa</div>
+                <div x-show="sidebarCollapsed" class="text-center text-gray-600 mt-6 mb-2"><i class="fa-solid fa-ellipsis"></i></div>
+                
+                <a href="{% url 'warehouse:dispatch_panel' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'despacho' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
+                    <i class="fa-solid fa-truck-ramp-box w-5 text-center"></i>
+                    <span x-show="!sidebarCollapsed" class="whitespace-nowrap">Despachos</span>
+                </a>
+                <a href="{% url 'warehouse:inventory_panel' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'inventario' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
+                    <i class="fa-solid fa-boxes-packing w-5 text-center"></i>
+                    <span x-show="!sidebarCollapsed" class="whitespace-nowrap">Inventario</span>
+                </a>
+                <a href="{% url 'documents:list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'documentos' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
+                    <i class="fa-solid fa-file-lines w-5 text-center"></i>
+                    <span x-show="!sidebarCollapsed" class="whitespace-nowrap">Documentos</span>
+                </a>
                 
                 {% if user.role in 'DIRECTOR,SUPERUSER' %}
-                <a href="{% url 'users:staff_list' %}" class="flex items-center gap-4 px-4 py-3 rounded-2xl font-bold text-sm transition-all {% if 'personal' in request.path %}bg-sky-600 text-white shadow-lg shadow-sky-900/50{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
-                    <div class="w-5 flex justify-center"><i class="fa-solid fa-users-gear text-lg"></i></div>
-                    <span>Gestión de Staff</span>
-                </a>
-                {% endif %}
-
-                <a href="{% url 'warehouse:dispatch_panel' %}" class="flex items-center gap-4 px-4 py-3 rounded-2xl font-bold text-sm transition-all {% if 'despacho' in request.path %}bg-sky-600 text-white shadow-lg shadow-sky-900/50{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
-                    <div class="w-5 flex justify-center"><i class="fa-solid fa-truck-ramp-box text-lg"></i></div>
-                    <span>Despachos</span>
-                </a>
-                <a href="{% url 'documents:list' %}" class="flex items-center gap-4 px-4 py-3 rounded-2xl font-bold text-sm transition-all {% if 'documentos' in request.path %}bg-sky-600 text-white shadow-lg shadow-sky-900/50{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
-                    <div class="w-5 flex justify-center"><i class="fa-solid fa-file-lines text-lg"></i></div>
-                    <span>Documentos</span>
-                </a>
-
-                <a href="{% url 'assignments:panel' %}" class="flex items-center gap-4 px-4 py-3 rounded-2xl font-bold text-sm transition-all {% if 'asignaciones' in request.path %}bg-sky-600 text-white shadow-lg shadow-sky-900/50{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
-                    <div class="w-5 flex justify-center"><i class="fa-solid fa-chalkboard-user text-lg"></i></div>
-                    <span>Asignar Aulas</span>
+                <a href="{% url 'portfolio:review_panel' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'revision' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
+                    <i class="fa-solid fa-magnifying-glass-chart w-5 text-center"></i>
+                    <span x-show="!sidebarCollapsed" class="whitespace-nowrap">Revisión Académica</span>
                 </a>
                 
-                <a href="{% url 'warehouse:inventory_panel' %}" class="flex items-center gap-4 px-4 py-3 rounded-2xl font-bold text-sm transition-all {% if 'inventario' in request.path %}bg-sky-600 text-white shadow-lg shadow-sky-900/50{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
-                    <div class="w-5 flex justify-center"><i class="fa-solid fa-boxes-packing text-lg"></i></div>
-                    <span>Inventario</span>
+                <div x-show="!sidebarCollapsed" class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 mt-6 px-2 whitespace-nowrap">Administración</div>
+                <div x-show="sidebarCollapsed" class="text-center text-gray-600 mt-6 mb-2"><i class="fa-solid fa-ellipsis"></i></div>
+                
+                <a href="{% url 'users:staff_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'personal' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
+                    <i class="fa-solid fa-users-gear w-5 text-center"></i>
+                    <span x-show="!sidebarCollapsed" class="whitespace-nowrap">Usuarios</span>
                 </a>
-
-            {% endif %}
-
-            {% if user.role in 'DIRECTOR,SUPERUSER' %}
-                <a href="{% url 'portfolio:review_panel' %}" class="flex items-center gap-4 px-4 py-3 rounded-2xl font-bold text-sm transition-all {% if 'revision' in request.path %}bg-sky-600 text-white shadow-lg shadow-sky-900/50{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
-                    <div class="w-5 flex justify-center"><i class="fa-solid fa-magnifying-glass-chart text-lg"></i></div>
-                    <span>Revisión Académica</span>
+                <a href="{% url 'assignments:panel' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'asignaciones' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
+                    <i class="fa-solid fa-chalkboard-user w-5 text-center"></i>
+                    <span x-show="!sidebarCollapsed" class="whitespace-nowrap">Asignar Aulas</span>
                 </a>
                 {% endif %}
+            {% endif %}
 
         </nav>
 
-        <!-- Footer Sidebar (Usuario y Salir) -->
+        <!-- Footer Sidebar -->
         <div class="p-4 border-t border-slate-800">
-            <div class="px-4 py-3 mb-2 flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-sky-500 flex items-center justify-center text-white font-bold text-xs">
+            <div class="px-4 py-3 mb-2 flex items-center gap-3" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
+                <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
                     {{ user.first_name|default:user.dni|make_list|first|upper }}
                 </div>
-                <div class="overflow-hidden">
+                <div x-show="!sidebarCollapsed" class="overflow-hidden">
                     <p class="text-[11px] font-bold text-white truncate">{{ user.first_name|default:"Usuario" }} {{ user.last_name }}</p>
                     <p class="text-[9px] text-slate-500 uppercase">{{ user.get_role_display }}</p>
                 </div>
             </div>
             
-            <a href="{% url 'users:logout' %}" class="flex items-center gap-4 px-4 py-3 w-full text-left rounded-2xl text-rose-400 hover:bg-rose-500/10 font-bold text-sm transition-all">
-                <div class="w-5 flex justify-center"><i class="fa-solid fa-power-off text-lg"></i></div>
-                <span>Cerrar Sesión</span>
+            <a href="{% url 'users:logout' %}" class="flex items-center gap-3 px-4 py-3 w-full text-left rounded-xl text-red-400 hover:bg-red-500/10 font-bold text-sm transition-all" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
+                <i class="fa-solid fa-power-off w-5 text-center"></i>
+                <span x-show="!sidebarCollapsed" class="whitespace-nowrap">Cerrar Sesión</span>
             </a>
         </div>
     </aside>
+    <!-- ========================================== -->
+    <!-- FIN: SIDEBAR DESKTOP                       -->
+    <!-- ========================================== -->
+
 
     <!-- ========================================== -->
-    <!-- CONTENEDOR PRINCIPAL (Header Móvil + Contenido) -->
+    <!-- INICIO: CONTENEDOR PRINCIPAL               -->
     <!-- ========================================== -->
-    <div class="flex-1 flex flex-col min-h-screen min-w-0">
+    <div class="flex-1 flex flex-col h-screen overflow-hidden bg-[#F8FAFC]">
         
-        <!-- HEADER MÓVIL (Visible solo en pantallas pequeñas) -->
-        <header class="lg:hidden sticky top-0 bg-white/90 backdrop-blur-md border-b border-slate-200 p-4 flex items-center justify-between z-40">
-            <button @click="mobileMenuOpen = true" class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-600 hover:bg-slate-200 transition-colors">
-                <i class="fa-solid fa-bars"></i>
-            </button>
-            <span class="font-black text-slate-900 tracking-tighter text-lg">Intranet_<span class="text-sky-600">HV</span></span>
-            <div class="w-10 h-10 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 font-bold text-sm">
-                {{ user.first_name|default:user.dni|make_list|first|upper }}
+        <!-- INICIO: Top Header -->
+        <header class="bg-white h-20 border-b border-gray-200 flex items-center justify-between px-4 lg:px-8 flex-shrink-0 z-40">
+            
+            <div class="flex items-center gap-4">
+                <button @click="mobileMenuOpen = true" class="lg:hidden text-gray-500 hover:text-gray-800 focus:outline-none">
+                    <i class="fa-solid fa-bars text-2xl"></i>
+                </button>
+                <h2 class="hidden md:block text-xl font-black text-gray-800 tracking-tight">{% block header_title %}I.E. Hermilio Valdizán 32011{% endblock %}</h2>
+            </div>
+            
+            <div class="flex items-center gap-6">
+                
+                <!-- INICIO: Campanita de Notificaciones -->
+                <div class="relative">
+                    <button @click="notifMenuOpen = !notifMenuOpen" @click.away="notifMenuOpen = false" class="text-gray-400 hover:text-blue-600 transition-colors relative focus:outline-none">
+                        <i class="fa-regular fa-bell text-xl"></i>
+                        {% if unread_notifs_count > 0 %}
+                        <span id="bell-badge" class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white text-[8px] font-black text-white flex items-center justify-center">{{ unread_notifs_count }}</span>
+                        {% else %}
+                        <span id="bell-badge" class="hidden absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white text-[8px] font-black text-white flex items-center justify-center"></span>
+                        {% endif %}
+                    </button>
+                    
+                    <div x-show="notifMenuOpen" x-transition style="display: none;" class="absolute right-0 mt-4 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+                        <div class="bg-gray-50 px-4 py-3 border-b border-gray-100 flex justify-between items-center">
+                            <h3 class="text-xs font-black text-gray-800 uppercase tracking-wider">Notificaciones</h3>
+                            
+                            <!-- BOTÓN MARCAR LEÍDAS CON HTMX Y ALPINE -->
+                            <button hx-post="{% url 'core:mark_notifications_read' %}" 
+                                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                    hx-swap="none"
+                                    @click="document.getElementById('bell-badge').classList.add('hidden'); document.getElementById('notification-dropdown-list').innerHTML='<div class=\'p-4 text-center text-gray-400 text-xs font-bold\'>No tienes notificaciones nuevas.</div>';"
+                                    class="text-[10px] font-bold text-blue-600 hover:underline cursor-pointer focus:outline-none">
+                                Marcar leídas
+                            </button>
+                        </div>
+                        <div class="max-h-64 overflow-y-auto p-2" id="notification-dropdown-list">
+                            {% for notif in latest_notifs %}
+                            <!-- AHORA ES UN ENLACE CLICKEABLE -->
+                            <a href="{{ notif.link|default:'#' }}" class="block p-3 hover:bg-gray-50 rounded-xl transition-colors border-b border-gray-50 last:border-0 flex gap-3 items-start">
+                                <div class="mt-0.5 {% if not notif.is_read %}text-blue-500{% else %}text-gray-300{% endif %}">
+                                    <i class="fa-solid fa-circle text-[8px]"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xs font-bold text-gray-800">{{ notif.title }}</p>
+                                    <p class="text-[10px] font-medium text-gray-500 mt-0.5">{{ notif.message }}</p>
+                                    <p class="text-[9px] font-bold text-gray-400 mt-1">{{ notif.created_at|date:"d M, h:i a" }}</p>
+                                </div>
+                            </a>
+                            {% empty %}
+                            <div class="p-4 text-center text-gray-400 text-xs font-bold">No tienes notificaciones.</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <!-- FIN: Campanita de Notificaciones -->
+                
+                <!-- INICIO: Perfil Dropdown -->
+                <div class="relative">
+                    <button @click="profileMenuOpen = !profileMenuOpen" @click.away="profileMenuOpen = false" class="flex items-center gap-3 focus:outline-none">
+                        <div class="text-right hidden sm:block">
+                            <p class="text-sm font-bold text-gray-800 leading-tight">{{ user.first_name }} {{ user.last_name }}</p>
+                            <p class="text-[10px] font-bold text-gray-500 uppercase">{{ user.get_role_display }}</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-black border border-blue-200">
+                            {{ user.first_name|make_list|first|upper }}
+                        </div>
+                        <i class="fa-solid fa-chevron-down text-xs text-gray-400"></i>
+                    </button>
+
+                    <div x-show="profileMenuOpen" x-transition style="display: none;" class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2">
+                        <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 font-medium"><i class="fa-regular fa-user mr-2"></i> Mi Perfil</a>
+                        <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 font-medium"><i class="fa-solid fa-gear mr-2"></i> Configuración</a>
+                        <div class="border-t border-gray-100 my-1"></div>
+                        <a href="{% url 'users:logout' %}" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 font-bold"><i class="fa-solid fa-power-off mr-2"></i> Cerrar Sesión</a>
+                    </div>
+                </div>
+                <!-- FIN: Perfil Dropdown -->
             </div>
         </header>
+        <!-- FIN: Top Header -->
 
-        <!-- ÁREA DE CONTENIDO DINÁMICO -->
-        <main class="flex-grow p-4 lg:p-8">
-            {% block content %}
-            {% endblock %}
+        <!-- INICIO: Área de Contenido -->
+        <main class="flex-grow p-6 lg:p-8 overflow-y-auto">
+            {% block content %}{% endblock %}
         </main>
+        <!-- FIN: Área de Contenido -->
 
-        <!-- FOOTER INTERNO -->
-        <footer class="py-6 border-t border-slate-200 px-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest flex justify-between bg-white mt-auto">
-            <span>I.E. 32011 — Huánuco</span>
-            <span>&copy; 2026</span>
-        </footer>
     </div>
+    <!-- ========================================== -->
+    <!-- FIN: CONTENEDOR PRINCIPAL                  -->
+    <!-- ========================================== -->
+
 
     <!-- ========================================== -->
-    <!-- SIDEBAR MÓVIL (Overlay con Alpine.js)      -->
+    <!-- INICIO: SIDEBAR MÓVIL                      -->
     <!-- ========================================== -->
-    <div x-show="mobileMenuOpen" x-cloak class="fixed inset-0 z-[60] lg:hidden">
-        <!-- Fondo oscuro -->
+    <div x-show="mobileMenuOpen" x-cloak class="fixed inset-0 z-[100] lg:hidden">
         <div x-show="mobileMenuOpen" x-transition.opacity class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="mobileMenuOpen = false"></div>
         
-        <!-- Menú deslizable -->
         <div x-show="mobileMenuOpen" 
-             x-transition:enter="transition ease-out duration-300"
-             x-transition:enter-start="-translate-x-full"
-             x-transition:enter-end="translate-x-0"
-             x-transition:leave="transition ease-in duration-300"
-             x-transition:leave-start="translate-x-0"
-             x-transition:leave-end="-translate-x-full"
-             class="relative w-72 bg-slate-900 h-full flex flex-col shadow-2xl">
+             x-transition:enter="transition ease-out duration-300" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0"
+             x-transition:leave="transition ease-in duration-300" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full"
+             class="absolute left-0 top-0 bottom-0 w-72 bg-[#0B1727] text-white shadow-2xl flex flex-col">
             
-            <div class="p-6 flex items-center justify-between border-b border-slate-800">
+            <div class="p-6 flex items-center justify-between border-b border-gray-800">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-sky-600 rounded-xl flex items-center justify-center">
-                        <i class="fa-solid fa-graduation-cap text-white text-xl"></i>
+                    <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center p-1">
+                        <img src="{% static 'img/logo_hv_32011.png' %}" alt="Logo" class="w-full h-full object-contain">
                     </div>
-                    <span class="text-white font-black text-xl italic tracking-tighter">Intranet_<span class="text-sky-400">HV</span></span>
+                    <span class="font-black text-lg tracking-tight uppercase">I.E. 32011</span>
                 </div>
-                <button @click="mobileMenuOpen = false" class="text-slate-400 w-8 h-8 flex items-center justify-center hover:text-white transition-colors">
-                    <i class="fa-solid fa-xmark text-2xl"></i>
-                </button>
+                <button @click="mobileMenuOpen = false" class="text-gray-400 hover:text-white text-2xl focus:outline-none"><i class="fa-solid fa-xmark"></i></button>
             </div>
             
-            <nav class="flex-grow p-4 space-y-2 overflow-y-auto">
-                <a href="{% url 'core:dashboard' %}" class="flex items-center gap-4 px-4 py-3 rounded-2xl font-bold text-sm {% if request.resolver_match.url_name == 'dashboard' %}bg-sky-600 text-white{% else %}text-slate-400{% endif %}">
-                    <i class="fa-solid fa-house"></i> Inicio
-                </a>
+            <nav class="flex-grow p-4 space-y-2 overflow-y-auto scrollbar-hide">
+                <a href="{% url 'core:dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if request.resolver_match.url_name == 'dashboard' %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-house w-5 text-center"></i> Dashboard</a>
                 
                 {% if user.role == 'DOCENTE' %}
-                    <div class="pt-6 pb-2 px-4 text-[10px] font-black text-slate-600 uppercase tracking-widest">Docencia</div>
-                    
+                    <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 mt-6 px-2">Módulos</div>
                     {% if 'almacen' in user.module_permissions %}
-                    <a href="{% url 'warehouse:catalog' %}" class="flex items-center gap-4 px-4 py-3 rounded-2xl font-bold text-sm {% if 'almacen' in request.path %}bg-sky-600 text-white{% else %}text-slate-400{% endif %}">
-                        <i class="fa-solid fa-boxes-stacked"></i> Inventario
-                    </a>
+                    <a href="{% url 'warehouse:catalog' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'almacen' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-boxes-stacked w-5 text-center"></i> Almacén</a>
                     {% endif %}
-
                     {% if 'disciplina' in user.module_permissions %}
-                    <a href="{% url 'discipline:report_incident' %}" class="flex items-center gap-4 px-4 py-3 rounded-2xl font-bold text-sm {% if 'disciplina' in request.path %}bg-sky-600 text-white{% else %}text-slate-400{% endif %}">
-                        <i class="fa-solid fa-hand-holding-hand"></i> Incidencias
-                    </a>
+                    <a href="{% url 'discipline:report_incident' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'disciplina' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-triangle-exclamation w-5 text-center"></i> Incidencias</a>
                     {% endif %}
-
                     {% if 'portafolio' in user.module_permissions %}
-                    <a href="{% url 'portfolio:list' %}" class="flex items-center gap-4 px-4 py-3 rounded-2xl font-bold text-sm {% if 'portafolio' in request.path %}bg-sky-600 text-white{% else %}text-slate-400{% endif %}">
-                        <i class="fa-solid fa-cloud-arrow-up"></i> Portafolio
-                    </a>
+                    <a href="{% url 'portfolio:list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'portafolio' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-cloud-arrow-up w-5 text-center"></i> Portafolio</a>
                     {% endif %}
+                {% endif %}
+
+                {% if user.role == 'APODERADO' %}
+                    <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 mt-6 px-2">Familia</div>
+                    <a href="{% url 'academics:parent_dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'apoderado' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-children w-5 text-center"></i> Mis Hijos</a>
                 {% endif %}
 
                 {% if user.role in 'DIRECTOR,SUBDIRECTOR,APOYO,SUPERUSER' %}
-                    <div class="pt-6 pb-2 px-4 text-[10px] font-black text-slate-600 uppercase tracking-widest">Gestión Operativa</div>
-                    
+                    <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 mt-6 px-2">Gestión Operativa</div>
+                    <a href="{% url 'warehouse:dispatch_panel' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'despacho' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-truck-ramp-box w-5 text-center"></i> Despachos</a>
+                    <a href="{% url 'warehouse:inventory_panel' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'inventario' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-boxes-packing w-5 text-center"></i> Inventario</a>
+                    <a href="{% url 'documents:list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'documentos' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-file-lines w-5 text-center"></i> Documentos</a>
                     {% if user.role in 'DIRECTOR,SUPERUSER' %}
-                    <a href="{% url 'users:staff_list' %}" class="flex items-center gap-4 px-4 py-3 rounded-2xl font-bold text-sm {% if 'personal' in request.path %}bg-sky-600 text-white{% else %}text-slate-400{% endif %}">
-                        <i class="fa-solid fa-users-gear"></i> Gestión de Staff
-                    </a>
+                    <a href="{% url 'portfolio:review_panel' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'revision' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-magnifying-glass-chart w-5 text-center"></i> Revisión Académica</a>
+                    
+                    <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 mt-6 px-2">Administración</div>
+                    <a href="{% url 'users:staff_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'personal' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-users-gear w-5 text-center"></i> Usuarios</a>
+                    <a href="{% url 'assignments:panel' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'asignaciones' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-chalkboard-user w-5 text-center"></i> Asignar Aulas</a>
                     {% endif %}
-
-                    <a href="{% url 'warehouse:dispatch_panel' %}" class="flex items-center gap-4 px-4 py-3 rounded-2xl font-bold text-sm {% if 'despacho' in request.path %}bg-sky-600 text-white{% else %}text-slate-400{% endif %}">
-                        <i class="fa-solid fa-truck-ramp-box"></i> Despachos
-                    </a>
                 {% endif %}
             </nav>
-
-            <div class="p-4 border-t border-slate-800">
-                <a href="{% url 'users:logout' %}" class="flex items-center gap-4 px-4 py-3 w-full text-left rounded-2xl text-rose-400 font-bold text-sm">
-                    <i class="fa-solid fa-power-off"></i> Cerrar Sesión
-                </a>
+            <div class="p-4 border-t border-gray-800">
+                <a href="{% url 'users:logout' %}" class="flex items-center gap-3 px-4 py-3 w-full text-left rounded-xl text-red-400 font-bold text-sm"><i class="fa-solid fa-power-off w-5 text-center"></i> Cerrar Sesión</a>
             </div>
         </div>
     </div>
+    <!-- ========================================== -->
+    <!-- FIN: SIDEBAR MÓVIL                         -->
+    <!-- ========================================== -->
 
-    <!-- SCRIPT ANTI-BOTÓN-ATRÁS -->
     <script>
         window.addEventListener('pageshow', function(event) {
-            if (event.persisted) {
-                window.location.reload(); 
-            }
+            if (event.persisted) { window.location.reload(); }
         });
     </script>
 </body>

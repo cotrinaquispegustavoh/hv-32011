@@ -56,6 +56,7 @@ MIDDLEWARE = [
     'apps.users.interfaces.middlewares.NoCacheAuthenticatedMiddleware',
     
     'apps.core.interfaces.middlewares.CurrentUserMiddleware',
+    'apps.users.interfaces.middlewares.HtmxLoginRedirectMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -83,6 +84,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'apps.core.context_processors.notifications_processor',
             ],
         },
     },
@@ -141,8 +143,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [BASE_DIR / 'staticfiles']
-STATIC_ROOT = BASE_DIR / 'static_root'
+STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Media files (Uploads)
 MEDIA_URL = 'media/'

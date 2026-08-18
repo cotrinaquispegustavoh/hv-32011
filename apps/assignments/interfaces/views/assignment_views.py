@@ -4,8 +4,9 @@ from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import transaction
+from django.utils import timezone # <-- IMPORTAMOS TIMEZONE
 from apps.assignments.infrastructure.repositories.assignment_repository import DjangoTeacherAssignmentRepository
-from apps.assignments.core.use_cases.manage_assignments import AssignTeacherUseCase, RemoveAssignmentUseCase
+from apps.assignments.core.use_cases.manage_assignments import AssignTeacherUseCase, RemoveAssignmentUseCase, GetTeacherAssignmentsUseCase
 from apps.assignments.core.use_cases.import_assignments import ImportAssignmentsUseCase
 from apps.users.infrastructure.models import User
 from apps.academics.infrastructure.models import Section
@@ -16,21 +17,22 @@ def assignment_panel_view(request):
     if request.user.role not in ['DIRECTOR', 'SUPERUSER']:
         return redirect('core:dashboard')
 
+    # --- SOLUCIÓN EFECTO 2027: Año Dinámico ---
+    current_year = timezone.now().year
+
     teachers = User.objects.filter(role='DOCENTE', is_active=True).order_by('last_name')
-    sections = Section.objects.filter(year=2026).order_by('grade', 'letter')
-    assignments = TeacherAssignment.objects.filter(academic_year=2026).select_related('teacher', 'section').order_by('section__grade', 'section__letter')
+    sections = Section.objects.filter(year=current_year).order_by('grade', 'letter')
+    assignments = TeacherAssignment.objects.filter(academic_year=current_year).select_related('teacher', 'section').order_by('section__grade', 'section__letter')
 
     if request.method == 'POST':
         action = request.POST.get('action')
         repo = DjangoTeacherAssignmentRepository()
 
-        # --- ASIGNACIÓN MANUAL (MÚLTIPLE) ---
         if action == 'manual':
             teacher_id = request.POST.get('teacher_id')
-            section_ids = request.POST.getlist('section_ids') # Capturamos la lista de checkboxes
+            section_ids = request.POST.getlist('section_ids')
             area = request.POST.get('area')
             
-            # Convertimos los IDs a enteros
             section_ids_int = [int(sid) for sid in section_ids if sid.isdigit()]
             
             if not section_ids_int:
@@ -39,13 +41,13 @@ def assignment_panel_view(request):
 
             use_case = AssignTeacherUseCase(repo)
             try:
-                use_case.execute(int(teacher_id), section_ids_int, area, 2026)
+                # Pasamos el año dinámico al caso de uso
+                use_case.execute(int(teacher_id), section_ids_int, area, current_year)
                 messages.success(request, f'Se crearon {len(section_ids_int)} asignaciones correctamente.')
             except Exception as e:
                 messages.error(request, 'Error: Una de las asignaciones ya existe o los datos son inválidos.')
             return redirect('assignments:panel')
 
-        # --- CARGA MASIVA (CSV) ---
         elif action == 'csv_upload':
             if 'csv_file' not in request.FILES:
                 messages.error(request, 'Debes adjuntar un archivo CSV.')
@@ -70,7 +72,8 @@ def assignment_panel_view(request):
                 with transaction.atomic():
                     for idx, row in enumerate(reader, start=2):
                         try:
-                            use_case.execute(row, 2026)
+                            # Pasamos el año dinámico al caso de uso
+                            use_case.execute(row, current_year)
                             creados += 1
                         except ValueError as ve:
                             errores.append(f"Fila {idx}: {str(ve)}")
@@ -89,7 +92,8 @@ def assignment_panel_view(request):
     context = {
         'teachers': teachers,
         'sections': sections,
-        'assignments': assignments
+        'assignments': assignments,
+        'current_year': current_year # Pasamos el año al HTML por si lo necesitamos
     }
     return render(request, 'assignments/panel.html', context)
 
@@ -101,3 +105,16 @@ def remove_assignment_view(request, assignment_id):
         use_case.execute(assignment_id)
         return HttpResponse("") 
     return HttpResponse("No autorizado", status=403)
+
+@login_required(login_url='/auth/login/')
+def my_sections_view(request):
+    if request.user.role != 'DOCENTE':
+        return redirect('core:dashboard')
+    
+    repo = DjangoTeacherAssignmentRepository()
+    use_case = GetTeacherAssignmentsUseCase(repo)
+    
+    current_year = timezone.now().year
+    assignments = use_case.execute(request.user.id, current_year)
+    
+    return render(request, 'assignments/my_sections.html', {'assignments': assignments, 'current_year': current_year})

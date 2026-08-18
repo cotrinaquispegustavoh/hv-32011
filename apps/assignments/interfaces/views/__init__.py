@@ -1,1 +1,1 @@
-from .assignment_views import assignment_panel_view, remove_assignment_view
+from .assignment_views import assignment_panel_view, remove_assignment_view, my_sections_view

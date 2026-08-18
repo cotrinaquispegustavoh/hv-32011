@@ -12,6 +12,10 @@ class INotificationRepository(ABC):
     @abstractmethod
     def mark_as_read(self, notification_id: int) -> bool:
         pass
+    @abstractmethod
+    def mark_all_as_read(self, user_id: int) -> bool:
+        pass
+
 
 class IAuditRepository(ABC):
     @abstractmethod

@@ -48,9 +48,14 @@ class DjangoIncidentRepository(IIncidentRepository):
         return self._to_entity(model)
 
     def get_by_student(self, student_id: int) -> List[IncidentEntity]:
-        models = Incident.objects.filter(student_id=student_id).prefetch_related('evidences', 'student', 'reported_by')
+        # CORRECCIÓN: Añadido order_by('-date_reported') para orden cronológico inverso
+        models = Incident.objects.filter(student_id=student_id).prefetch_related('evidences', 'student', 'reported_by').order_by('-date_reported')
         return [self._to_entity(m) for m in models]
 
     def get_all(self) -> List[IncidentEntity]:
         models = Incident.objects.all().prefetch_related('evidences', 'student', 'reported_by').order_by('-date_reported')
+        return [self._to_entity(m) for m in models]
+
+    def get_by_reporter(self, reporter_id: int) -> List[IncidentEntity]:
+        models = Incident.objects.filter(reported_by_id=reporter_id).prefetch_related('evidences', 'student', 'reported_by').order_by('-date_reported')
         return [self._to_entity(m) for m in models]

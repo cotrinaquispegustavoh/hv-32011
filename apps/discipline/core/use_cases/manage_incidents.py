@@ -30,3 +30,10 @@ class GetAllIncidentsUseCase:
 
     def execute(self) -> List[IncidentEntity]:
         return self.incident_repo.get_all()
+    
+class GetTeacherIncidentsUseCase:
+    def __init__(self, incident_repo: IIncidentRepository):
+        self.incident_repo = incident_repo
+
+    def execute(self, reporter_id: int) -> List[IncidentEntity]:
+        return self.incident_repo.get_by_reporter(reporter_id)

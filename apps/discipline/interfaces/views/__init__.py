@@ -1,1 +1,1 @@
-from .incident_views import report_incident_view, incident_list_view
+from .incident_views import report_incident_view, incident_list_view, search_incidents_view

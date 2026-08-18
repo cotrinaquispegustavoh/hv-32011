@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from django.http import HttpResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.files.storage import FileSystemStorage
@@ -8,6 +9,9 @@ from apps.discipline.infrastructure.repositories.discipline_repository import Dj
 from apps.discipline.core.use_cases.manage_incidents import ReportIncidentUseCase, GetAllIncidentsUseCase
 from apps.academics.infrastructure.models import Student
 from apps.users.interfaces.middlewares import require_module_permission
+from apps.core.infrastructure.repositories.core_repository import DjangoNotificationRepository
+from apps.core.core.use_cases.manage_notifications import NotifyAdminsUseCase, NotifyUserUseCase
+from apps.core.utils import normalize_text
 
 @login_required(login_url='/auth/login/')
 @require_module_permission('disciplina')
@@ -38,8 +42,27 @@ def report_incident_view(request):
                 evidence_paths=evidence_paths
             )
             
-            # --- MAGIA EN TIEMPO REAL ---
-            # Enviamos el chispazo al grupo de directores
+            notif_repo = DjangoNotificationRepository()
+
+            # --- NOTIFICAR AL APODERADO ---
+            student = Student.objects.select_related('parent__user').get(id=student_id)
+            if student.parent and student.parent.user:
+                NotifyUserUseCase(notif_repo).execute(
+                    user_id=student.parent.user.id,
+                    title="Nuevo Reporte de Conducta",
+                    message=f"Se ha registrado una incidencia ({severity}) para {student.first_name}. Revisa el portal de familia.",
+                    link=f"/academico/apoderado/hijo/{student.id}/"
+                )
+
+            # Notificar a Directivos (Solo si es GRAVE)
+            if severity == 'GRAVE':
+                NotifyAdminsUseCase(notif_repo).execute(
+                    title="Incidencia Grave Registrada",
+                    message=f"Se ha reportado una incidencia grave para {student.first_name}. Revisa el historial.",
+                    link="/disciplina/historial/"
+                )
+
+            # WebSockets para Directivos
             channel_layer = get_channel_layer()
             async_to_sync(channel_layer.group_send)(
                 "directors_group",
@@ -50,7 +73,6 @@ def report_incident_view(request):
                     "severity": severity
                 }
             )
-            # ----------------------------
 
             messages.success(request, 'Incidencia registrada y enviada a Dirección.')
             return redirect('core:dashboard')
@@ -61,12 +83,46 @@ def report_incident_view(request):
     return render(request, 'discipline/report_incident.html', {'students': students})
 
 @login_required(login_url='/auth/login/')
+@require_module_permission('disciplina')
 def incident_list_view(request):
-    if request.user.role not in ['DIRECTOR', 'SUBDIRECTOR', 'SUPERUSER']:
+    repo = DjangoIncidentRepository()
+    
+    if request.user.role in ['DIRECTOR', 'SUBDIRECTOR', 'SUPERUSER']:
+        incidents = GetAllIncidentsUseCase(repo).execute()
+    elif request.user.role == 'DOCENTE':
+        from apps.discipline.core.use_cases.manage_incidents import GetTeacherIncidentsUseCase
+        incidents = GetTeacherIncidentsUseCase(repo).execute(request.user.id)
+    else:
         return redirect('core:dashboard')
 
-    repo = DjangoIncidentRepository()
-    use_case = GetAllIncidentsUseCase(repo)
-    incidents = use_case.execute()
+    query = normalize_text(request.GET.get('q', ''))
+    if query:
+        incidents = [i for i in incidents if query in normalize_text(i.student_name) or query in normalize_text(i.description)]
 
-    return render(request, 'discipline/incident_list.html', {'incidents': incidents})
+    return render(request, 'discipline/incident_list.html', {'incidents': incidents, 'initial_query': request.GET.get('q', '')})
+
+@login_required(login_url='/auth/login/')
+@require_module_permission('disciplina')
+def search_incidents_view(request):
+    repo = DjangoIncidentRepository()
+    if request.user.role in ['DIRECTOR', 'SUBDIRECTOR', 'SUPERUSER']:
+        incidents = GetAllIncidentsUseCase(repo).execute()
+    elif request.user.role == 'DOCENTE':
+        from apps.discipline.core.use_cases.manage_incidents import GetTeacherIncidentsUseCase
+        incidents = GetTeacherIncidentsUseCase(repo).execute(request.user.id)
+    else:
+        return HttpResponseForbidden()
+
+    # Normalizamos
+    query = normalize_text(request.GET.get('q', ''))
+    severity = request.GET.get('severity', '')
+    subtype = request.GET.get('subtype', '')
+
+    if query:
+        incidents = [i for i in incidents if query in normalize_text(i.student_name) or query in normalize_text(i.description)]
+    if severity:
+        incidents = [i for i in incidents if i.severity == severity]
+    if subtype:
+        incidents = [i for i in incidents if i.subtype == subtype]
+
+    return render(request, 'discipline/partials/incident_table_rows.html', {'incidents': incidents})

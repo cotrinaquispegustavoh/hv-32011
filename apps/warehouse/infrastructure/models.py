@@ -4,6 +4,7 @@ from apps.core.infrastructure.models import SoftDeleteModel
 
 class Material(SoftDeleteModel):
     name = models.CharField('Nombre', max_length=200)
+    category = models.CharField('Categoría', max_length=100, default='General') # <-- NUEVO CAMPO
     stock = models.PositiveIntegerField('Stock Actual', default=0)
     unit = models.CharField('Unidad de medida', max_length=50)
     state = models.CharField('Estado físico', max_length=50)

@@ -3,6 +3,7 @@ from django.contrib.auth import authenticate, login, logout, update_session_auth
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from django.contrib import messages
+from django.contrib.messages import get_messages
 
 @never_cache
 def login_view(request):
@@ -25,6 +26,11 @@ def login_view(request):
 
 @never_cache
 def logout_view(request):
+    # CORRECCIÓN: Limpiamos cualquier mensaje residual antes de cerrar sesión
+    storage = get_messages(request)
+    for _ in storage: 
+        pass 
+        
     logout(request)
     return redirect('users:login')
 

@@ -1,0 +1,28 @@
+{% for member in staff %}
+<div hx-get="{% url 'users:staff_detail' member.id %}" 
+     hx-target="#staff-detail-container" 
+     hx-swap="innerHTML"
+     class="flex items-center justify-between p-4 border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition-colors group">
+    
+    <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center font-black text-sm border border-gray-200 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+            {{ member.first_name|default:member.dni|make_list|first|upper }}
+        </div>
+        <div>
+            <p class="text-sm font-bold text-gray-900 leading-tight">{{ member.first_name }} {{ member.last_name }}</p>
+            <p class="text-[10px] font-bold text-gray-500 mt-0.5">DNI: {{ member.dni }}</p>
+        </div>
+    </div>
+    
+    <span class="inline-block px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider
+        {% if member.role == 'DIRECTOR' or member.role == 'SUBDIRECTOR' %}bg-amber-50 text-amber-700
+        {% elif member.role == 'DOCENTE' %}bg-blue-50 text-blue-700
+        {% else %}bg-gray-100 text-gray-600{% endif %}">
+        {{ member.role }}
+    </span>
+</div>
+{% empty %}
+<div class="p-8 text-center text-gray-400 font-bold text-sm">
+    No se encontraron usuarios.
+</div>
+{% endfor %}

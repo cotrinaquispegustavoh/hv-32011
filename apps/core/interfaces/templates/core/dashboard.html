@@ -1,177 +1,305 @@
 {% extends 'base.html' %}
 
-{% block title %}Dashboard - Intranet HV{% endblock %}
+{% block header_title %}Dashboard {{ user.get_role_display }}{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto w-full animate-in fade-in duration-500">
-    
-    <header class="mb-10 border-b border-slate-200/60 pb-6">
-        <h1 class="text-3xl font-black text-slate-900 tracking-tight">Resumen de Actividades</h1>
-        <p class="text-[10px] font-black text-sky-600 uppercase tracking-widest mt-1">
-            Portal Institucional / {{ user.get_role_display }}
-        </p>
-    </header>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    {% if messages %}
-        <div class="mb-6 space-y-3">
-            {% for message in messages %}
-                <div class="p-4 rounded-2xl shadow-sm border text-sm font-medium
-                    {% if message.tags == 'error' %}bg-rose-50 text-rose-700 border-rose-100
-                    {% elif message.tags == 'success' %}bg-emerald-50 text-emerald-700 border-emerald-100
-                    {% else %}bg-sky-50 text-sky-700 border-sky-100{% endif %}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
+<div class="w-full animate-in fade-in duration-500">
+    
+    <div class="flex justify-between items-center mb-6">
+        <p class="text-sm font-medium text-gray-500">Resumen general de la gestión institucional</p>
+    </div>
 
     <div id="realtime-alerts" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
 
-    <!-- ========================================== -->
-    <!-- DASHBOARD DIRECTIVO                        -->
-    <!-- ========================================== -->
     {% if role in 'DIRECTOR,SUBDIRECTOR,SUPERUSER' %}
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+    
+    <!-- 1. TARJETAS SUPERIORES (Solución Punto 1: Enlaces correctos) -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         
-        <!-- Columna Izquierda: Métricas (Ocupa 2 espacios) -->
-        <div class="lg:col-span-2 space-y-6">
-            <h2 class="text-lg font-black text-slate-800 tracking-tight">Indicadores Clave</h2>
-            
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <!-- Incidencias Hoy -->
-                <a href="{% url 'discipline:incident_list' %}" class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md hover:border-rose-200 transition-all relative overflow-hidden group block">
-                    <div class="absolute -right-4 -top-4 text-rose-50 opacity-50 group-hover:scale-110 transition-transform duration-500">
-                        <i class="fa-solid fa-triangle-exclamation text-8xl"></i>
-                    </div>
-                    <div class="flex items-center justify-between mb-4 relative z-10">
-                        <span class="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center text-xl border border-rose-100">
-                            <i class="fa-solid fa-triangle-exclamation"></i>
-                        </span>
-                        <span id="badge-atencion" class="{% if metrics.incidents_today == 0 %}hidden{% endif %} text-[10px] font-black text-rose-500 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-100 uppercase tracking-wider animate-pulse">ATENCIÓN</span>
-                    </div>
-                    <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest relative z-10 group-hover:text-rose-500 transition-colors">Incidencias Hoy</h3>
-                    <p id="counter-incidencias" class="text-4xl font-black text-slate-800 mt-1 tracking-tight relative z-10 transition-all duration-300">{{ metrics.incidents_today }}</p>
-                </a>
+        <a href="{% url 'academics:student_directory' %}" class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-4 hover:shadow-md hover:border-blue-200 transition-all group block">
+            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                <i class="fa-solid fa-user-graduate"></i>
+            </div>
+            <div>
+                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider group-hover:text-blue-500 transition-colors">Alumnos</p>
+                <p class="text-2xl font-black text-gray-900 leading-none mt-1">{{ metrics.top_cards.students }}</p>
+                <p class="text-[10px] font-bold text-emerald-500 mt-1">Activos</p>
+            </div>
+        </a>
 
-                <!-- Materiales en Circulación -->
-                <a href="{% url 'warehouse:dispatch_panel' %}" class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md hover:border-sky-200 transition-all relative overflow-hidden group block">
-                    <div class="absolute -right-4 -top-4 text-sky-50 opacity-50 group-hover:scale-110 transition-transform duration-500">
-                        <i class="fa-solid fa-truck-ramp-box text-8xl"></i>
-                    </div>
-                    <div class="flex items-center justify-between mb-4 relative z-10">
-                        <span class="w-12 h-12 bg-sky-50 text-sky-600 rounded-2xl flex items-center justify-center text-xl border border-sky-100">
-                            <i class="fa-solid fa-truck-ramp-box"></i>
-                        </span>
-                    </div>
-                    <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest relative z-10 group-hover:text-sky-500 transition-colors">Préstamos Activos</h3>
-                    <p class="text-4xl font-black text-slate-800 mt-1 tracking-tight relative z-10">{{ metrics.active_loans }}</p>
-                </a>
+        <a href="{% url 'users:staff_list' %}" class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-4 hover:shadow-md hover:border-emerald-200 transition-all group block">
+            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl group-hover:bg-emerald-600 group-hover:text-white transition-colors"><i class="fa-solid fa-chalkboard-user"></i></div>
+            <div>
+                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider group-hover:text-emerald-500 transition-colors">Docentes</p>
+                <p class="text-2xl font-black text-gray-900 leading-none mt-1">{{ metrics.top_cards.teachers }}</p>
+                <p class="text-[10px] font-bold text-emerald-500 mt-1">Activos</p>
+            </div>
+        </a>
 
-                <!-- Stock Crítico -->
-                <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-                    <div class="absolute -right-4 -top-4 text-amber-50 opacity-50 group-hover:scale-110 transition-transform duration-500">
-                        <i class="fa-solid fa-boxes-stacked text-8xl"></i>
-                    </div>
-                    <div class="flex items-center justify-between mb-4 relative z-10">
-                        <span class="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-xl border border-amber-100">
-                            <i class="fa-solid fa-boxes-stacked"></i>
-                        </span>
-                    </div>
-                    <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest relative z-10">Stock Crítico</h3>
-                    <p class="text-4xl font-black text-slate-800 mt-1 tracking-tight relative z-10">{{ metrics.critical_materials }}</p>
-                </div>
+        <a href="{% url 'warehouse:dispatch_panel' %}" class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-4 hover:shadow-md hover:border-amber-200 transition-all group block">
+            <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl group-hover:bg-amber-500 group-hover:text-white transition-colors"><i class="fa-solid fa-clipboard-list"></i></div>
+            <div>
+                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider group-hover:text-amber-500 transition-colors">Solicitudes hoy</p>
+                <p id="counter-solicitudes" class="text-2xl font-black text-gray-900 leading-none mt-1 transition-all duration-300">{{ metrics.top_cards.pending_loans }}</p>
+                <p class="text-[10px] font-bold text-gray-400 mt-1">Pendientes</p>
+            </div>
+        </a>
 
-                <!-- Portafolios Recientes -->
-                <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-                    <div class="absolute -right-4 -top-4 text-emerald-50 opacity-50 group-hover:scale-110 transition-transform duration-500">
-                        <i class="fa-solid fa-folder-open text-8xl"></i>
-                    </div>
-                    <div class="flex items-center justify-between mb-4 relative z-10">
-                        <span class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-xl border border-emerald-100">
-                            <i class="fa-solid fa-folder-open"></i>
-                        </span>
-                    </div>
-                    <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest relative z-10">Fichas Subidas (30d)</h3>
-                    <p class="text-4xl font-black text-slate-800 mt-1 tracking-tight relative z-10">{{ metrics.recent_portfolios }}</p>
-                </div>
+        <a href="{% url 'discipline:incident_list' %}" class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-4 hover:shadow-md hover:border-red-300 transition-all group block">
+            <div class="w-12 h-12 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-xl group-hover:bg-red-600 group-hover:text-white transition-colors"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div>
+                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider group-hover:text-red-500 transition-colors">Incidencias hoy</p>
+                <p id="counter-incidencias" class="text-2xl font-black text-gray-900 leading-none mt-1 transition-all duration-300">{{ metrics.top_cards.incidents_today }}</p>
+                <p class="text-[10px] font-bold text-red-500 mt-1">Graves: <span id="counter-graves">{{ metrics.chart_incidents.1.counts.GRAVE }}</span></p>
+            </div>
+        </a>
+
+        <a href="{% url 'warehouse:inventory_panel' %}" class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-4 hover:shadow-md hover:border-green-200 transition-all group block">
+            <div class="w-12 h-12 rounded-xl bg-green-50 text-green-600 flex items-center justify-center text-xl group-hover:bg-green-600 group-hover:text-white transition-colors"><i class="fa-solid fa-boxes-stacked"></i></div>
+            <div>
+                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider group-hover:text-green-500 transition-colors">Materiales</p>
+                <p class="text-2xl font-black text-gray-900 leading-none mt-1">{{ metrics.top_cards.available_materials }}</p>
+                <p class="text-[10px] font-bold text-emerald-500 mt-1">Disponibles</p>
+            </div>
+        </a>
+
+    </div>
+
+    <!-- 2. SECCIÓN CENTRAL (Gráficos y Alertas) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+        
+        <!-- Gráfico de Líneas -->
+        <div class="lg:col-span-6 bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-sm font-black text-gray-800 uppercase tracking-wide">Solicitudes de materiales</h3>
+                <select id="timeFilterLoans" onchange="updateLineChart()" class="bg-gray-50 border border-gray-200 text-gray-600 text-xs font-bold rounded-lg px-3 py-1.5 focus:outline-none cursor-pointer">
+                    <option value="7" selected>Últimos 7 días</option>
+                    <option value="15">Últimos 15 días</option>
+                    <option value="30">Último mes</option>
+                </select>
+            </div>
+            <div class="relative w-full flex-grow min-h-[250px]">
+                <canvas id="loansChart"></canvas>
             </div>
         </div>
 
-        <!-- Columna Derecha: Agenda Institucional -->
-        <div class="space-y-6">
-            <h2 class="text-lg font-black text-slate-800 tracking-tight">Próximas Actividades</h2>
-            
-            <div class="bg-slate-900 rounded-[2rem] p-6 shadow-xl shadow-slate-900/20 border border-slate-800">
-                {% if metrics.upcoming_events %}
-                    <div class="space-y-4">
-                        {% for event in metrics.upcoming_events %}
-                        <div class="flex gap-4 items-start p-4 rounded-2xl bg-slate-800/50 border border-slate-700/50 hover:bg-slate-800 transition-colors">
-                            <div class="w-12 h-12 bg-sky-500/20 text-sky-400 rounded-xl flex flex-col items-center justify-center flex-shrink-0 border border-sky-500/30">
-                                <span class="text-lg font-black leading-none">{{ event.event_date|date:"d" }}</span>
-                                <span class="text-[9px] font-bold uppercase tracking-widest">{{ event.event_date|date:"M" }}</span>
-                            </div>
-                            <div>
-                                <h4 class="text-sm font-black text-white leading-tight">{{ event.title }}</h4>
-                                {% if event.is_holiday %}
-                                    <span class="inline-block mt-1.5 px-2 py-0.5 bg-rose-500/20 text-rose-400 text-[9px] font-black uppercase tracking-wider rounded border border-rose-500/30">Feriado</span>
-                                {% endif %}
-                            </div>
-                        </div>
-                        {% endfor %}
+        <!-- Gráfico de Anillo (Solución Punto 4: Filtro de tiempo) -->
+        <div class="lg:col-span-3 bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-sm font-black text-gray-800 uppercase tracking-wide">Incidencias por tipo</h3>
+                <select id="timeFilterIncidents" onchange="updateDoughnutChart()" class="bg-gray-50 border border-gray-200 text-gray-600 text-xs font-bold rounded-lg px-2 py-1 focus:outline-none cursor-pointer">
+                    <option value="1" selected>Hoy</option>
+                    <option value="7">7 días</option>
+                    <option value="30">30 días</option>
+                </select>
+            </div>
+            <div class="relative w-full flex-grow flex items-center justify-center min-h-[200px]">
+                <canvas id="incidentsChart"></canvas>
+            </div>
+            <div class="mt-6 flex justify-between px-2 text-xs font-bold">
+                <span class="flex items-center gap-1 text-gray-600"><span class="w-3 h-3 rounded-full bg-blue-500"></span> Leve <span id="lbl-leve" class="ml-1 text-gray-900">{{ metrics.chart_incidents.1.counts.LEVE }}</span></span>
+                <span class="flex items-center gap-1 text-gray-600"><span class="w-3 h-3 rounded-full bg-amber-400"></span> Mod. <span id="lbl-mod" class="ml-1 text-gray-900">{{ metrics.chart_incidents.1.counts.MODERADA }}</span></span>
+                <span class="flex items-center gap-1 text-gray-600"><span class="w-3 h-3 rounded-full bg-red-500"></span> Grave <span id="lbl-grave" class="ml-1 text-gray-900">{{ metrics.chart_incidents.1.counts.GRAVE }}</span></span>
+            </div>
+        </div>
+
+        <!-- Alertas Importantes -->
+        <div class="lg:col-span-3 bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex flex-col">
+            <h3 class="text-sm font-black text-gray-800 uppercase tracking-wide mb-4">Alertas importantes</h3>
+            <div class="flex-grow space-y-4 overflow-y-auto max-h-[250px] pr-2 scrollbar-hide">
+                {% for alert in metrics.alerts %}
+                <div class="flex items-start gap-3 pb-3 border-b border-gray-100 last:border-0">
+                    <div class="mt-1 text-red-500"><i class="fa-solid fa-bell"></i></div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-800 leading-tight">{{ alert.title }}</p>
+                        <p class="text-[10px] text-gray-500 mt-1">{{ alert.created_at|date:"d M, h:i a" }}</p>
                     </div>
-                {% else %}
-                    <div class="text-center py-10">
-                        <i class="fa-regular fa-calendar-check text-4xl text-slate-700 mb-3"></i>
-                        <p class="text-sm font-bold text-slate-400">Agenda libre</p>
-                        <p class="text-xs text-slate-500 mt-1">No hay eventos próximos.</p>
+                </div>
+                {% empty %}
+                <div class="text-center py-10 text-gray-400">
+                    <i class="fa-regular fa-circle-check text-4xl mb-3 text-emerald-400"></i>
+                    <p class="text-xs font-bold">Todo en orden.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 3. SECCIÓN INFERIOR (Eventos y Cumpleaños) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+            <h3 class="text-sm font-black text-gray-800 uppercase tracking-wide mb-6">Próximos eventos</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {% for event in metrics.upcoming_events %}
+                <div class="flex items-start gap-3 p-4 rounded-xl border-l-4 {% if event.is_holiday %}border-red-400 bg-red-50/50{% else %}border-blue-500 bg-blue-50/50{% endif %}">
+                    <div>
+                        <h4 class="text-sm font-bold text-gray-900 leading-tight">{{ event.title }}</h4>
+                        <p class="text-xs text-gray-500 mt-1">{{ event.event_date|date:"d/m/Y" }} {% if event.is_holiday %}- Feriado{% endif %}</p>
                     </div>
-                {% endif %}
+                </div>
+                {% empty %}
+                <p class="text-sm text-gray-500 font-medium col-span-full">No hay eventos programados próximos.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+            <h3 class="text-sm font-black text-gray-800 uppercase tracking-wide mb-6">Cumpleaños próximos</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {% for bday in metrics.upcoming_birthdays %}
+                <div class="flex items-center gap-3 p-3 rounded-xl border border-gray-100">
+                    <div class="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center font-black text-lg">
+                        {{ bday.first_name|make_list|first|upper }}
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold text-gray-900">Prof. {{ bday.first_name }} {{ bday.last_name }}</h4>
+                        <p class="text-xs text-gray-500">{{ bday.birth_date|date:"d \d\e F" }}</p>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-6">
+                    <i class="fa-solid fa-cake-candles text-3xl text-gray-300 mb-2"></i>
+                    <p class="text-sm text-gray-500 font-medium">No hay cumpleaños próximos este mes.</p>
+                </div>
+                {% endfor %}
             </div>
         </div>
     </div>
     {% endif %}
 
-    <!-- ========================================== -->
-    <!-- ACCESOS RÁPIDOS (Tarjetas)                 -->
-    <!-- ========================================== -->
-    <h2 class="text-lg font-black text-slate-800 mb-4 tracking-tight">Accesos Rápidos</h2>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {% if role == 'DOCENTE' %}
-        <a href="{% url 'warehouse:catalog' %}" class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 hover:shadow-md hover:border-sky-300 transition-all block group">
-            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 group-hover:text-sky-500 transition-colors">Módulo de Almacén</h3>
-            <p class="text-slate-800 font-black text-lg">Ver Catálogo de Materiales</p>
-        </a>
-        <a href="{% url 'discipline:report_incident' %}" class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 hover:shadow-md hover:border-sky-300 transition-all block group">
-            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 group-hover:text-sky-500 transition-colors">Módulo de Disciplina</h3>
-            <p class="text-slate-800 font-black text-lg">Reportar Incidencia</p>
-        </a>
-        <a href="{% url 'portfolio:list' %}" class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 hover:shadow-md hover:border-sky-300 transition-all block group">
-            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 group-hover:text-sky-500 transition-colors">Módulo Académico</h3>
-            <p class="text-slate-800 font-black text-lg">Mi Portafolio</p>
-        </a>
-        {% endif %}
-
-        {% if role in 'DIRECTOR,SUBDIRECTOR,APOYO,SUPERUSER' %}
-        <a href="{% url 'warehouse:dispatch_panel' %}" class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 hover:shadow-md hover:border-sky-300 transition-all block group">
-            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 group-hover:text-sky-500 transition-colors">Gestión Operativa</h3>
-            <p class="text-slate-800 font-black text-lg">Panel de Despacho</p>
-        </a>
-        {% endif %}
-    </div>
 </div>
 
+<!-- PASAMOS VARIABLES DE DJANGO A JS DE FORMA SEGURA -->
 {{ role|json_script:"user-role" }}
+{% if role in 'DIRECTOR,SUBDIRECTOR,SUPERUSER' %}
+    {{ metrics.chart_loans.labels|json_script:"chart-labels" }}
+    {{ metrics.chart_loans.data|json_script:"chart-data" }}
+    {{ metrics.chart_incidents|json_script:"chart-incidents" }}
+{% endif %}
 
 <script>
-    window.addEventListener('pageshow', function(event) {
-        if (event.persisted) { window.location.reload(); }
-    });
+    let loansChartInstance = null;
+    let allLabels = [];
+    let allData = [];
+    let incidentsDataObj = {};
+
+    const centerTextPlugin = {
+        id: 'centerText',
+        beforeDraw: function(chart) {
+            if (chart.config.type === 'doughnut') {
+                var width = chart.width, height = chart.height, ctx = chart.ctx;
+                ctx.restore();
+                var fontSize = (height / 100).toFixed(2);
+                ctx.font = "900 " + fontSize + "em 'Plus Jakarta Sans'";
+                ctx.textBaseline = "middle";
+                ctx.fillStyle = "#111827";
+
+                var text = chart.config.data.totalIncidents.toString(),
+                    textX = Math.round((width - ctx.measureText(text).width) / 2),
+                    textY = height / 2 - 10;
+                ctx.fillText(text, textX, textY);
+                
+                ctx.font = "700 " + (fontSize/2.5).toFixed(2) + "em 'Plus Jakarta Sans'";
+                ctx.fillStyle = "#6B7280";
+                var text2 = "Total";
+                var text2X = Math.round((width - ctx.measureText(text2).width) / 2);
+                var text2Y = height / 2 + 15;
+                ctx.fillText(text2, text2X, text2Y);
+                ctx.save();
+            }
+        }
+    };
+
+    function updateLineChart() {
+        const days = parseInt(document.getElementById('timeFilterLoans').value);
+        loansChartInstance.data.labels = allLabels.slice(-days);
+        loansChartInstance.data.datasets[0].data = allData.slice(-days);
+        loansChartInstance.update();
+    }
+
+    function updateDoughnutChart() {
+        const timeKey = document.getElementById('timeFilterIncidents').value;
+        const data = incidentsDataObj[timeKey];
+        
+        window.incidentsChart.data.datasets[0].data = [data.counts.LEVE, data.counts.MODERADA, data.counts.GRAVE];
+        window.incidentsChart.data.totalIncidents = data.total;
+        window.incidentsChart.update();
+
+        document.getElementById('lbl-leve').innerText = data.counts.LEVE;
+        document.getElementById('lbl-mod').innerText = data.counts.MODERADA;
+        document.getElementById('lbl-grave').innerText = data.counts.GRAVE;
+    }
 
     document.addEventListener('DOMContentLoaded', function() {
         const userRole = JSON.parse(document.getElementById('user-role').textContent);
         const allowedRoles = ['DIRECTOR', 'SUBDIRECTOR', 'SUPERUSER'];
 
         if (allowedRoles.includes(userRole)) {
+            
+            // --- GRÁFICO DE LÍNEAS ---
+            allLabels = JSON.parse(document.getElementById('chart-labels').textContent);
+            allData = JSON.parse(document.getElementById('chart-data').textContent);
+
+            const ctxLoans = document.getElementById('loansChart').getContext('2d');
+            loansChartInstance = new Chart(ctxLoans, {
+                type: 'line',
+                data: {
+                    labels: allLabels.slice(-7),
+                    datasets: [{
+                        label: 'Solicitudes',
+                        data: allData.slice(-7),
+                        borderColor: '#2563EB',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#2563EB',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1, color: '#9CA3AF' }, grid: { color: '#F3F4F6' } },
+                        x: { ticks: { color: '#9CA3AF' }, grid: { display: false } }
+                    }
+                }
+            });
+
+            // --- GRÁFICO DE ANILLO ---
+            incidentsDataObj = JSON.parse(document.getElementById('chart-incidents').textContent);
+            const initialData = incidentsDataObj['1'];
+            
+            const ctxIncidents = document.getElementById('incidentsChart').getContext('2d');
+            window.incidentsChart = new Chart(ctxIncidents, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Leve', 'Moderada', 'Grave'],
+                    totalIncidents: initialData.total,
+                    datasets: [{
+                        data: [initialData.counts.LEVE, initialData.counts.MODERADA, initialData.counts.GRAVE],
+                        backgroundColor: ['#3B82F6', '#FBBF24', '#EF4444'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%',
+                    plugins: { legend: { display: false } }
+                },
+                plugins: [centerTextPlugin]
+            });
+
+            // --- WEBSOCKETS (Solución Puntos 5 y 6) ---
             const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
             const wsUrl = protocol + window.location.host + '/ws/notificaciones/';
             const socket = new WebSocket(wsUrl);
@@ -180,39 +308,191 @@
                 const data = JSON.parse(e.data);
                 
                 if (data.type === 'new_incident') {
+                    // Actualizar contador tarjeta
                     const counterEl = document.getElementById('counter-incidencias');
                     if (counterEl) {
-                        let count = parseInt(counterEl.innerText);
-                        counterEl.innerText = count + 1;
-                        counterEl.classList.add('scale-150', 'text-rose-600');
-                        setTimeout(() => counterEl.classList.remove('scale-150', 'text-rose-600'), 300);
+                        counterEl.innerText = parseInt(counterEl.innerText) + 1;
+                        counterEl.classList.add('scale-150', 'text-red-600');
+                        setTimeout(() => counterEl.classList.remove('scale-150', 'text-red-600'), 300);
+                    }
+                    
+                    // Actualizar contador graves si aplica
+                    if (data.severity === 'GRAVE') {
+                        const gravesEl = document.getElementById('counter-graves');
+                        if (gravesEl) gravesEl.innerText = parseInt(gravesEl.innerText) + 1;
                     }
 
                     const badgeEl = document.getElementById('badge-atencion');
                     if (badgeEl) { badgeEl.classList.remove('hidden'); }
 
-                    const toastContainer = document.getElementById('realtime-alerts');
-                    if (toastContainer) {
-                        const toast = document.createElement('div');
-                        toast.className = `bg-white border-l-4 ${data.severity === 'GRAVE' ? 'border-rose-500' : 'border-amber-500'} shadow-xl rounded-xl p-4 flex items-start gap-3 animate-in slide-in-from-right-8 duration-300`;
-                        toast.innerHTML = `
-                            <div class="mt-0.5 ${data.severity === 'GRAVE' ? 'text-rose-500' : 'text-amber-500'}">
-                                <i class="fa-solid fa-bell animate-bounce"></i>
-                            </div>
-                            <div>
-                                <h4 class="text-sm font-black text-slate-800">Alerta en Tiempo Real</h4>
-                                <p class="text-xs font-bold text-slate-500 mt-1">${data.message}</p>
-                            </div>
-                        `;
-                        toastContainer.appendChild(toast);
-                        setTimeout(() => {
-                            toast.classList.add('opacity-0', 'translate-x-full');
-                            setTimeout(() => toast.remove(), 300);
-                        }, 5000);
+                    // Actualizar gráfico SI está en la vista de "Hoy" ('1')
+                    const timeFilter = document.getElementById('timeFilterIncidents').value;
+                    if (window.incidentsChart && timeFilter === '1') {
+                        if (data.severity === 'LEVE') { window.incidentsChart.data.datasets[0].data[0]++; document.getElementById('lbl-leve').innerText++; }
+                        else if (data.severity === 'MODERADA') { window.incidentsChart.data.datasets[0].data[1]++; document.getElementById('lbl-mod').innerText++; }
+                        else if (data.severity === 'GRAVE') { window.incidentsChart.data.datasets[0].data[2]++; document.getElementById('lbl-grave').innerText++; }
+                        window.incidentsChart.data.totalIncidents++;
+                        window.incidentsChart.update();
                     }
+                }
+                
+                if (data.type === 'new_loan') {
+                    // Actualizar contador tarjeta
+                    const counterEl = document.getElementById('counter-solicitudes');
+                    if (counterEl) {
+                        counterEl.innerText = parseInt(counterEl.innerText) + 1;
+                        counterEl.classList.add('scale-150', 'text-amber-600');
+                        setTimeout(() => counterEl.classList.remove('scale-150', 'text-amber-600'), 300);
+                    }
+                }
+
+                // Mostrar Toast
+                const toastContainer = document.getElementById('realtime-alerts');
+                if (toastContainer) {
+                    const toast = document.createElement('div');
+                    let borderColor = 'border-blue-500';
+                    let iconColor = 'text-blue-500';
+                    
+                    if (data.type === 'new_incident') {
+                        borderColor = data.severity === 'GRAVE' ? 'border-rose-500' : 'border-amber-500';
+                        iconColor = data.severity === 'GRAVE' ? 'text-rose-500' : 'text-amber-500';
+                    }
+
+                    toast.className = `bg-white border-l-4 ${borderColor} shadow-xl rounded-xl p-4 flex items-start gap-3 animate-in slide-in-from-right-8 duration-300`;
+                    toast.innerHTML = `
+                        <div class="mt-0.5 ${iconColor}">
+                            <i class="fa-solid fa-bell animate-bounce"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-black text-gray-800">Alerta en Tiempo Real</h4>
+                            <p class="text-xs font-bold text-gray-500 mt-1">${data.message}</p>
+                        </div>
+                    `;
+                    toastContainer.appendChild(toast);
+                    setTimeout(() => {
+                        toast.classList.add('opacity-0', 'translate-x-full');
+                        setTimeout(() => toast.remove(), 300);
+                    }, 5000);
                 }
             };
         }
     });
 </script>
+
+<!-- ========================================== -->
+    <!-- DASHBOARD DOCENTE                          -->
+    <!-- ========================================== -->
+    {% if role == 'DOCENTE' %}
+    
+    <!-- 1. TARJETAS SUPERIORES -->
+    <!-- 1. TARJETAS SUPERIORES (Clickeables) -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        
+        <!-- Mis Aulas (No clickeable por ahora) -->
+        <a href="{% url 'assignments:my_sections' %}" class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-4 hover:shadow-md hover:border-blue-300 transition-all group block">
+            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl group-hover:bg-blue-600 group-hover:text-white transition-colors"><i class="fa-solid fa-chalkboard-user"></i></div>
+            <div>
+                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider group-hover:text-blue-600 transition-colors">Mis Aulas</p>
+                <p class="text-2xl font-black text-gray-900 leading-none mt-1">{{ metrics.top_cards.sections }}</p>
+                <p class="text-[10px] font-bold text-blue-500 mt-1">Asignadas</p>
+            </div>
+        </a>
+
+        <!-- Solicitudes (Lleva al Catálogo) -->
+        <a href="{% url 'warehouse:loan_list' %}" class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-4 hover:shadow-md hover:border-amber-300 transition-all group block">
+            <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl group-hover:bg-amber-500 group-hover:text-white transition-colors"><i class="fa-solid fa-clipboard-list"></i></div>
+            <div>
+                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider group-hover:text-amber-600 transition-colors">Solicitudes</p>
+                <p class="text-2xl font-black text-gray-900 leading-none mt-1">{{ metrics.top_cards.pending_loans }}</p>
+                <p class="text-[10px] font-bold text-amber-500 mt-1">Pendientes</p>
+            </div>
+        </a>
+
+        <!-- Incidencias (Lleva al Historial del Docente) -->
+        <a href="{% url 'discipline:incident_list' %}" class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-4 hover:shadow-md hover:border-red-300 transition-all group block">
+            <div class="w-12 h-12 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-xl group-hover:bg-red-600 group-hover:text-white transition-colors"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div>
+                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider group-hover:text-red-600 transition-colors">Incidencias</p>
+                <p class="text-2xl font-black text-gray-900 leading-none mt-1">{{ metrics.top_cards.incidents }}</p>
+                <p class="text-[10px] font-bold text-red-500 mt-1">Registradas</p>
+            </div>
+        </a>
+
+        <!-- Fichas (Lleva al Portafolio) -->
+        <a href="{% url 'portfolio:list' %}" class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-4 hover:shadow-md hover:border-emerald-300 transition-all group block">
+            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl group-hover:bg-emerald-600 group-hover:text-white transition-colors"><i class="fa-solid fa-folder-open"></i></div>
+            <div>
+                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider group-hover:text-emerald-600 transition-colors">Fichas</p>
+                <p class="text-2xl font-black text-gray-900 leading-none mt-1">{{ metrics.top_cards.portfolio }}</p>
+                <p class="text-[10px] font-bold text-emerald-500 mt-1">Subidas</p>
+            </div>
+        </a>
+    </div>
+
+    <!-- 2. SECCIÓN CENTRAL -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        
+        <!-- Estado del Último Pedido -->
+        <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex flex-col">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-sm font-black text-gray-800 uppercase tracking-wide">Estado de tu último pedido</h3>
+                <a href="{% url 'warehouse:catalog' %}" class="text-xs font-bold text-blue-600 hover:underline">Ir al Catálogo</a>
+            </div>
+            
+            {% if metrics.latest_loan %}
+            <div class="flex flex-col sm:flex-row items-center gap-6 p-5 bg-gray-50 rounded-xl border border-gray-100 flex-grow">
+                <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 shadow-sm">
+                    <i class="fa-solid fa-box-open"></i>
+                </div>
+                <div class="flex-grow text-center sm:text-left">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Solicitado el {{ metrics.latest_loan.request_date|date:"d M, Y" }}</p>
+                    <h4 class="text-lg font-black text-gray-900 leading-tight">{{ metrics.latest_loan.details.first.material.name }}</h4>
+                    <p class="text-xs font-bold text-gray-500 mt-1">Cantidad: {{ metrics.latest_loan.details.first.quantity_requested }} {{ metrics.latest_loan.details.first.material.unit }}</p>
+                </div>
+                <div class="text-center sm:text-right flex-shrink-0">
+                    <span class="px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider border shadow-sm block
+                        {% if metrics.latest_loan.status == 'PENDING' %}bg-amber-50 text-amber-700 border-amber-200
+                        {% elif metrics.latest_loan.status == 'DISPATCHED' %}bg-blue-50 text-blue-700 border-blue-200
+                        {% elif metrics.latest_loan.status == 'RETURNED' %}bg-emerald-50 text-emerald-700 border-emerald-200
+                        {% else %}bg-red-50 text-red-700 border-red-200{% endif %}">
+                        {{ metrics.latest_loan.get_status_display }}
+                    </span>
+                    <p class="text-[9px] font-bold text-gray-400 uppercase mt-2">Para: {{ metrics.latest_loan.required_for|date:"h:i A" }}</p>
+                </div>
+            </div>
+            {% else %}
+            <div class="flex-grow flex flex-col items-center justify-center text-center py-8 text-gray-400">
+                <i class="fa-solid fa-box-open text-4xl mb-3 text-gray-300"></i>
+                <p class="text-sm font-bold text-gray-600">No has realizado ninguna solicitud.</p>
+                <p class="text-xs font-medium mt-1">Tus pedidos al almacén aparecerán aquí.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Actividad Reciente (CORRECCIÓN: Nombres amigables) -->
+        <div class="lg:col-span-1 bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex flex-col">
+            <h3 class="text-sm font-black text-gray-800 uppercase tracking-wide mb-4">Tu Actividad Reciente</h3>
+            <div class="flex-grow space-y-4 overflow-y-auto max-h-[200px] pr-2 scrollbar-hide">
+                {% for log in metrics.recent_activity %}
+                <div class="flex gap-3 items-start">
+                    <div class="mt-1 {% if log.action == 'CREATE' %}text-emerald-500{% elif log.action == 'DELETE' %}text-red-500{% else %}text-blue-500{% endif %}">
+                        <i class="fa-solid fa-circle-dot text-[10px]"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-800 leading-tight">{{ log.get_action_display }} en {{ log.friendly_model_name }}</p>
+                        <p class="text-[10px] font-medium text-gray-500 mt-0.5">{{ log.timestamp|date:"d M, h:i a" }}</p>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-8 text-gray-400">
+                    <i class="fa-solid fa-clock-rotate-left text-3xl mb-2 text-gray-300"></i>
+                    <p class="text-xs font-bold">Sin actividad reciente.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+    {% endif %}
+
 {% endblock %}

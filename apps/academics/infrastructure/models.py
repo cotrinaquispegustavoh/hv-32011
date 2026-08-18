@@ -17,7 +17,6 @@ class Section(models.Model):
         return f"{self.grade} {self.letter} - {self.name} ({self.year})"
 
 class Parent(models.Model):
-    # Vinculamos el apoderado con su cuenta de login (User)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='parent_profile')
     
     class Meta:
@@ -29,6 +28,7 @@ class Parent(models.Model):
         return f"Apoderado: {self.user.first_name} {self.user.last_name}"
 
 class Student(models.Model):
+    dni = models.CharField('DNI', max_length=8, null=True, blank=True) # <-- NUEVO CAMPO
     first_name = models.CharField('Nombres', max_length=100)
     last_name = models.CharField('Apellidos', max_length=100)
     parent = models.ForeignKey(Parent, on_delete=models.CASCADE, related_name='students', verbose_name='Apoderado')

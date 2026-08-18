@@ -5,8 +5,13 @@ from .entities import UserEntity
 class IUserRepository(ABC):
     @abstractmethod
     def get_by_dni(self, dni: str) -> Optional[UserEntity]: pass
+    
+    @abstractmethod
+    def get_by_id(self, user_id: int) -> Optional[UserEntity]: pass # <-- NUEVO
+
     @abstractmethod
     def save(self, user: UserEntity) -> UserEntity: pass
+    
     @abstractmethod
     def get_all_staff(self) -> List[UserEntity]: pass
     

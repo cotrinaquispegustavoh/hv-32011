@@ -45,6 +45,7 @@ class InternalNotification(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
     title = models.CharField('Título', max_length=200)
     message = models.TextField('Mensaje')
+    link = models.CharField('Enlace', max_length=255, blank=True, null=True)
     is_read = models.BooleanField('Leída', default=False)
     created_at = models.DateTimeField('Fecha de creación', auto_now_add=True)
 

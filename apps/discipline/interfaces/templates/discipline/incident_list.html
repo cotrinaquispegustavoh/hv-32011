@@ -1,75 +1,79 @@
 {% extends 'base.html' %}
 
-{% block title %}Historial de Incidencias — I.E. 32011{% endblock %}
+{% block header_title %}Historial de Incidencias{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto py-6 px-4 animate-in fade-in duration-500">
+<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 animate-in fade-in duration-300">
     
-    <header class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+    <!-- HEADER -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <div>
-            <h1 class="text-3xl font-black text-slate-900 tracking-tight">Historial Disciplinario</h1>
-            <p class="text-slate-500 font-medium mt-1">Registro centralizado de incidencias y reportes de aula.</p>
+            <h1 class="text-2xl font-black text-blue-900 uppercase tracking-wide">Historial Disciplinario</h1>
+            <p class="text-sm font-medium text-gray-500 mt-1">Registro centralizado de incidencias y reportes de aula.</p>
         </div>
-        <a href="{% url 'core:dashboard' %}" class="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-black text-xs px-6 py-3.5 rounded-xl uppercase tracking-wider transition-all shadow-sm active:scale-95">
-            <i class="fa-solid fa-arrow-left"></i> Volver al Panel
+        
+        {% if user.role == 'DOCENTE' %}
+        <a href="{% url 'discipline:report_incident' %}" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2.5 px-5 rounded-xl shadow-sm transition-colors flex items-center gap-2">
+            <i class="fa-solid fa-plus"></i> Nueva Incidencia
         </a>
-    </header>
+        {% endif %}
+    </div>
 
-    <div class="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
+    <!-- BUSCADOR Y FILTROS -->
+    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 mb-6 flex flex-col sm:flex-row gap-4">
+        <div class="relative flex-grow">
+            <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-gray-400"></i>
+            <!-- El value="{{ initial_query }}" asegura que si venimos del directorio, el nombre se quede escrito en la caja -->
+            <input type="text" name="q" value="{{ initial_query }}"
+                   hx-get="{% url 'discipline:search_incidents' %}" 
+                   hx-trigger="keyup changed delay:300ms, search" 
+                   hx-target="#tabla-incidencias" 
+                   hx-include="[name='severity'], [name='subtype']"
+                   placeholder="Buscar por nombre del alumno o descripción..." 
+                   class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow">
+        </div>
+        
+        <select name="severity" 
+                hx-get="{% url 'discipline:search_incidents' %}" 
+                hx-trigger="change" 
+                hx-target="#tabla-incidencias" 
+                hx-include="[name='q'], [name='subtype']"
+                class="w-full sm:w-48 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white cursor-pointer transition-shadow">
+            <option value="">Todas las gravedades</option>
+            <option value="LEVE">Leve</option>
+            <option value="MODERADA">Moderada</option>
+            <option value="GRAVE">Grave</option>
+        </select>
+
+        <select name="subtype" 
+                hx-get="{% url 'discipline:search_incidents' %}" 
+                hx-trigger="change" 
+                hx-target="#tabla-incidencias" 
+                hx-include="[name='q'], [name='severity']"
+                class="w-full sm:w-48 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white cursor-pointer transition-shadow">
+            <option value="">Todos los tipos</option>
+            <option value="CONDUCTA">Conducta</option>
+            <option value="RENDIMIENTO">Rendimiento</option>
+            <option value="ASISTENCIA">Asistencia</option>
+            <option value="SALUD">Salud</option>
+        </select>
+    </div>
+
+    <!-- TABLA -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="bg-slate-50 border-b border-slate-100 text-[10px] text-slate-400 uppercase tracking-widest">
-                        <th class="p-5 font-black">Fecha y Reportante</th>
-                        <th class="p-5 font-black">Estudiante</th>
-                        <th class="p-5 font-black">Clasificación</th>
-                        <th class="p-5 font-black">Descripción del Suceso</th>
-                        <th class="p-5 font-black text-center">Evidencia</th>
+            <table class="min-w-full text-left border-collapse">
+                <thead class="bg-gray-50">
+                    <tr class="border-b-2 border-gray-100 text-[10px] text-gray-500 uppercase tracking-widest">
+                        <th class="px-6 py-4 font-black">Fecha y Reportante</th>
+                        <th class="px-6 py-4 font-black">Estudiante</th>
+                        <th class="px-6 py-4 font-black">Clasificación</th>
+                        <th class="px-6 py-4 font-black">Descripción del Suceso</th>
+                        <th class="px-6 py-4 font-black text-right">Evidencia</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-50">
-                    {% for incident in incidents %}
-                    <tr class="hover:bg-slate-50/50 transition-colors group">
-                        <td class="p-5 align-top">
-                            <p class="text-sm font-black text-slate-800">{{ incident.date_reported|date:"d M Y" }}</p>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase mt-1">{{ incident.date_reported|date:"h:i A" }}</p>
-                            <p class="text-xs text-sky-600 font-semibold mt-2"><i class="fa-solid fa-user-tie mr-1"></i> {{ incident.reporter_name }}</p>
-                        </td>
-                        <td class="p-5 align-top">
-                            <p class="text-sm font-black text-slate-900">{{ incident.student_name }}</p>
-                        </td>
-                        <td class="p-5 align-top space-y-2">
-                            <span class="inline-block px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider
-                                {% if incident.severity == 'GRAVE' %}bg-rose-100 text-rose-700 border border-rose-200
-                                {% elif incident.severity == 'MODERADA' %}bg-amber-100 text-amber-700 border border-amber-200
-                                {% else %}bg-slate-100 text-slate-600 border border-slate-200{% endif %}">
-                                {{ incident.severity }}
-                            </span>
-                            <span class="block text-xs font-bold text-slate-500"><i class="fa-solid fa-tag mr-1"></i> {{ incident.subtype }}</span>
-                        </td>
-                        <td class="p-5 align-top max-w-md">
-                            <p class="text-sm text-slate-600 font-medium leading-relaxed">{{ incident.description }}</p>
-                        </td>
-                        <td class="p-5 align-top text-center">
-                            {% if incident.evidences %}
-                                <a href="/media/{{ incident.evidences.0.file_path }}" target="_blank" class="inline-flex items-center justify-center w-10 h-10 bg-sky-50 text-sky-600 rounded-xl hover:bg-sky-600 hover:text-white transition-colors shadow-sm border border-sky-100" title="Ver Evidencia">
-                                    <i class="fa-solid fa-paperclip"></i>
-                                </a>
-                            {% else %}
-                                <span class="text-slate-300 text-sm"><i class="fa-solid fa-minus"></i></span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="p-12 text-center">
-                            <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <i class="fa-solid fa-shield-halved text-2xl text-slate-300"></i>
-                            </div>
-                            <p class="text-slate-500 font-bold">No hay incidencias registradas en el sistema.</p>
-                        </td>
-                    </tr>
-                    {% endfor %}
+                <tbody id="tabla-incidencias" class="divide-y divide-gray-100">
+                    {% include 'discipline/partials/incident_table_rows.html' %}
                 </tbody>
             </table>
         </div>

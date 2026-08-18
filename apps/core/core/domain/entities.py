@@ -9,6 +9,7 @@ class NotificationEntity:
     title: str
     message: str
     is_read: bool
+    link: Optional[str] = None
     created_at: Optional[datetime] = None
 
 @dataclass

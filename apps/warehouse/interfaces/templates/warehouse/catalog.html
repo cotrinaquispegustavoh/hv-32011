@@ -1,31 +1,57 @@
 {% extends 'base.html' %}
 
-{% block title %}Catálogo de Almacén - Intranet HV{% endblock %}
+{% block header_title %}Catálogo de Materiales{% endblock %}
 
 {% block content %}
-<div class="p-4 lg:p-8 max-w-7xl mx-auto w-full animate-in fade-in duration-500">
+<div class="max-w-7xl mx-auto w-full animate-in fade-in duration-500">
     
-    <header class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <div>
-            <h1 class="text-3xl font-black text-slate-900 tracking-tight">Catálogo de Materiales</h1>
-            <p class="text-slate-500 font-medium mt-1">Consulta y reserva de recursos didácticos.</p>
+            <h1 class="text-2xl font-black text-blue-900 uppercase tracking-wide">Catálogo de Materiales</h1>
+            <p class="text-sm font-medium text-gray-500 mt-1">Consulta y reserva de recursos didácticos en tiempo real.</p>
         </div>
-    </header>
+    </div>
 
-    <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 mb-8">
-        <div class="relative">
+    <!-- BUSCADOR Y FILTROS (Solución Punto 7) -->
+    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 mb-8 flex flex-col sm:flex-row gap-4">
+        <div class="relative flex-grow">
+            <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-gray-400"></i>
             <input type="text" name="q" 
                    hx-get="{% url 'warehouse:catalog' %}" 
                    hx-trigger="keyup changed delay:300ms, search" 
                    hx-target="#grid-materiales" 
+                   hx-include="[name='cycle'], [name='category']"
                    placeholder="Buscar material por nombre o ubicación..." 
-                   class="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all text-sm font-semibold text-slate-800">
-            <span class="absolute left-4 top-4 text-slate-400 text-lg"><i class="fa-solid fa-magnifying-glass"></i></span>
+                   class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow">
         </div>
+        
+        <select name="category" 
+                hx-get="{% url 'warehouse:catalog' %}" 
+                hx-trigger="change" 
+                hx-target="#grid-materiales" 
+                hx-include="[name='q'], [name='cycle']"
+                class="w-full sm:w-48 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white cursor-pointer transition-shadow">
+            <option value="">Todas las Categorías</option>
+            {% for cat in categories %}
+                <option value="{{ cat }}">{{ cat }}</option>
+            {% endfor %}
+        </select>
+
+        <select name="cycle" 
+                hx-get="{% url 'warehouse:catalog' %}" 
+                hx-trigger="change" 
+                hx-target="#grid-materiales" 
+                hx-include="[name='q'], [name='category']"
+                class="w-full sm:w-48 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white cursor-pointer transition-shadow">
+            <option value="">Todos los Ciclos</option>
+            <option value="III">Ciclo III (1ro y 2do)</option>
+            <option value="IV">Ciclo IV (3ro y 4to)</option>
+            <option value="V">Ciclo V (5to y 6to)</option>
+        </select>
     </div>
 
-    <!-- CORRECCIÓN: hx-trigger="actualizarCatalogo from:body" recarga el grid cuando el pedido es exitoso -->
-    <div id="grid-materiales" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6"
+    <!-- GRID DE MATERIALES -->
+    <div id="grid-materiales" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
          hx-get="{% url 'warehouse:catalog' %}"
          hx-trigger="actualizarCatalogo from:body">
         {% include 'warehouse/partials/catalog_cards.html' %}
@@ -46,7 +72,6 @@
             hours: ['01','02','03','04','05','06','07','08','09','10','11','12'],
             minutes: ['00','05','10','15','20','25','30','35','40','45','50','55'],
             
-            // CORRECCIÓN: Horas vacías por defecto para obligar al usuario a elegir
             p_hour: '', p_min: '', p_ampm: 'AM',
             r_hour: '', r_min: '', r_ampm: 'AM',
 
@@ -73,13 +98,27 @@
             getReturnDatetime() { return this.formatToISO(this.r_hour, this.r_min, this.r_ampm); },
 
             hasTimeError() {
-                // CORRECCIÓN: Si falta algún dato, bloquea el botón
                 if(!this.date || !this.p_hour || !this.p_min || !this.r_hour || !this.r_min) return true;
                 const pickup = new Date(this.getPickupDatetime());
                 const ret = new Date(this.getReturnDatetime());
                 return ret <= pickup;
             }
         }))
-    })
+    });
+
+    // --- SOLUCIÓN PUNTO 10: Escuchar WebSockets para actualizar stock sin recargar ---
+    document.addEventListener('DOMContentLoaded', function() {
+        const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+        const wsUrl = protocol + window.location.host + '/ws/notificaciones/';
+        const socket = new WebSocket(wsUrl);
+
+        socket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            if (data.type === 'stock_update') {
+                // Disparamos el evento de HTMX para que recargue el grid de materiales
+                htmx.trigger('#grid-materiales', 'actualizarCatalogo');
+            }
+        };
+    });
 </script>
 {% endblock %}

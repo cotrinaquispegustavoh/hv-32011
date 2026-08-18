@@ -6,4 +6,5 @@ app_name = 'assignments'
 urlpatterns = [
     path('', assignment_views.assignment_panel_view, name='panel'),
     path('eliminar/<int:assignment_id>/', assignment_views.remove_assignment_view, name='remove'),
+    path('mis-aulas/', assignment_views.my_sections_view, name='my_sections'), # <-- NUEVA RUTA
 ]

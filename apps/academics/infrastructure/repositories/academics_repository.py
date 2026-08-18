@@ -17,12 +17,37 @@ class DjangoParentRepository(IParentRepository):
             return None
 
 class DjangoStudentRepository(IStudentRepository):
+    def _to_entity(self, model: Student) -> StudentEntity:
+        tutor_name = "Sin tutor asignado"
+        if hasattr(model, 'section') and model.section:
+            if hasattr(model.section, 'assignments'):
+                for assign in model.section.assignments.all():
+                    if 'Polidocencia' in assign.area:
+                        tutor_name = f"{assign.teacher.first_name} {assign.teacher.last_name}"
+                        break
+
+        # CORRECCIÓN: Lectura segura de DNI y Teléfono
+        return StudentEntity(
+            id=model.id,
+            dni=model.dni or "Sin DNI",
+            first_name=model.first_name,
+            last_name=model.last_name,
+            parent_id=model.parent_id,
+            section_id=model.section_id,
+            section_name=f"{model.section.grade} '{model.section.letter}'" if model.section else "Sin sección",
+            parent_name=f"{model.parent.user.first_name} {model.parent.user.last_name}" if model.parent else "Sin apoderado",
+            parent_phone=model.parent.user.phone if model.parent and hasattr(model.parent.user, 'phone') and model.parent.user.phone else "No registrado",
+            tutor_name=tutor_name
+        )
+
     def get_by_parent(self, parent_id: int) -> List[StudentEntity]:
-        models = Student.objects.filter(parent_id=parent_id)
-        return [StudentEntity(id=m.id, first_name=m.first_name, last_name=m.last_name, 
-                              parent_id=m.parent_id, section_id=m.section_id) for m in models]
+        models = Student.objects.filter(parent_id=parent_id).select_related('section', 'parent__user').prefetch_related('section__assignments__teacher')
+        return [self._to_entity(m) for m in models]
 
     def get_by_section(self, section_id: int) -> List[StudentEntity]:
-        models = Student.objects.filter(section_id=section_id)
-        return [StudentEntity(id=m.id, first_name=m.first_name, last_name=m.last_name, 
-                              parent_id=m.parent_id, section_id=m.section_id) for m in models]
+        models = Student.objects.filter(section_id=section_id).select_related('section', 'parent__user').prefetch_related('section__assignments__teacher')
+        return [self._to_entity(m) for m in models]
+
+    def get_all_students(self) -> List[StudentEntity]:
+        models = Student.objects.all().select_related('section', 'parent__user').prefetch_related('section__assignments__teacher').order_by('section__grade', 'section__letter', 'last_name')
+        return [self._to_entity(m) for m in models]

@@ -1,61 +1,106 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}I.E. 32011 Hermilio Valdizán — Huánuco{% endblock %}</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        [x-cloak] { display: none !important; }
     </style>
-    <script>
-        tailwind.config = {
-            theme: { extend: { colors: { hv: { dark: '#111827', blue: '#2563EB', gray: '#F3F4F6' } } } }
-        }
-    </script>
 </head>
-<body id="inicio" class="bg-slate-50 text-slate-900 antialiased overflow-x-hidden flex flex-col min-h-screen">
+<body id="inicio" class="bg-gray-50 text-gray-900 antialiased flex flex-col min-h-screen" x-data="{ mobileMenuOpen: false }">
 
-    <header class="fixed w-full top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100 transition-all">
-        <div class="container mx-auto px-6 h-20 flex items-center justify-between">
+    <!-- HEADER INSTITUCIONAL (Azul Oscuro) -->
+    <header class="w-full top-0 z-50 bg-blue-900 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
             
-            <a href="{% url 'core:home' %}" class="flex items-center gap-3 group overflow-visible">
-                <!-- Reemplazo temporal del logo por un icono elegante -->
-                <div class="w-11 h-11 bg-sky-600 text-white rounded-xl flex items-center justify-center shadow-md shadow-sky-200 group-hover:scale-105 transition-transform duration-300">
-                    <i class="fa-solid fa-graduation-cap text-xl"></i>
+            <!-- Logo y Título -->
+            <a href="{% url 'core:home' %}" class="flex items-center gap-3 group">
+                <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform p-1">
+                    <img src="{% static 'img/logo_hv_32011.png' %}" alt="Logo" class="w-full h-full object-contain">
                 </div>
                 <div class="flex flex-col">
-                    <span class="font-black text-lg tracking-tight leading-none text-slate-800">I.E. 32011</span>
-                    <span class="text-[10px] font-black text-sky-600 uppercase tracking-widest mt-0.5">Huánuco</span>
+                    <span class="font-black text-lg tracking-tight leading-none">I.E. N.º 32011</span>
+                    <span class="text-[10px] font-bold text-blue-300 uppercase tracking-widest mt-0.5">Hermilio Valdizán</span>
                 </div>
             </a>
 
-            <nav class="hidden md:flex items-center gap-8 text-xs font-black text-slate-500 uppercase tracking-widest">
-                <a href="#inicio" class="hover:text-sky-600 transition-colors">Inicio</a>
-                <a href="#identidad" class="hover:text-sky-600 transition-colors">Identidad</a>
-                <a href="#agenda" class="hover:text-sky-600 transition-colors">Agenda</a>
+            <!-- Navegación Desktop -->
+            <nav class="hidden md:flex items-center gap-8 text-xs font-bold uppercase tracking-wider text-blue-100">
+                <a href="{% url 'core:home' %}#inicio" class="hover:text-white transition-colors">Inicio</a>
+                <a href="{% url 'core:home' %}#institucion" class="hover:text-white transition-colors">La Institución</a>
+                <a href="{% url 'core:home' %}#servicios" class="hover:text-white transition-colors">Servicios</a>
+                <a href="{% url 'core:home' %}#novedades" class="hover:text-white transition-colors">Novedades</a>
             </nav>
 
-            <div class="flex items-center gap-6">
-                <a href="{% url 'users:login' %}" class="bg-slate-900 hover:bg-sky-700 text-white px-6 py-3 rounded-full font-black text-xs uppercase tracking-wider transition-all shadow-lg shadow-slate-900/10 active:scale-95">
-                    Intranet
+            <!-- Botón Login Desktop -->
+            <div class="hidden md:flex items-center">
+                <a href="{% url 'users:login' %}" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider transition-all shadow-sm active:scale-95 border border-blue-500">
+                    Iniciar Sesión
                 </a>
             </div>
+
+            <!-- Botón Menú Móvil -->
+            <button @click="mobileMenuOpen = true" class="md:hidden w-10 h-10 flex items-center justify-center text-white hover:bg-blue-800 rounded-lg transition-colors">
+                <i class="fa-solid fa-bars text-xl"></i>
+            </button>
         </div>
     </header>
-    <div class="h-20"></div>
 
+    <!-- MENÚ MÓVIL (Alpine.js) -->
+    <div x-show="mobileMenuOpen" x-cloak class="fixed inset-0 z-[60] md:hidden">
+        <div x-show="mobileMenuOpen" x-transition.opacity class="absolute inset-0 bg-blue-900/80 backdrop-blur-sm" @click="mobileMenuOpen = false"></div>
+        <div x-show="mobileMenuOpen" 
+             x-transition:enter="transition ease-out duration-300" x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0"
+             x-transition:leave="transition ease-in duration-300" x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full"
+             class="absolute right-0 top-0 bottom-0 w-64 bg-white shadow-2xl flex flex-col">
+            
+            <div class="p-4 flex justify-end border-b border-gray-100">
+                <button @click="mobileMenuOpen = false" class="w-10 h-10 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-lg">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            
+            <nav class="flex flex-col p-4 space-y-2">
+                <a href="{% url 'core:home' %}#inicio" @click="mobileMenuOpen = false" class="p-3 text-sm font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-lg">Inicio</a>
+                <a href="{% url 'core:home' %}#institucion" @click="mobileMenuOpen = false" class="p-3 text-sm font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-lg">La Institución</a>
+                <a href="{% url 'core:home' %}#servicios" @click="mobileMenuOpen = false" class="p-3 text-sm font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-lg">Servicios</a>
+                <a href="{% url 'core:home' %}#novedades" @click="mobileMenuOpen = false" class="p-3 text-sm font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-lg">Novedades</a>
+                <div class="pt-4 mt-2 border-t border-gray-100">
+                    <a href="{% url 'users:login' %}" class="block text-center bg-blue-600 text-white p-3 rounded-lg font-bold text-sm shadow-sm">Iniciar Sesión</a>
+                </div>
+            </nav>
+        </div>
+    </div>
+
+    <!-- CONTENIDO PRINCIPAL -->
     <main class="flex-grow">
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="bg-white py-8 border-t border-slate-100 mt-auto">
-        <div class="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-            <div class="text-slate-400 font-black">I.E. 32011 Hermilio Valdizán — Huánuco</div>
-            <div class="text-slate-500">&copy; 2026 Intranet_HV</div>
+    <!-- FOOTER INSTITUCIONAL -->
+    <footer class="bg-blue-900 text-blue-100 py-6 border-t border-blue-800 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-medium">
+            <div class="flex items-center gap-6">
+                <span class="flex items-center gap-2"><i class="fa-solid fa-location-dot text-blue-400"></i> Huánuco, Huánuco - Perú</span>
+                <span class="flex items-center gap-2"><i class="fa-solid fa-phone text-blue-400"></i> (062) 123 456</span>
+                <span class="flex items-center gap-2"><i class="fa-solid fa-envelope text-blue-400"></i> informes@32011hv.edu.pe</span>
+            </div>
+            <div class="flex items-center gap-4 text-lg">
+                <a href="#" class="hover:text-white transition-colors"><i class="fa-brands fa-facebook"></i></a>
+                <a href="#" class="hover:text-white transition-colors"><i class="fa-brands fa-twitter"></i></a>
+                <a href="#" class="hover:text-white transition-colors"><i class="fa-brands fa-instagram"></i></a>
+            </div>
         </div>
     </footer>
+
 </body>
 </html>

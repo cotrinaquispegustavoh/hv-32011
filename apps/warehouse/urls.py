@@ -7,10 +7,11 @@ urlpatterns = [
     path('catalogo/', catalog_views.catalog_view, name='catalog'),
     path('solicitar/<int:material_id>/', loan_views.request_material_view, name='request_material'),
     
+    # --- NUEVA RUTA: Historial del Docente ---
+    path('mis-solicitudes/', loan_views.teacher_loans_view, name='loan_list'),
+    
     path('despacho/', dispatch_views.dispatch_panel_view, name='dispatch_panel'),
     path('despacho/actualizar/<int:loan_id>/', dispatch_views.update_loan_status_view, name='update_loan_status'),
-
-    # --- NUEVAS RUTAS DE INVENTARIO ---
     path('inventario/', inventory_views.inventory_panel_view, name='inventory_panel'),
     path('inventario/editar/<int:material_id>/', inventory_views.edit_material_view, name='edit_material'),
     path('inventario/eliminar/<int:material_id>/', inventory_views.delete_material_view, name='delete_material'),

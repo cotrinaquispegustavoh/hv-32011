@@ -18,6 +18,12 @@ class DjangoUserRepository(IUserRepository):
         except UserModel.DoesNotExist:
             return None
 
+    def get_by_id(self, user_id: int) -> Optional[UserEntity]:
+        try:
+            return self._to_entity(UserModel.objects.get(id=user_id))
+        except UserModel.DoesNotExist:
+            return None
+
     def save(self, user: UserEntity) -> UserEntity:
         model, _ = UserModel.objects.update_or_create(
             dni=user.dni,
@@ -36,7 +42,6 @@ class DjangoUserRepository(IUserRepository):
     def toggle_active_status(self, user_id: int, current_user_id: int) -> bool:
         try:
             user = UserModel.objects.get(id=user_id)
-            # REGLAS DE SEGURIDAD
             if user.id == current_user_id:
                 raise ValueError("No puedes suspender tu propia cuenta.")
             if user.role == 'SUPERUSER':
@@ -49,6 +54,5 @@ class DjangoUserRepository(IUserRepository):
             raise ValueError("Usuario no encontrado.")
 
     def bulk_update_permissions(self, user_ids: List[int], modules: List[str]) -> bool:
-        # Actualiza los permisos de todos los IDs seleccionados en una sola consulta
         UserModel.objects.filter(id__in=user_ids).update(module_permissions=modules)
         return True

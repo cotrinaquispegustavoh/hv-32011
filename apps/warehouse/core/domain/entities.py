@@ -6,6 +6,7 @@ from datetime import datetime
 class MaterialEntity:
     id: Optional[int]
     name: str
+    category: str # <-- NUEVO CAMPO
     stock: int
     unit: str
     state: str
@@ -32,4 +33,4 @@ class LoanRequestEntity:
     details: List[LoanDetailEntity]
     required_for: Optional[datetime] = None
     expected_return_date: Optional[datetime] = None
-    teacher_name: Optional[str] = None 
+    teacher_name: Optional[str] = None

@@ -26,3 +26,10 @@ class RemoveAssignmentUseCase:
 
     def execute(self, assignment_id: int) -> bool:
         return self.assignment_repo.delete(assignment_id)
+    
+class GetTeacherAssignmentsUseCase:
+    def __init__(self, assignment_repo: ITeacherAssignmentRepository):
+        self.assignment_repo = assignment_repo
+
+    def execute(self, teacher_id: int, year: int) -> List[TeacherAssignmentEntity]:
+        return self.assignment_repo.get_by_teacher(teacher_id, year)

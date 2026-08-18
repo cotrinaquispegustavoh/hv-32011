@@ -12,7 +12,8 @@ class DjangoNotificationRepository(INotificationRepository):
                 'user_id': notification.user_id,
                 'title': notification.title,
                 'message': notification.message,
-                'is_read': notification.is_read
+                'is_read': notification.is_read,
+                'link': notification.link
             }
         )
         notification.id = model.id
