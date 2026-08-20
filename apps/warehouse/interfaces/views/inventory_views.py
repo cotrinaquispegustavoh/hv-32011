@@ -18,9 +18,9 @@ def inventory_panel_view(request):
     if request.method == 'POST':
         action = request.POST.get('action')
 
-        # --- CREACIÓN MANUAL ---
         if action == 'manual':
             name = request.POST.get('name')
+            category = request.POST.get('category', 'General') # <-- CAPTURAMOS CATEGORÍA
             stock = int(request.POST.get('stock', 0))
             unit = request.POST.get('unit')
             state = request.POST.get('state')
@@ -28,13 +28,12 @@ def inventory_panel_view(request):
             cycle = request.POST.get('cycle')
             
             try:
-                SaveMaterialUseCase(repo).execute(None, name, stock, unit, state, location, cycle, "")
+                SaveMaterialUseCase(repo).execute(None, name, category, stock, unit, state, location, cycle, "")
                 messages.success(request, 'Material registrado correctamente.')
             except Exception as e:
                 messages.error(request, f'Error al registrar: {str(e)}')
             return redirect('warehouse:inventory_panel')
 
-        # --- CARGA MASIVA (CSV) ---
         elif action == 'csv_upload':
             if 'csv_file' not in request.FILES:
                 messages.error(request, 'Debes adjuntar un archivo CSV.')
@@ -92,6 +91,7 @@ def edit_material_view(request, material_id):
 
     if request.method == 'POST':
         name = request.POST.get('name')
+        category = request.POST.get('category', 'General') # <-- CAPTURAMOS CATEGORÍA
         stock = int(request.POST.get('stock', 0))
         unit = request.POST.get('unit')
         state = request.POST.get('state')
@@ -99,7 +99,7 @@ def edit_material_view(request, material_id):
         cycle = request.POST.get('cycle')
         
         try:
-            SaveMaterialUseCase(repo).execute(material_id, name, stock, unit, state, location, cycle, material.pedagogical_use)
+            SaveMaterialUseCase(repo).execute(material_id, name, category, stock, unit, state, location, cycle, material.pedagogical_use)
             messages.success(request, 'Material actualizado correctamente.')
             return redirect('warehouse:inventory_panel')
         except Exception as e:
@@ -112,5 +112,5 @@ def delete_material_view(request, material_id):
     if request.method == 'POST' and request.user.role in ['DIRECTOR', 'SUBDIRECTOR', 'APOYO', 'SUPERUSER']:
         repo = DjangoMaterialRepository()
         DeleteMaterialUseCase(repo).execute(material_id)
-        return HttpResponse("") # HTMX borrará la fila
+        return HttpResponse("") 
     return HttpResponse("No autorizado", status=403)

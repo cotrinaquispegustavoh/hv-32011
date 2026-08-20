@@ -104,9 +104,15 @@
                 {% csrf_token %}
                 <input type="hidden" name="action" value="manual">
                 
-                <div>
-                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Nombre del Material</label>
-                    <input type="text" name="name" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Nombre del Material</label>
+                        <input type="text" name="name" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Categoría</label>
+                        <input type="text" name="category" placeholder="Ej: Matemática, Ciencia..." required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
@@ -166,7 +172,7 @@
                 
                 <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
                     <p class="text-xs font-bold text-blue-800 mb-2">El archivo CSV debe tener estas columnas (separadas por punto y coma):</p>
-                    <code class="text-[10px] bg-white px-2 py-1 rounded border border-blue-200 text-blue-600 font-black block">nombre; stock; unidad; estado; ubicacion; ciclo</code>
+                    <code class="text-[10px] bg-white px-2 py-1 rounded border border-blue-200 text-blue-600 font-black block">nombre; categoría; stock; unidad; estado; ubicacion; ciclo</code>
                 </div>
 
                 <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-500 hover:bg-blue-50 transition-colors">

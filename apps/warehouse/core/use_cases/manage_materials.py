@@ -6,10 +6,12 @@ class SaveMaterialUseCase:
     def __init__(self, material_repo: IMaterialRepository):
         self.material_repo = material_repo
 
-    def execute(self, material_id: Optional[int], name: str, stock: int, unit: str, state: str, location: str, cycle: str, pedagogical_use: str) -> MaterialEntity:
+    # CORRECCIÓN: Añadido el parámetro 'category'
+    def execute(self, material_id: Optional[int], name: str, category: str, stock: int, unit: str, state: str, location: str, cycle: str, pedagogical_use: str) -> MaterialEntity:
         material = MaterialEntity(
             id=material_id,
             name=name,
+            category=category, # <-- GUARDAMOS LA CATEGORÍA
             stock=stock,
             unit=unit,
             state=state,
