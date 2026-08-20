@@ -1,57 +1,182 @@
 {% extends 'base.html' %}
 
-{% block header_title %}Asignación de Permisos{% endblock %}
+{% block header_title %}Gestión de Personal{% endblock %}
 
 {% block content %}
-<div class="max-w-[1400px] mx-auto h-[calc(100vh-140px)] flex flex-col animate-in fade-in duration-300">
+<div x-data="{ selectedUsers: [], selectAll: false, modalOpen: false, modalCsv: false }" 
+     x-init="$watch('selectAll', val => { 
+         const checkboxes = document.querySelectorAll('input[type=checkbox][x-model=selectedUsers]');
+         selectedUsers = val ? Array.from(checkboxes).map(cb => cb.value) : []; 
+     })"
+     class="max-w-7xl mx-auto py-6 px-4 animate-in fade-in duration-500 relative">
     
-    <div class="mb-6">
-        <h1 class="text-2xl font-black text-blue-900 uppercase tracking-wide">Gestión de Roles y Permisos</h1>
-        <p class="text-sm font-medium text-gray-500 mt-1">Administración de accesos y seguridad del equipo institucional.</p>
-    </div>
-
-    <!-- ESTRUCTURA MASTER-DETAIL -->
-    <div class="flex flex-col lg:flex-row gap-6 flex-grow min-h-0">
+    <header class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+        <div>
+            <h1 class="text-2xl font-black text-blue-900 uppercase tracking-wide">Gestión de Personal</h1>
+            <p class="text-sm font-medium text-gray-500 mt-1">Administración de accesos y permisos por módulos.</p>
+        </div>
         
-        <!-- COLUMNA IZQUIERDA (Lista de Usuarios) -->
-        <div class="w-full lg:w-1/3 bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col overflow-hidden flex-shrink-0">
-            
-            <!-- Buscador y Filtro -->
-            <div class="p-4 border-b border-gray-100 bg-gray-50/50 space-y-3">
-                <div class="relative">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-gray-400 text-sm"></i>
-                    <input type="text" name="q" 
-                           hx-get="{% url 'users:search_staff' %}" 
-                           hx-trigger="keyup changed delay:300ms, search" 
-                           hx-target="#lista-personal" 
-                           hx-include="[name='role']"
-                           placeholder="Buscar usuario por nombre o DNI..." 
-                           class="w-full pl-9 pr-3 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow text-xs font-bold text-gray-800">
+        <!-- NUEVO: Botón para importar CSV -->
+        <button @click="modalCsv = true" class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-bold py-2.5 px-4 rounded-lg shadow-sm transition-colors flex items-center gap-2">
+            <i class="fa-solid fa-file-csv text-emerald-600"></i> Importar Personal
+        </button>
+    </header>
+
+    {% if messages %}
+        <div class="mb-6 space-y-3">
+            {% for message in messages %}
+                <div class="p-4 rounded-lg text-sm font-bold border {% if message.tags == 'error' %}bg-red-50 text-red-700 border-red-200{% else %}bg-green-50 text-green-700 border-green-200{% endif %}">
+                    {{ message }}
                 </div>
-                <select name="role" 
-                        hx-get="{% url 'users:search_staff' %}" 
-                        hx-trigger="change" 
-                        hx-target="#lista-personal"
-                        hx-include="[name='q']"
-                        class="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer">
-                    <option value="">Todos los roles</option>
-                    <option value="DOCENTE">Docentes</option>
-                    <option value="SUBDIRECTOR">Subdirectores</option>
-                    <option value="APOYO">Personal de Apoyo</option>
-                </select>
-            </div>
-
-            <!-- Lista Scrolleable -->
-            <div id="lista-personal" class="flex-grow overflow-y-auto bg-white">
-                {% include 'users/partials/staff_list_items.html' %}
-            </div>
+            {% endfor %}
         </div>
+    {% endif %}
 
-        <!-- COLUMNA DERECHA (Detalle y Permisos) -->
-        <div id="staff-detail-container" class="w-full lg:w-2/3 bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col overflow-hidden">
-            {% include 'users/partials/staff_detail.html' %}
-        </div>
-
+    <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-200 mb-6">
+        <form class="flex flex-col md:flex-row gap-4" onsubmit="event.preventDefault();">
+            <div class="flex-1 relative">
+                <input type="text" name="q" 
+                       hx-get="{% url 'users:search_staff' %}" 
+                       hx-trigger="keyup changed delay:300ms, search" 
+                       hx-target="#tabla-personal" 
+                       hx-include="[name='role']"
+                       placeholder="Buscar por nombre, apellido o DNI..." 
+                       class="w-full pl-12 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow text-sm font-semibold text-gray-800">
+                <span class="absolute left-4 top-3 text-gray-400 text-lg"><i class="fa-solid fa-magnifying-glass"></i></span>
+            </div>
+            
+            <select name="role" 
+                    hx-get="{% url 'users:search_staff' %}" 
+                    hx-trigger="change" 
+                    hx-target="#tabla-personal"
+                    hx-include="[name='q']"
+                    class="md:w-64 px-4 py-2.5 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white cursor-pointer font-bold text-gray-700 text-xs uppercase tracking-wider transition-all">
+                <option value="">Todos los Roles</option>
+                <option value="DOCENTE">Docentes</option>
+                <option value="SUBDIRECTOR">Subdirectores</option>
+                <option value="APOYO">Personal de Apoyo</option>
+            </select>
+        </form>
     </div>
+
+    <div x-show="selectedUsers.length > 0" x-transition.opacity style="display: none;" 
+         class="bg-blue-900 text-white p-4 rounded-2xl mb-6 flex items-center justify-between shadow-lg">
+        <div class="flex items-center gap-3">
+            <span class="w-8 h-8 bg-blue-800 rounded-full flex items-center justify-center font-black text-sm" x-text="selectedUsers.length"></span>
+            <span class="text-sm font-bold tracking-wide">Usuarios seleccionados</span>
+        </div>
+        <button @click="modalOpen = true" class="bg-white text-blue-900 hover:bg-blue-50 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-colors shadow-sm">
+            <i class="fa-solid fa-key mr-1"></i> Asignar Permisos
+        </button>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-50 border-b-2 border-gray-100 text-[10px] text-gray-500 uppercase tracking-widest">
+                        <th class="p-5 w-10">
+                            <input type="checkbox" x-model="selectAll" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer">
+                        </th>
+                        <th class="p-5 font-black">Usuario / DNI</th>
+                        <th class="p-5 font-black">Rol / Cargo</th>
+                        <th class="p-5 font-black">Módulos Asignados</th>
+                        <th class="p-5 font-black text-center">Acceso al Sistema</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-personal" class="divide-y divide-gray-100">
+                    {% include 'users/partials/staff_table_rows.html' %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- MODAL DE PERMISOS -->
+    <div x-show="modalOpen" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+        <div @click.away="modalOpen = false" class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+            <div class="bg-slate-900 text-white px-6 py-5 flex justify-between items-center">
+                <h3 class="font-black tracking-wide uppercase text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-shield-halved text-blue-400"></i> Matriz de Permisos
+                </h3>
+                <button @click="modalOpen = false" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <form hx-post="{% url 'users:bulk_permissions' %}" 
+                  hx-target="#tabla-personal"
+                  hx-swap="innerHTML"
+                  @submit="setTimeout(() => { modalOpen = false; selectedUsers = []; selectAll = false; }, 100)"
+                  class="p-6 space-y-6">
+                {% csrf_token %}
+                
+                <template x-for="id in selectedUsers">
+                    <input type="hidden" name="user_ids" :value="id">
+                </template>
+
+                <p class="text-sm text-gray-500 font-medium">Selecciona los módulos a los que tendrán acceso los <strong x-text="selectedUsers.length" class="text-gray-900"></strong> usuarios seleccionados.</p>
+
+                <div class="space-y-3">
+                    <label class="flex items-center gap-3 p-4 border border-gray-200 rounded-2xl cursor-pointer hover:bg-gray-50 transition-colors">
+                        <input type="checkbox" name="modules" value="almacen" class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500">
+                        <div>
+                            <p class="font-black text-gray-800 text-sm">Módulo de Almacén</p>
+                            <p class="text-[10px] text-gray-400 uppercase font-bold mt-0.5">Catálogo y Solicitudes</p>
+                        </div>
+                    </label>
+                    <label class="flex items-center gap-3 p-4 border border-gray-200 rounded-2xl cursor-pointer hover:bg-gray-50 transition-colors">
+                        <input type="checkbox" name="modules" value="disciplina" class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500">
+                        <div>
+                            <p class="font-black text-gray-800 text-sm">Módulo de Disciplina</p>
+                            <p class="text-[10px] text-gray-400 uppercase font-bold mt-0.5">Registro de Incidencias</p>
+                        </div>
+                    </label>
+                    <label class="flex items-center gap-3 p-4 border border-gray-200 rounded-2xl cursor-pointer hover:bg-gray-50 transition-colors">
+                        <input type="checkbox" name="modules" value="portafolio" class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500">
+                        <div>
+                            <p class="font-black text-gray-800 text-sm">Módulo Académico</p>
+                            <p class="text-[10px] text-gray-400 uppercase font-bold mt-0.5">Portafolio Docente</p>
+                        </div>
+                    </label>
+                </div>
+
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl transition-all shadow-md active:scale-95 text-xs uppercase tracking-wider">
+                    Guardar Permisos
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: CARGA MASIVA CSV -->
+    <div x-show="modalCsv" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+        <div @click.away="modalCsv = false" class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+            <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center">
+                <h3 class="font-black tracking-wide uppercase text-sm"><i class="fa-solid fa-file-csv text-emerald-400 mr-2"></i> Importar Personal</h3>
+                <button @click="modalCsv = false" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            
+            <form method="POST" action="{% url 'users:staff_list' %}" enctype="multipart/form-data" class="p-6 space-y-5">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="csv_upload">
+                
+                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                    <p class="text-xs font-bold text-blue-800 mb-2">El archivo CSV debe tener estas columnas (separadas por punto y coma):</p>
+                    <code class="text-[10px] bg-white px-2 py-1 rounded border border-blue-200 text-blue-600 font-black block">dni; nombres; apellidos; rol; cargo_especifico</code>
+                    <p class="text-[10px] text-blue-600 mt-2 font-medium">* Roles válidos: DOCENTE, SUBDIRECTOR, APOYO. La contraseña inicial será el DNI.</p>
+                </div>
+
+                <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-500 hover:bg-blue-50 transition-colors">
+                    <i class="fa-solid fa-file-excel text-3xl text-gray-400 mb-3"></i>
+                    <input type="file" name="csv_file" required accept=".csv"
+                           class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer mx-auto">
+                </div>
+
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 rounded-xl transition-all shadow-md active:scale-95 text-xs uppercase tracking-wider">
+                    Procesar Archivo CSV
+                </button>
+            </form>
+        </div>
+    </div>
+
 </div>
 {% endblock %}
