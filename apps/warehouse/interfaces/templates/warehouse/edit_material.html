@@ -22,13 +22,20 @@
             </div>
         </div>
 
-        <form method="POST" action="{% url 'warehouse:edit_material' material.id %}" class="p-6 space-y-6">
+        <form method="POST" enctype="multipart/form-data" action="{% url 'warehouse:edit_material' material.id %}" class="p-6 space-y-6">
             {% csrf_token %}
             
-            <div>
-                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Nombre del Material</label>
-                <input type="text" name="name" required value="{{ material.name }}"
-                       class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Nombre del Material</label>
+                    <input type="text" name="name" required value="{{ material.name }}"
+                           class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Categoría</label>
+                    <input type="text" name="category" required value="{{ material.category }}"
+                           class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -68,6 +75,22 @@
                 <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Ubicación</label>
                 <input type="text" name="location" required value="{{ material.location }}"
                        class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Uso Pedagógico</label>
+                <textarea name="pedagogical_use" rows="3" class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none">{{ material.pedagogical_use|default:"" }}</textarea>
+            </div>
+
+            <div class="border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center hover:border-blue-500 hover:bg-blue-50 transition-colors">
+                {% if material.main_image_url %}
+                    <img src="/media/{{ material.main_image_url }}" alt="Imagen actual" class="h-32 object-contain mx-auto mb-4 rounded-lg shadow-sm">
+                    <p class="text-xs font-bold text-gray-500 mb-4">Sube una nueva imagen solo si deseas reemplazar la actual.</p>
+                {% else %}
+                    <i class="fa-solid fa-image text-3xl text-gray-400 mb-3"></i>
+                {% endif %}
+                <input type="file" name="image" accept="image/*"
+                       class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer mx-auto transition-colors">
             </div>
 
             <div class="flex justify-end pt-4 border-t border-gray-100">

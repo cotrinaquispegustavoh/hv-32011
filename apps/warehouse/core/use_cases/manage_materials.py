@@ -6,18 +6,18 @@ class SaveMaterialUseCase:
     def __init__(self, material_repo: IMaterialRepository):
         self.material_repo = material_repo
 
-    # CORRECCIÓN: Añadido el parámetro 'category'
-    def execute(self, material_id: Optional[int], name: str, category: str, stock: int, unit: str, state: str, location: str, cycle: str, pedagogical_use: str) -> MaterialEntity:
+    def execute(self, material_id: Optional[int], name: str, category: str, stock: int, unit: str, state: str, location: str, cycle: str, pedagogical_use: str, image_path: Optional[str] = None) -> MaterialEntity:
         material = MaterialEntity(
             id=material_id,
             name=name,
-            category=category, # <-- GUARDAMOS LA CATEGORÍA
+            category=category,
             stock=stock,
             unit=unit,
             state=state,
             location=location,
             cycle=cycle,
-            pedagogical_use=pedagogical_use
+            pedagogical_use=pedagogical_use,
+            new_image_path=image_path # Pasamos la nueva imagen si existe
         )
         return self.material_repo.save(material)
 

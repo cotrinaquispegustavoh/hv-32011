@@ -93,14 +93,7 @@
     </div>
 
     <!-- MODAL: CREACIÓN MANUAL -->
-    <div x-show="modalManual" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-        <div @click.away="modalManual = false" class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
-            <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center">
-                <h3 class="font-black tracking-wide uppercase text-sm"><i class="fa-solid fa-box text-sky-400 mr-2"></i> Nuevo Material</h3>
-                <button @click="modalManual = false" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
-            </div>
-            
-            <form method="POST" action="{% url 'warehouse:inventory_panel' %}" class="p-6 space-y-4">
+            <form method="POST" action="{% url 'warehouse:inventory_panel' %}" enctype="multipart/form-data" class="p-6 space-y-4">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="manual">
                 
@@ -151,12 +144,21 @@
                     <input type="text" name="location" placeholder="Ej: Almacén Central, Estante A" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
                 </div>
 
+                <!-- NUEVOS CAMPOS -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Uso Pedagógico (Opcional)</label>
+                    <textarea name="pedagogical_use" rows="2" placeholder="¿Para qué sirve este material en clase?" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Fotografía del Material (Opcional)</label>
+                    <input type="file" name="image" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border border-gray-200 rounded-xl">
+                </div>
+
                 <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl transition-all shadow-md active:scale-95 text-xs uppercase tracking-wider mt-4">
                     Guardar Material
                 </button>
             </form>
-        </div>
-    </div>
 
     <!-- MODAL: CARGA MASIVA CSV -->
     <div x-show="modalCsv" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">

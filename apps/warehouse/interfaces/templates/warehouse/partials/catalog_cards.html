@@ -1,19 +1,33 @@
 {% for item in materials %}
 <div x-data="loanModal({{ item.stock }})" class="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all flex flex-col overflow-hidden group">
     
-    <div class="p-5 flex-grow">
-        <div class="flex justify-between items-start mb-3">
-            <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center border border-blue-100">
-                <i class="fa-solid fa-cube text-lg"></i>
-            </div>
-            <span class="bg-gray-100 text-gray-600 text-[10px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider border border-gray-200">
-                {{ item.cycle }}
-            </span>
-        </div>
+    <!-- Contenedor de Imagen -->
+    <div class="h-40 bg-gray-50 relative overflow-hidden border-b border-gray-100 flex items-center justify-center">
+        {% if item.main_image_url %}
+            <img src="/media/{{ item.main_image_url }}" alt="{{ item.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+        {% else %}
+            <i class="fa-solid fa-image text-4xl text-gray-200"></i>
+        {% endif %}
+        
+        <!-- Etiqueta de Ciclo superpuesta -->
+        <span class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-gray-700 text-[9px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider shadow-sm">
+            {{ item.cycle }}
+        </span>
+    </div>
+
+    <!-- Info de la Tarjeta -->
+    <div class="p-5 flex-grow flex flex-col">
         <h3 class="font-black text-gray-900 text-base leading-tight mb-1">{{ item.name }}</h3>
-        <p class="text-xs font-medium text-gray-500"><i class="fa-solid fa-location-dot mr-1 text-gray-400"></i> {{ item.location }}</p>
+        <p class="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-2">{{ item.category }}</p>
+        
+        <p class="text-xs text-gray-500 font-medium leading-relaxed mb-3 line-clamp-2 flex-grow" title="{{ item.pedagogical_use }}">
+            {{ item.pedagogical_use|default:"Sin descripción pedagógica." }}
+        </p>
+        
+        <p class="text-xs font-bold text-gray-400"><i class="fa-solid fa-location-dot mr-1"></i> {{ item.location }}</p>
     </div>
     
+    <!-- Footer de la Tarjeta -->
     <div class="px-5 py-4 border-t border-gray-100 bg-gray-50 flex justify-between items-center">
         <div class="flex flex-col">
             <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Stock</span>
@@ -26,25 +40,15 @@
         </button>
     </div>
 
-    <!-- MODAL DE RESERVA -->
+    <!-- MODAL DE RESERVA (Mantenemos el mismo modal que ya arreglamos) -->
     <div x-show="open" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-        
-        <!-- CORRECCIÓN: max-h-[90vh] para que no se salga de la pantalla en celulares pequeños -->
         <div @click.away="open = false" class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 max-h-[90vh]">
-            
             <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center flex-shrink-0">
                 <h3 class="font-black tracking-wide uppercase text-sm" x-text="step === 1 ? 'Configurar Reserva' : 'Verificar Solicitud'"></h3>
-                <button @click="open = false; step = 1" class="text-slate-400 hover:text-white transition-colors">
-                    <i class="fa-solid fa-xmark text-xl"></i>
-                </button>
+                <button @click="open = false; step = 1" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
-
-            <!-- CORRECCIÓN: overflow-y-auto para permitir scroll interno si el celular es muy pequeño -->
             <div class="overflow-y-auto scrollbar-hide flex-grow">
-                <form hx-post="{% url 'warehouse:request_material' item.id %}" 
-                      hx-target="#form-error-{{ item.id }}"
-                      hx-swap="innerHTML"
-                      class="p-6 space-y-6">
+                <form hx-post="{% url 'warehouse:request_material' item.id %}" hx-target="#form-error-{{ item.id }}" hx-swap="innerHTML" class="p-6 space-y-6">
                     {% csrf_token %}
                     <input type="hidden" name="quantity" :value="quantity">
                     <input type="hidden" name="required_for" :value="getPickupDatetime()">
@@ -60,8 +64,7 @@
 
                         <div>
                             <label class="block text-xs font-bold text-gray-600 uppercase mb-2">Fecha del Préstamo</label>
-                            <input type="date" x-model="date" required :min="today"
-                                   class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                            <input type="date" x-model="date" required :min="today" class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
                         </div>
 
                         <div>
@@ -75,13 +78,9 @@
 
                         <div>
                             <label class="block text-xs font-bold text-gray-600 uppercase mb-3">Planificación del Tiempo</label>
-                            
-                            <!-- CORRECCIÓN: grid-cols-1 en móvil, sm:grid-cols-2 en PC. Esto apila las cajas en celulares -->
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                
                                 <div class="bg-gray-50 p-3 rounded-xl border border-gray-200">
                                     <span class="block text-[10px] font-bold text-emerald-600 uppercase mb-2">RECOJO</span>
-                                    <!-- CORRECCIÓN: flex-1 en los selects para que se distribuyan uniformemente -->
                                     <div class="flex items-center gap-1">
                                         <select x-model="p_hour" class="flex-1 min-w-0 bg-white border border-gray-200 rounded-lg px-1 py-2 text-sm font-bold text-center focus:outline-none focus:border-blue-500"><option value="" disabled selected>HH</option><template x-for="h in hours"><option :value="h" x-text="h"></option></template></select>
                                         <span class="font-bold text-gray-400">:</span>
@@ -89,7 +88,6 @@
                                         <select x-model="p_ampm" class="flex-1 min-w-0 bg-white border border-gray-200 rounded-lg px-1 py-2 text-sm font-bold text-center focus:outline-none focus:border-blue-500"><option value="AM">AM</option><option value="PM">PM</option></select>
                                     </div>
                                 </div>
-                                
                                 <div class="bg-blue-50 p-3 rounded-xl border border-blue-200">
                                     <span class="block text-[10px] font-bold text-blue-600 uppercase mb-2">RETORNO</span>
                                     <div class="flex items-center gap-1">
@@ -99,7 +97,6 @@
                                         <select x-model="r_ampm" class="flex-1 min-w-0 bg-white border border-blue-200 rounded-lg px-1 py-2 text-sm font-bold text-blue-700 text-center focus:outline-none focus:border-blue-500"><option value="AM">AM</option><option value="PM">PM</option></select>
                                     </div>
                                 </div>
-
                             </div>
                             <div x-show="hasTimeError() && p_hour && r_hour" class="mt-3 text-[11px] font-bold text-red-700 bg-red-50 border border-red-100 p-3 rounded-xl">
                                 <i class="fa-solid fa-circle-exclamation text-red-500 mr-1"></i> La hora de retorno debe ser posterior al recojo.
@@ -112,38 +109,17 @@
                     </div>
 
                     <div x-show="step === 2" style="display: none;" class="space-y-6 text-center">
-                        <div class="w-16 h-16 bg-amber-50 text-amber-500 border border-amber-100 rounded-full flex items-center justify-center text-2xl mx-auto shadow-inner">
-                            <i class="fa-solid fa-circle-question"></i>
-                        </div>
-                        
+                        <div class="w-16 h-16 bg-amber-50 text-amber-500 border border-amber-100 rounded-full flex items-center justify-center text-2xl mx-auto shadow-inner"><i class="fa-solid fa-circle-question"></i></div>
                         <h4 class="font-black text-xl text-slate-900 tracking-tight uppercase">¿Confirmar Reserva?</h4>
-                        
                         <div class="bg-gray-50 p-5 rounded-2xl border border-gray-200 text-left space-y-3 shadow-inner">
-                            <div class="flex justify-between border-b border-gray-200 pb-2">
-                                <span class="text-[10px] font-black text-gray-500 uppercase">Fecha:</span>
-                                <span class="text-xs font-black text-gray-900" x-text="date"></span>
-                            </div>
-                            <div class="flex justify-between border-b border-gray-200 pb-2">
-                                <span class="text-[10px] font-black text-gray-500 uppercase">Unidades:</span>
-                                <span class="text-xs font-black text-gray-900" x-text="quantity"></span>
-                            </div>
-                            <div class="flex justify-between border-b border-gray-200 pb-2">
-                                <span class="text-[10px] font-black text-gray-500 uppercase">Recojo:</span>
-                                <span class="text-xs font-black text-emerald-600" x-text="`${p_hour}:${p_min} ${p_ampm}`"></span>
-                            </div>
-                            <div class="flex justify-between pt-1">
-                                <span class="text-[10px] font-black text-gray-500 uppercase">Retorno:</span>
-                                <span class="text-xs font-black text-blue-600" x-text="`${r_hour}:${r_min} ${r_ampm}`"></span>
-                            </div>
+                            <div class="flex justify-between border-b border-gray-200 pb-2"><span class="text-[10px] font-black text-gray-500 uppercase">Fecha:</span><span class="text-xs font-black text-gray-900" x-text="date"></span></div>
+                            <div class="flex justify-between border-b border-gray-200 pb-2"><span class="text-[10px] font-black text-gray-500 uppercase">Unidades:</span><span class="text-xs font-black text-gray-900" x-text="quantity"></span></div>
+                            <div class="flex justify-between border-b border-gray-200 pb-2"><span class="text-[10px] font-black text-gray-500 uppercase">Recojo:</span><span class="text-xs font-black text-emerald-600" x-text="`${p_hour}:${p_min} ${p_ampm}`"></span></div>
+                            <div class="flex justify-between pt-1"><span class="text-[10px] font-black text-gray-500 uppercase">Retorno:</span><span class="text-xs font-black text-blue-600" x-text="`${r_hour}:${r_min} ${r_ampm}`"></span></div>
                         </div>
-
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <button type="button" @click="step = 1" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-black py-4 rounded-xl text-xs uppercase transition-colors">
-                                Corregir
-                            </button>
-                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl text-xs uppercase shadow-md transition-colors">
-                                Confirmar <i class="fa-solid fa-check ml-1"></i>
-                            </button>
+                            <button type="button" @click="step = 1" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-black py-4 rounded-xl text-xs uppercase transition-colors">Corregir</button>
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl text-xs uppercase shadow-md transition-colors">Confirmar <i class="fa-solid fa-check ml-1"></i></button>
                         </div>
                     </div>
                 </form>

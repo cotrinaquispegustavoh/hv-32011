@@ -1,9 +1,11 @@
 import csv
+import os
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import transaction
+from django.core.files.storage import FileSystemStorage
 from apps.warehouse.infrastructure.repositories.warehouse_repository import DjangoMaterialRepository
 from apps.warehouse.core.use_cases.manage_materials import SaveMaterialUseCase, DeleteMaterialUseCase
 from apps.warehouse.core.use_cases.import_materials import ImportMaterialUseCase
@@ -20,15 +22,24 @@ def inventory_panel_view(request):
 
         if action == 'manual':
             name = request.POST.get('name')
-            category = request.POST.get('category', 'General') # <-- CAPTURAMOS CATEGORÍA
+            category = request.POST.get('category', 'General')
             stock = int(request.POST.get('stock', 0))
             unit = request.POST.get('unit')
             state = request.POST.get('state')
             location = request.POST.get('location')
             cycle = request.POST.get('cycle')
+            pedagogical_use = request.POST.get('pedagogical_use', '')
+            
+            # Procesar imagen
+            image_path = None
+            if 'image' in request.FILES:
+                file = request.FILES['image']
+                fs = FileSystemStorage(location='media/materials/')
+                filename = fs.save(file.name, file)
+                image_path = f'materials/{filename}'
             
             try:
-                SaveMaterialUseCase(repo).execute(None, name, category, stock, unit, state, location, cycle, "")
+                SaveMaterialUseCase(repo).execute(None, name, category, stock, unit, state, location, cycle, pedagogical_use, image_path)
                 messages.success(request, 'Material registrado correctamente.')
             except Exception as e:
                 messages.error(request, f'Error al registrar: {str(e)}')
@@ -51,7 +62,6 @@ def inventory_panel_view(request):
             try:
                 decoded_file = csv_file.read().decode('utf-8-sig').splitlines()
                 reader = csv.DictReader(decoded_file, delimiter=';')
-                
                 if reader.fieldnames:
                     reader.fieldnames = [str(c).strip().lower().replace(' ', '_') for c in reader.fieldnames if c]
 
@@ -66,9 +76,7 @@ def inventory_panel_view(request):
                             
                 messages.success(request, f'Importación exitosa: {creados} creados, {actualizados} actualizados.')
                 if errores:
-                    for err in errores[:5]:
-                        messages.error(request, err)
-                        
+                    for err in errores[:5]: messages.error(request, err)
             except Exception as e:
                 messages.error(request, f'Error al procesar el archivo: {str(e)}')
                 
@@ -91,15 +99,23 @@ def edit_material_view(request, material_id):
 
     if request.method == 'POST':
         name = request.POST.get('name')
-        category = request.POST.get('category', 'General') # <-- CAPTURAMOS CATEGORÍA
+        category = request.POST.get('category', 'General')
         stock = int(request.POST.get('stock', 0))
         unit = request.POST.get('unit')
         state = request.POST.get('state')
         location = request.POST.get('location')
         cycle = request.POST.get('cycle')
+        pedagogical_use = request.POST.get('pedagogical_use', '')
+        
+        image_path = None
+        if 'image' in request.FILES:
+            file = request.FILES['image']
+            fs = FileSystemStorage(location='media/materials/')
+            filename = fs.save(file.name, file)
+            image_path = f'materials/{filename}'
         
         try:
-            SaveMaterialUseCase(repo).execute(material_id, name, category, stock, unit, state, location, cycle, material.pedagogical_use)
+            SaveMaterialUseCase(repo).execute(material_id, name, category, stock, unit, state, location, cycle, pedagogical_use, image_path)
             messages.success(request, 'Material actualizado correctamente.')
             return redirect('warehouse:inventory_panel')
         except Exception as e:

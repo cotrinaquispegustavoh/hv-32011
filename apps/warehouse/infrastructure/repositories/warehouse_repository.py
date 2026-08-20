@@ -2,11 +2,10 @@ from typing import List, Optional
 from django.db import transaction
 from apps.warehouse.core.domain.entities import MaterialEntity, LoanRequestEntity, LoanDetailEntity
 from apps.warehouse.core.domain.repositories import IMaterialRepository, ILoanRequestRepository
-from apps.warehouse.infrastructure.models import Material, LoanRequest, LoanDetail
+from apps.warehouse.infrastructure.models import Material, MaterialImage, LoanRequest, LoanDetail
 
 class DjangoMaterialRepository(IMaterialRepository):
     def get_all(self) -> List[MaterialEntity]:
-        # CORRECCIÓN: Añadimos order_by('name') para evitar que PostgreSQL desordene las tarjetas
         return [self._to_entity(m) for m in Material.objects.all().order_by('name')]
 
     def get_by_id(self, material_id: int) -> Optional[MaterialEntity]:
@@ -24,12 +23,13 @@ class DjangoMaterialRepository(IMaterialRepository):
         except Material.DoesNotExist:
             return None
 
+    @transaction.atomic
     def save(self, material: MaterialEntity) -> MaterialEntity:
         model, _ = Material.objects.update_or_create(
             id=material.id,
             defaults={
                 'name': material.name,
-                'category': material.category, # <-- NUEVO
+                'category': material.category,
                 'stock': material.stock,
                 'unit': material.unit,
                 'state': material.state,
@@ -38,6 +38,12 @@ class DjangoMaterialRepository(IMaterialRepository):
                 'pedagogical_use': material.pedagogical_use
             }
         )
+        
+        # Si se subió una nueva imagen, borramos la anterior y guardamos la nueva
+        if material.new_image_path:
+            MaterialImage.objects.filter(material=model, is_main=True).delete()
+            MaterialImage.objects.create(material=model, image=material.new_image_path, is_main=True)
+            
         return self._to_entity(model)
 
     def delete(self, material_id: int) -> bool:
@@ -49,10 +55,14 @@ class DjangoMaterialRepository(IMaterialRepository):
             return False
 
     def _to_entity(self, model: Material) -> MaterialEntity:
+        # Buscamos la imagen principal
+        main_img = model.images.filter(is_main=True).first()
+        img_url = main_img.image.name if main_img and main_img.image else None
+        
         return MaterialEntity(
             id=model.id, name=model.name, category=model.category, stock=model.stock, unit=model.unit,
             state=model.state, location=model.location, cycle=model.cycle,
-            pedagogical_use=model.pedagogical_use
+            pedagogical_use=model.pedagogical_use, main_image_url=img_url
         )
 
 class DjangoLoanRequestRepository(ILoanRequestRepository):
@@ -100,7 +110,7 @@ class DjangoLoanRequestRepository(ILoanRequestRepository):
         )
 
     def get_by_teacher(self, teacher_id: int) -> List[LoanRequestEntity]:
-        models = LoanRequest.objects.filter(teacher_id=teacher_id).prefetch_related('details__material', 'teacher')
+        models = LoanRequest.objects.filter(teacher_id=teacher_id).prefetch_related('details__material', 'teacher').order_by('-request_date')
         return [self._to_entity(m) for m in models]
 
     def get_all_active(self) -> List[LoanRequestEntity]:

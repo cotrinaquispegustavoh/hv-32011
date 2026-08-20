@@ -8,15 +8,14 @@
          const checkboxes = document.querySelectorAll('input[type=checkbox][x-model=selectedUsers]');
          selectedUsers = val ? Array.from(checkboxes).map(cb => cb.value) : []; 
      })"
-     class="max-w-7xl mx-auto py-6 px-4 animate-in fade-in duration-500 relative">
+     class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 animate-in fade-in duration-300 relative">
     
-    <header class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+    <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <div>
             <h1 class="text-2xl font-black text-blue-900 uppercase tracking-wide">Gestión de Personal</h1>
             <p class="text-sm font-medium text-gray-500 mt-1">Administración de accesos y permisos por módulos.</p>
         </div>
         
-        <!-- NUEVO: Botón para importar CSV -->
         <button @click="modalCsv = true" class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-bold py-2.5 px-4 rounded-lg shadow-sm transition-colors flex items-center gap-2">
             <i class="fa-solid fa-file-csv text-emerald-600"></i> Importar Personal
         </button>
@@ -32,33 +31,33 @@
         </div>
     {% endif %}
 
-    <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-200 mb-6">
-        <form class="flex flex-col md:flex-row gap-4" onsubmit="event.preventDefault();">
-            <div class="flex-1 relative">
-                <input type="text" name="q" 
-                       hx-get="{% url 'users:search_staff' %}" 
-                       hx-trigger="keyup changed delay:300ms, search" 
-                       hx-target="#tabla-personal" 
-                       hx-include="[name='role']"
-                       placeholder="Buscar por nombre, apellido o DNI..." 
-                       class="w-full pl-12 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow text-sm font-semibold text-gray-800">
-                <span class="absolute left-4 top-3 text-gray-400 text-lg"><i class="fa-solid fa-magnifying-glass"></i></span>
-            </div>
-            
-            <select name="role" 
-                    hx-get="{% url 'users:search_staff' %}" 
-                    hx-trigger="change" 
-                    hx-target="#tabla-personal"
-                    hx-include="[name='q']"
-                    class="md:w-64 px-4 py-2.5 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white cursor-pointer font-bold text-gray-700 text-xs uppercase tracking-wider transition-all">
-                <option value="">Todos los Roles</option>
-                <option value="DOCENTE">Docentes</option>
-                <option value="SUBDIRECTOR">Subdirectores</option>
-                <option value="APOYO">Personal de Apoyo</option>
-            </select>
-        </form>
+    <!-- Buscador y Filtros -->
+    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 mb-6 flex flex-col sm:flex-row gap-4">
+        <div class="relative flex-grow">
+            <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-gray-400"></i>
+            <input type="text" name="q" 
+                   hx-get="{% url 'users:search_staff' %}" 
+                   hx-trigger="keyup changed delay:300ms, search" 
+                   hx-target="#tabla-personal" 
+                   hx-include="[name='role']"
+                   placeholder="Buscar por nombre, apellido o DNI..." 
+                   class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow">
+        </div>
+        
+        <select name="role" 
+                hx-get="{% url 'users:search_staff' %}" 
+                hx-trigger="change" 
+                hx-target="#tabla-personal"
+                hx-include="[name='q']"
+                class="w-full sm:w-64 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white cursor-pointer transition-shadow">
+            <option value="">Todos los Roles</option>
+            <option value="DOCENTE">Docentes</option>
+            <option value="SUBDIRECTOR">Subdirectores</option>
+            <option value="APOYO">Personal de Apoyo</option>
+        </select>
     </div>
 
+    <!-- Barra de Acciones en Bloque -->
     <div x-show="selectedUsers.length > 0" x-transition.opacity style="display: none;" 
          class="bg-blue-900 text-white p-4 rounded-2xl mb-6 flex items-center justify-between shadow-lg">
         <div class="flex items-center gap-3">
@@ -70,18 +69,19 @@
         </button>
     </div>
 
+    <!-- Tabla -->
     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="min-w-full text-left border-collapse">
-                <thead>
-                    <tr class="bg-gray-50 border-b-2 border-gray-100 text-[10px] text-gray-500 uppercase tracking-widest">
-                        <th class="p-5 w-10">
+                <thead class="bg-gray-50">
+                    <tr class="border-b-2 border-gray-100 text-[10px] text-gray-500 uppercase tracking-widest">
+                        <th class="px-6 py-4 w-10">
                             <input type="checkbox" x-model="selectAll" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer">
                         </th>
-                        <th class="p-5 font-black">Usuario / DNI</th>
-                        <th class="p-5 font-black">Rol / Cargo</th>
-                        <th class="p-5 font-black">Módulos Asignados</th>
-                        <th class="p-5 font-black text-center">Acceso al Sistema</th>
+                        <th class="px-6 py-4 font-black">Usuario / DNI</th>
+                        <th class="px-6 py-4 font-black">Rol / Cargo</th>
+                        <th class="px-6 py-4 font-black">Módulos Asignados</th>
+                        <th class="px-6 py-4 font-black text-right">Acceso al Sistema</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-personal" class="divide-y divide-gray-100">

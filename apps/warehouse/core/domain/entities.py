@@ -6,13 +6,15 @@ from datetime import datetime
 class MaterialEntity:
     id: Optional[int]
     name: str
-    category: str # <-- NUEVO CAMPO
+    category: str
     stock: int
     unit: str
     state: str
     location: str
     cycle: str
     pedagogical_use: Optional[str]
+    main_image_url: Optional[str] = None
+    new_image_path: Optional[str] = None
 
 @dataclass
 class LoanDetailEntity:
