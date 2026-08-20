@@ -7,7 +7,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Initialize environment variables
 env = environ.Env(
-    DEBUG=(bool, True)
+    DEBUG=(bool, False) # Por defecto en producción será False
 )
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
@@ -17,11 +17,10 @@ SECRET_KEY = env('SECRET_KEY', default='django-insecure-default-key-for-dev')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
+# Dominios permitidos
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['*'])
 
-
 # Application definition
-
 INSTALLED_APPS = [
     'daphne',
     'django.contrib.admin',
@@ -39,11 +38,12 @@ INSTALLED_APPS = [
     'apps.discipline',
     'apps.portfolio',
     'apps.assignments',
-    'apps.documents'
+    'apps.documents',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -54,7 +54,6 @@ MIDDLEWARE = [
     'apps.users.interfaces.middlewares.ForcePasswordChangeMiddleware',
     'apps.users.interfaces.middlewares.RoleGuardMiddleware',
     'apps.users.interfaces.middlewares.NoCacheAuthenticatedMiddleware',
-    
     'apps.core.interfaces.middlewares.CurrentUserMiddleware',
     'apps.users.interfaces.middlewares.HtmxLoginRedirectMiddleware',
 ]
@@ -65,9 +64,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            BASE_DIR / 'templates', # Aquí está el base.html global
-            
-            # Rutas de Clean Architecture para cada app
+            BASE_DIR / 'templates',
             BASE_DIR / 'apps' / 'users' / 'interfaces' / 'templates',
             BASE_DIR / 'apps' / 'core' / 'interfaces' / 'templates',
             BASE_DIR / 'apps' / 'academics' / 'interfaces' / 'templates',
@@ -93,77 +90,55 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 ASGI_APPLICATION = 'config.asgi.application'
 
+# --- CONFIGURACIÓN DE WEBSOCKETS ---
 CHANNEL_LAYERS = {
     "default": {
-        # Usamos el backend de Redis, pero configurado para correr localmente en memoria
         "BACKEND": "channels.layers.InMemoryChannelLayer" 
     },
 }
 
 # Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
 DATABASES = {
     'default': env.db('DATABASE_URL', default=f'sqlite:///{BASE_DIR / "db.sqlite3"}')
 }
 
-
 # Password validation
-# https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',},
 ]
 
-
 # Internationalization
-# https://docs.djangoproject.com/en/5.0/topics/i18n/
-
 LANGUAGE_CODE = 'es-pe'
-
 TIME_ZONE = 'America/Lima'
-
 USE_I18N = True
-
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.0/howto/static-files/
-
+# --- ARCHIVOS ESTÁTICOS Y MULTIMEDIA ---
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Media files (Uploads)
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# Custom User Model
 AUTH_USER_MODEL = 'users.User'
 
 # --- SEGURIDAD DE SESIONES ---
-# Cierra la sesión automáticamente cuando el usuario cierra el navegador
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True 
-
-# Tiempo máximo de inactividad (30 minutos = 1800 segundos)
 SESSION_COOKIE_AGE = 1800 
-
-# Renueva los 30 minutos cada vez que el usuario hace clic en algo
 SESSION_SAVE_EVERY_REQUEST = True
+
+# --- SEGURIDAD EN PRODUCCIÓN (HTTPS) ---
+if not DEBUG:
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = False
+    
+    # CORRECCIÓN: Le decimos a Django que confíe en el dominio de Render para los formularios
+    CSRF_TRUSTED_ORIGINS = ['https://intranet-hv.onrender.com']
