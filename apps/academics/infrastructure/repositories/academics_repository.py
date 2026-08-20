@@ -8,6 +8,13 @@ class DjangoSectionRepository(ISectionRepository):
         models = Section.objects.filter(year=year)
         return [SectionEntity(id=m.id, grade=m.grade, letter=m.letter, name=m.name, year=m.year) for m in models]
 
+    def get_by_grade_letter(self, grade: str, letter: str, year: int) -> Optional[SectionEntity]:
+        try:
+            m = Section.objects.get(grade__iexact=grade, letter__iexact=letter, year=year)
+            return SectionEntity(id=m.id, grade=m.grade, letter=m.letter, name=m.name, year=m.year)
+        except Section.DoesNotExist:
+            return None
+
 class DjangoParentRepository(IParentRepository):
     def get_by_user_id(self, user_id: int) -> Optional[ParentEntity]:
         try:
@@ -15,6 +22,10 @@ class DjangoParentRepository(IParentRepository):
             return ParentEntity(id=model.id, user_id=model.user_id)
         except Parent.DoesNotExist:
             return None
+
+    def save(self, user_id: int) -> ParentEntity:
+        model, _ = Parent.objects.get_or_create(user_id=user_id)
+        return ParentEntity(id=model.id, user_id=model.user_id)
 
 class DjangoStudentRepository(IStudentRepository):
     def _to_entity(self, model: Student) -> StudentEntity:
@@ -26,7 +37,6 @@ class DjangoStudentRepository(IStudentRepository):
                         tutor_name = f"{assign.teacher.first_name} {assign.teacher.last_name}"
                         break
 
-        # CORRECCIÓN: Lectura segura de DNI y Teléfono
         return StudentEntity(
             id=model.id,
             dni=model.dni or "Sin DNI",
@@ -51,3 +61,15 @@ class DjangoStudentRepository(IStudentRepository):
     def get_all_students(self) -> List[StudentEntity]:
         models = Student.objects.all().select_related('section', 'parent__user').prefetch_related('section__assignments__teacher').order_by('section__grade', 'section__letter', 'last_name')
         return [self._to_entity(m) for m in models]
+
+    def save(self, student: StudentEntity) -> StudentEntity:
+        model, _ = Student.objects.update_or_create(
+            dni=student.dni,
+            defaults={
+                'first_name': student.first_name,
+                'last_name': student.last_name,
+                'parent_id': student.parent_id,
+                'section_id': student.section_id
+            }
+        )
+        return self._to_entity(model)

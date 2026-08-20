@@ -56,3 +56,12 @@ class DjangoUserRepository(IUserRepository):
     def bulk_update_permissions(self, user_ids: List[int], modules: List[str]) -> bool:
         UserModel.objects.filter(id__in=user_ids).update(module_permissions=modules)
         return True
+    
+    def set_password(self, user_id: int, password: str) -> bool:
+        try:
+            user = UserModel.objects.get(id=user_id)
+            user.set_password(password)
+            user.save()
+            return True
+        except UserModel.DoesNotExist:
+            return False

@@ -20,3 +20,6 @@ class IUserRepository(ABC):
     
     @abstractmethod
     def bulk_update_permissions(self, user_ids: List[int], modules: List[str]) -> bool: pass
+    
+    @abstractmethod
+    def set_password(self, user_id: int, password: str) -> bool: pass

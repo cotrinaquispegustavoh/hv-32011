@@ -1,4 +1,21 @@
-__pycache__/
-*.pyc
+# Entornos virtuales
 venv/
+env/
+ENV/
+
+# Variables de entorno y secretos
 .env
+
+# Base de datos local
+db.sqlite3
+
+# Archivos cacheados de Python
+*.pyc
+__pycache__/
+
+# Archivos multimedia subidos en local
+media/
+
+# Archivos estáticos compilados
+staticfiles/
+static_root/
