@@ -1,10 +1,9 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="es" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}I.E. 32011 Hermilio Valdizán{% endblock %}</title>
+    <title>{% block title %}Intranet HV{% endblock %}</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
@@ -34,16 +33,16 @@
         <!-- INICIO: Header Sidebar -->
         <div class="h-20 border-b border-gray-800 flex items-center transition-all duration-300 relative" :class="sidebarCollapsed ? 'justify-center' : 'justify-between px-6'">
             <div class="flex items-center gap-3 overflow-hidden" x-show="!sidebarCollapsed">
-                <div class="min-w-[40px] w-10 h-10 bg-white rounded-lg flex items-center justify-center p-1">
-                    <img src="{% static 'img/logo_hv_32011.png' %}" alt="Logo" class="w-full h-full object-contain">
+                <div class="min-w-[40px] w-10 h-10 bg-transparent border border-gray-600 rounded-lg flex items-center justify-center">
+                    <i class="fa-solid fa-shield-halved text-blue-400 text-xl"></i>
                 </div>
-                <span class="font-black text-lg tracking-tight uppercase whitespace-nowrap">I.E. 32011</span>
+                <span class="font-black text-lg tracking-tight uppercase whitespace-nowrap">Intranet HV</span>
             </div>
             <button x-show="!sidebarCollapsed" @click="sidebarCollapsed = true" class="text-gray-500 hover:text-white transition-colors flex-shrink-0">
                 <i class="fa-solid fa-chevron-left"></i>
             </button>
-            <button x-show="sidebarCollapsed" @click="sidebarCollapsed = false" class="w-10 h-10 bg-white rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors p-1">
-                <img src="{% static 'img/logo_hv_32011.png' %}" alt="Logo" class="w-full h-full object-contain">
+            <button x-show="sidebarCollapsed" @click="sidebarCollapsed = false" class="w-10 h-10 bg-transparent border border-gray-600 rounded-lg flex items-center justify-center hover:bg-gray-800 transition-colors">
+                <i class="fa-solid fa-shield-halved text-blue-400 text-xl"></i>
             </button>
         </div>
         <!-- FIN: Header Sidebar -->
@@ -64,17 +63,21 @@
                 <div x-show="sidebarCollapsed" class="text-center text-gray-600 mt-6 mb-2"><i class="fa-solid fa-ellipsis"></i></div>
                 
                 {% if 'almacen' in user.module_permissions %}
-                <a href="{% url 'warehouse:catalog' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'almacen' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
+                <!-- CORRECCIÓN: Apunta al historial de solicitudes (loan_list) -->
+                <a href="{% url 'warehouse:loan_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'almacen' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
                     <i class="fa-solid fa-boxes-stacked w-5 text-center"></i>
                     <span x-show="!sidebarCollapsed" class="whitespace-nowrap">Almacén</span>
                 </a>
                 {% endif %}
+
                 {% if 'disciplina' in user.module_permissions %}
-                <a href="{% url 'discipline:report_incident' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'disciplina' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
+                <!-- CORRECCIÓN: Apunta al historial de incidencias (incident_list) -->
+                <a href="{% url 'discipline:incident_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'disciplina' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
                     <i class="fa-solid fa-triangle-exclamation w-5 text-center"></i>
                     <span x-show="!sidebarCollapsed" class="whitespace-nowrap">Incidencias</span>
                 </a>
                 {% endif %}
+
                 {% if 'portafolio' in user.module_permissions %}
                 <a href="{% url 'portfolio:list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'portafolio' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
                     <i class="fa-solid fa-folder-open w-5 text-center"></i>
@@ -132,15 +135,15 @@
 
         </nav>
 
-        <!-- Footer Sidebar -->
-        <div class="p-4 border-t border-slate-800">
+        <!-- Footer Sidebar (Usuario y Salir) -->
+        <div class="p-4 border-t border-gray-800">
             <div class="px-4 py-3 mb-2 flex items-center gap-3" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
                 <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
                     {{ user.first_name|default:user.dni|make_list|first|upper }}
                 </div>
                 <div x-show="!sidebarCollapsed" class="overflow-hidden">
                     <p class="text-[11px] font-bold text-white truncate">{{ user.first_name|default:"Usuario" }} {{ user.last_name }}</p>
-                    <p class="text-[9px] text-slate-500 uppercase">{{ user.get_role_display }}</p>
+                    <p class="text-[9px] text-gray-400 uppercase">{{ user.get_role_display }}</p>
                 </div>
             </div>
             
@@ -167,7 +170,7 @@
                 <button @click="mobileMenuOpen = true" class="lg:hidden text-gray-500 hover:text-gray-800 focus:outline-none">
                     <i class="fa-solid fa-bars text-2xl"></i>
                 </button>
-                <h2 class="hidden md:block text-xl font-black text-gray-800 tracking-tight">{% block header_title %}I.E. Hermilio Valdizán 32011{% endblock %}</h2>
+                <h2 class="hidden md:block text-xl font-black text-gray-800 tracking-tight">{% block header_title %}Intranet HV{% endblock %}</h2>
             </div>
             
             <div class="flex items-center gap-6">
@@ -186,8 +189,6 @@
                     <div x-show="notifMenuOpen" x-transition style="display: none;" class="absolute right-0 mt-4 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
                         <div class="bg-gray-50 px-4 py-3 border-b border-gray-100 flex justify-between items-center">
                             <h3 class="text-xs font-black text-gray-800 uppercase tracking-wider">Notificaciones</h3>
-                            
-                            <!-- BOTÓN MARCAR LEÍDAS CON HTMX Y ALPINE -->
                             <button hx-post="{% url 'core:mark_notifications_read' %}" 
                                     hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                                     hx-swap="none"
@@ -198,7 +199,6 @@
                         </div>
                         <div class="max-h-64 overflow-y-auto p-2" id="notification-dropdown-list">
                             {% for notif in latest_notifs %}
-                            <!-- AHORA ES UN ENLACE CLICKEABLE -->
                             <a href="{{ notif.link|default:'#' }}" class="block p-3 hover:bg-gray-50 rounded-xl transition-colors border-b border-gray-50 last:border-0 flex gap-3 items-start">
                                 <div class="mt-0.5 {% if not notif.is_read %}text-blue-500{% else %}text-gray-300{% endif %}">
                                     <i class="fa-solid fa-circle text-[8px]"></i>
@@ -212,6 +212,9 @@
                             {% empty %}
                             <div class="p-4 text-center text-gray-400 text-xs font-bold">No tienes notificaciones.</div>
                             {% endfor %}
+                        </div>
+                        <div class="bg-gray-50 px-4 py-2 border-t border-gray-100 text-center">
+                            <a href="#" class="text-[10px] font-black text-blue-600 uppercase tracking-wider hover:underline">Ver todas</a>
                         </div>
                     </div>
                 </div>
@@ -267,10 +270,8 @@
             
             <div class="p-6 flex items-center justify-between border-b border-gray-800">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center p-1">
-                        <img src="{% static 'img/logo_hv_32011.png' %}" alt="Logo" class="w-full h-full object-contain">
-                    </div>
-                    <span class="font-black text-lg tracking-tight uppercase">I.E. 32011</span>
+                    <div class="w-10 h-10 bg-transparent border border-gray-600 rounded-lg flex items-center justify-center"><i class="fa-solid fa-shield-halved text-blue-400 text-xl"></i></div>
+                    <span class="font-black text-lg tracking-tight uppercase">Intranet HV</span>
                 </div>
                 <button @click="mobileMenuOpen = false" class="text-gray-400 hover:text-white text-2xl focus:outline-none"><i class="fa-solid fa-xmark"></i></button>
             </div>
@@ -281,10 +282,12 @@
                 {% if user.role == 'DOCENTE' %}
                     <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 mt-6 px-2">Módulos</div>
                     {% if 'almacen' in user.module_permissions %}
-                    <a href="{% url 'warehouse:catalog' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'almacen' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-boxes-stacked w-5 text-center"></i> Almacén</a>
+                    <!-- CORRECCIÓN: Apunta al historial de solicitudes (loan_list) -->
+                    <a href="{% url 'warehouse:loan_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'almacen' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-boxes-stacked w-5 text-center"></i> Almacén</a>
                     {% endif %}
                     {% if 'disciplina' in user.module_permissions %}
-                    <a href="{% url 'discipline:report_incident' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'disciplina' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-triangle-exclamation w-5 text-center"></i> Incidencias</a>
+                    <!-- CORRECCIÓN: Apunta al historial de incidencias (incident_list) -->
+                    <a href="{% url 'discipline:incident_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'disciplina' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-triangle-exclamation w-5 text-center"></i> Incidencias</a>
                     {% endif %}
                     {% if 'portafolio' in user.module_permissions %}
                     <a href="{% url 'portfolio:list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'portafolio' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-cloud-arrow-up w-5 text-center"></i> Portafolio</a>
