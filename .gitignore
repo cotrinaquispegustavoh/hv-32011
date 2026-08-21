@@ -18,4 +18,6 @@ media/
 
 # Archivos estáticos compilados
 staticfiles/
-static_root/
+static_root/*.csv
+*.xlsx
+*.csv

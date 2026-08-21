@@ -3,12 +3,15 @@
 {% block header_title %}Directorio de Alumnos{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 animate-in fade-in duration-300">
+<div x-data="{ modalCsv: false }" class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 animate-in fade-in duration-300">
     
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <div>
             <h1 class="text-2xl font-black text-blue-900 uppercase tracking-wide">Directorio de Alumnos</h1>
             <p class="text-sm font-medium text-gray-500 mt-1">Consulta rápida de estudiantes, tutores y contactos de emergencia.</p>
+            <button @click="modalCsv = true" class="mt-4 sm:mt-0 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2.5 px-4 rounded-lg shadow-sm transition-colors flex items-center gap-2">
+            <i class="fa-solid fa-file-csv"></i> Importar Matrícula
+        </button>
         </div>
     </div>
 
@@ -35,6 +38,36 @@
                 <option value="{{ sec }}">{{ sec }}</option>
             {% endfor %}
         </select>
+    </div>
+
+<!-- MODAL: CARGA MASIVA CSV -->
+    <div x-show="modalCsv" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+        <div @click.away="modalCsv = false" class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+            <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center">
+                <h3 class="font-black tracking-wide uppercase text-sm"><i class="fa-solid fa-file-csv text-emerald-400 mr-2"></i> Importar Alumnos</h3>
+                <button @click="modalCsv = false" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            
+            <form method="POST" action="{% url 'academics:student_directory' %}" enctype="multipart/form-data" class="p-6 space-y-5">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="csv_upload">
+                
+                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                    <p class="text-xs font-bold text-blue-800 mb-2">El CSV debe tener estas columnas (separadas por punto y coma):</p>
+                    <code class="text-[10px] bg-white px-2 py-1 rounded border border-blue-200 text-blue-600 font-black block">dni_apoderado; nombres_apoderado; apellidos_apoderado; dni_alumno; nombres_alumno; apellidos_alumno; grado; letra</code>
+                </div>
+
+                <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-500 hover:bg-blue-50 transition-colors">
+                    <i class="fa-solid fa-file-excel text-3xl text-gray-400 mb-3"></i>
+                    <input type="file" name="csv_file" required accept=".csv"
+                           class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer mx-auto">
+                </div>
+
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl transition-all shadow-md active:scale-95 text-xs uppercase tracking-wider">
+                    Procesar Matrícula
+                </button>
+            </form>
+        </div>
     </div>
 
     <!-- TABLA DE ALUMNOS -->

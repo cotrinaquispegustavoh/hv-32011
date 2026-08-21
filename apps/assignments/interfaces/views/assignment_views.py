@@ -4,7 +4,7 @@ from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import transaction
-from django.utils import timezone # <-- IMPORTAMOS TIMEZONE
+from django.utils import timezone
 from apps.assignments.infrastructure.repositories.assignment_repository import DjangoTeacherAssignmentRepository
 from apps.assignments.core.use_cases.manage_assignments import AssignTeacherUseCase, RemoveAssignmentUseCase, GetTeacherAssignmentsUseCase
 from apps.assignments.core.use_cases.import_assignments import ImportAssignmentsUseCase
@@ -17,9 +17,7 @@ def assignment_panel_view(request):
     if request.user.role not in ['DIRECTOR', 'SUPERUSER']:
         return redirect('core:dashboard')
 
-    # --- SOLUCIÓN EFECTO 2027: Año Dinámico ---
     current_year = timezone.now().year
-
     teachers = User.objects.filter(role='DOCENTE', is_active=True).order_by('last_name')
     sections = Section.objects.filter(year=current_year).order_by('grade', 'letter')
     assignments = TeacherAssignment.objects.filter(academic_year=current_year).select_related('teacher', 'section').order_by('section__grade', 'section__letter')
@@ -34,14 +32,12 @@ def assignment_panel_view(request):
             area = request.POST.get('area')
             
             section_ids_int = [int(sid) for sid in section_ids if sid.isdigit()]
-            
             if not section_ids_int:
                 messages.error(request, 'Debes seleccionar al menos un aula.')
                 return redirect('assignments:panel')
 
             use_case = AssignTeacherUseCase(repo)
             try:
-                # Pasamos el año dinámico al caso de uso
                 use_case.execute(int(teacher_id), section_ids_int, area, current_year)
                 messages.success(request, f'Se crearon {len(section_ids_int)} asignaciones correctamente.')
             except Exception as e:
@@ -54,25 +50,26 @@ def assignment_panel_view(request):
                 return redirect('assignments:panel')
                 
             csv_file = request.FILES['csv_file']
-            if not csv_file.name.endswith('.csv'):
-                messages.error(request, 'El archivo debe tener extensión .csv')
-                return redirect('assignments:panel')
-
             use_case = ImportAssignmentsUseCase(repo)
             creados = 0
             errores = []
 
             try:
                 decoded_file = csv_file.read().decode('utf-8-sig').splitlines()
-                reader = csv.DictReader(decoded_file, delimiter=';')
+                
+                # CORRECCIÓN: Detector automático de separador (Tabulación, Coma o Punto y Coma)
+                delimiter = ';'
+                if decoded_file and '\t' in decoded_file[0]: delimiter = '\t'
+                elif decoded_file and ';' not in decoded_file[0] and ',' in decoded_file[0]: delimiter = ','
+
+                reader = csv.DictReader(decoded_file, delimiter=delimiter)
                 
                 if reader.fieldnames:
-                    reader.fieldnames = [str(c).strip().lower() for c in reader.fieldnames if c]
+                    reader.fieldnames = [str(c).strip().lower().replace(' ', '_') for c in reader.fieldnames if c]
 
                 with transaction.atomic():
                     for idx, row in enumerate(reader, start=2):
                         try:
-                            # Pasamos el año dinámico al caso de uso
                             use_case.execute(row, current_year)
                             creados += 1
                         except ValueError as ve:
@@ -93,7 +90,7 @@ def assignment_panel_view(request):
         'teachers': teachers,
         'sections': sections,
         'assignments': assignments,
-        'current_year': current_year # Pasamos el año al HTML por si lo necesitamos
+        'current_year': current_year
     }
     return render(request, 'assignments/panel.html', context)
 
@@ -110,11 +107,8 @@ def remove_assignment_view(request, assignment_id):
 def my_sections_view(request):
     if request.user.role != 'DOCENTE':
         return redirect('core:dashboard')
-    
     repo = DjangoTeacherAssignmentRepository()
     use_case = GetTeacherAssignmentsUseCase(repo)
-    
     current_year = timezone.now().year
     assignments = use_case.execute(request.user.id, current_year)
-    
     return render(request, 'assignments/my_sections.html', {'assignments': assignments, 'current_year': current_year})
