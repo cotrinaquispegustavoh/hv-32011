@@ -8,6 +8,7 @@ class DjangoUserRepository(IUserRepository):
         return UserEntity(
             id=model.id, dni=model.dni, role=model.role,
             first_name=model.first_name, last_name=model.last_name,
+            email=model.email, 
             password_changed=model.password_changed, is_active=model.is_active,
             support_role=model.support_role, module_permissions=model.module_permissions
         )
@@ -29,6 +30,7 @@ class DjangoUserRepository(IUserRepository):
             dni=user.dni,
             defaults={
                 'role': user.role, 'first_name': user.first_name, 'last_name': user.last_name,
+                'email': user.email, 
                 'password_changed': user.password_changed, 'is_active': user.is_active,
                 'support_role': user.support_role, 'module_permissions': user.module_permissions
             }

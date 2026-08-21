@@ -10,5 +10,6 @@ class UserEntity:
     last_name: str
     password_changed: bool
     is_active: bool
+    email: str = "" 
     support_role: Optional[str] = None
     module_permissions: List[str] = field(default_factory=list)
