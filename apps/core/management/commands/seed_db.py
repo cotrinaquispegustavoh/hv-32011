@@ -8,7 +8,6 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         self.stdout.write('Iniciando carga de semillas...')
 
-        # 1. Crear Usuarios
         users_data = [
             {'dni': '00000000', 'role': 'SUPERUSER', 'first': 'Superuser', 'last': 'Técnico', 'support_role': None},
             {'dni': '11111111', 'role': 'DIRECTOR', 'first': 'Carlos', 'last': 'Director', 'support_role': None},
@@ -29,15 +28,23 @@ class Command(BaseCommand):
                     'first_name': u['first'],
                     'last_name': u['last'],
                     'support_role': u['support_role'],
-                    'password_changed': False
+                    'password_changed': False,
+                    # CORRECCIÓN: Le damos las llaves maestras al Superuser
+                    'is_staff': u['role'] == 'SUPERUSER',
+                    'is_superuser': u['role'] == 'SUPERUSER'
                 }
             )
+            if not created and u['role'] == 'SUPERUSER':
+                # Si ya existía, forzamos los permisos por si acaso
+                user.is_staff = True
+                user.is_superuser = True
+                user.save()
+                
             if created:
                 user.set_password(u['dni'])
                 user.save()
                 self.stdout.write(self.style.SUCCESS(f"Usuario creado: {u['role']} - {u['dni']}"))
 
-        # 2. Crear Secciones de prueba
         sections_data = [
             {'grade': '1ro', 'letter': 'A', 'name': 'Respeto', 'year': 2026},
             {'grade': '2do', 'letter': 'B', 'name': 'Solidaridad', 'year': 2026},
@@ -52,7 +59,6 @@ class Command(BaseCommand):
             secciones_creadas.append(section)
             self.stdout.write(self.style.SUCCESS(f"Sección creada: {s['grade']} {s['letter']}"))
 
-        # 3. Crear Apoderados (Perfiles vinculados al User) y Alumnos
         try:
             user_apoderado_1 = User.objects.get(dni='66666666')
             user_apoderado_2 = User.objects.get(dni='77777777')
@@ -60,21 +66,15 @@ class Command(BaseCommand):
             parent_1, _ = Parent.objects.get_or_create(user=user_apoderado_1)
             parent_2, _ = Parent.objects.get_or_create(user=user_apoderado_2)
 
-            # Crear Alumno 1
             Student.objects.get_or_create(
-                first_name='Juanito',
-                last_name='Pérez',
-                parent=parent_1,
-                section=secciones_creadas[0]
+                first_name='Juanito', last_name='Pérez',
+                parent=parent_1, section=secciones_creadas[0]
             )
             self.stdout.write(self.style.SUCCESS("Alumno creado: Juanito Pérez"))
 
-            # Crear Alumno 2
             Student.objects.get_or_create(
-                first_name='Anita',
-                last_name='Gómez',
-                parent=parent_2,
-                section=secciones_creadas[1]
+                first_name='Anita', last_name='Gómez',
+                parent=parent_2, section=secciones_creadas[1]
             )
             self.stdout.write(self.style.SUCCESS("Alumno creado: Anita Gómez"))
 

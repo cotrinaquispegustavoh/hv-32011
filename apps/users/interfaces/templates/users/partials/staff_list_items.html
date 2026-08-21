@@ -1,5 +1,5 @@
 {% for member in staff %}
-<div class="flex items-center p-4 border-b border-gray-100 hover:bg-blue-50 transition-colors group">
+<div class="flex items-center p-4 hover:bg-blue-50 transition-colors group">
     
     <!-- Checkbox para selección múltiple -->
     <div class="mr-4">
@@ -17,7 +17,7 @@
                 {{ member.first_name|default:member.dni|make_list|first|upper }}
             </div>
             <div>
-                <p class="text-sm font-bold text-gray-900 leading-tight">{{ member.first_name }} {{ member.last_name }}</p>
+                <p class="text-sm font-bold text-gray-900 leading-tight">{{ member.last_name }}, {{ member.first_name }}</p>
                 <p class="text-[10px] font-bold text-gray-500 mt-0.5">DNI: {{ member.dni }}</p>
             </div>
         </div>
