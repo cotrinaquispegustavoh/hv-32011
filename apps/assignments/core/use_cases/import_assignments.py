@@ -9,7 +9,6 @@ class ImportAssignmentsUseCase:
         self.assignment_repo = assignment_repo
 
     def execute(self, row_data: Dict[str, Any], year: int) -> Tuple[bool, str]:
-        # Buscamos 'dni_docente' o simplemente 'dni' por si el Excel varía
         dni = str(row_data.get('dni_docente', row_data.get('dni', ''))).strip()
         grado = str(row_data.get('grado', '')).strip()
         seccion_nombre = str(row_data.get('seccion', '')).strip()
@@ -18,7 +17,6 @@ class ImportAssignmentsUseCase:
         if not dni or not grado or not seccion_nombre:
             raise ValueError("Faltan datos obligatorios (DNI, Grado o Sección).")
 
-        # CORRECCIÓN: Manejo de docentes sin DNI
         if dni.upper() == 'SIN_DNI':
             raise ValueError(f"No se puede asignar el aula {grado} {seccion_nombre} porque el docente no tiene DNI registrado.")
 
@@ -26,10 +24,19 @@ class ImportAssignmentsUseCase:
         if not teacher:
             raise ValueError(f"Docente con DNI {dni} no encontrado.")
 
+        # 1. Buscamos la sección
         section = Section.objects.filter(grade__icontains=grado, name__icontains=seccion_nombre, year=year).first()
+        
+        # 2. --- CORRECCIÓN: AUTO-CREAR SECCIÓN ---
         if not section:
-            raise ValueError(f"Sección {grado} '{seccion_nombre}' no encontrada en el año {year}.")
+            section = Section.objects.create(
+                grade=grado,
+                letter="-", # Como en tu colegio usan nombres, dejamos la letra con un guion
+                name=seccion_nombre,
+                year=year
+            )
 
+        # 3. Crear la asignación
         assignment = TeacherAssignmentEntity(
             id=None, teacher_id=teacher.id, section_id=section.id,
             area=area, academic_year=year

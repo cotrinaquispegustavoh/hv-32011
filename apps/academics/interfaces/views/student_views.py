@@ -1,24 +1,24 @@
+import csv
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from apps.academics.infrastructure.repositories.academics_repository import DjangoStudentRepository
-from apps.academics.core.use_cases.manage_students import GetStudentDirectoryUseCase
-from apps.core.utils import normalize_text
-import csv
-from django.db import transaction
 from django.contrib import messages
+from django.db import transaction
 from django.utils import timezone
 from apps.users.infrastructure.repositories.user_repository import DjangoUserRepository
-from apps.academics.infrastructure.repositories.academics_repository import DjangoSectionRepository, DjangoParentRepository
+from apps.academics.infrastructure.repositories.academics_repository import DjangoSectionRepository, DjangoParentRepository, DjangoStudentRepository
 from apps.academics.core.use_cases.import_students import ImportStudentsUseCase
+from apps.academics.core.use_cases.manage_students import GetStudentDirectoryUseCase
+from apps.core.utils import normalize_text
+from django.http import HttpResponseForbidden
 
 @login_required(login_url='/auth/login/')
 def student_directory_view(request):
-    if request.user.role not in ['DIRECTOR', 'SUBDIRECTOR', 'SUPERUSER', 'APOYO']:
+    # CORRECCIÓN: Permitimos el acceso a DOCENTES
+    if request.user.role not in ['DIRECTOR', 'SUBDIRECTOR', 'SUPERUSER', 'APOYO', 'DOCENTE']:
         return redirect('core:dashboard')
     
     repo = DjangoStudentRepository()
 
-    # --- NUEVA LÓGICA DE IMPORTACIÓN CSV ---
     if request.method == 'POST' and request.POST.get('action') == 'csv_upload':
         if 'csv_file' not in request.FILES:
             messages.error(request, 'Debes adjuntar un archivo CSV.')
@@ -35,7 +35,11 @@ def student_directory_view(request):
 
         try:
             decoded_file = csv_file.read().decode('utf-8-sig').splitlines()
-            reader = csv.DictReader(decoded_file, delimiter=';')
+            delimiter = ';'
+            if decoded_file and '\t' in decoded_file[0]: delimiter = '\t'
+            elif decoded_file and ';' not in decoded_file[0] and ',' in decoded_file[0]: delimiter = ','
+
+            reader = csv.DictReader(decoded_file, delimiter=delimiter)
             if reader.fieldnames:
                 reader.fieldnames = [str(c).strip().lower().replace(' ', '_') for c in reader.fieldnames if c]
 
@@ -54,24 +58,36 @@ def student_directory_view(request):
             messages.error(request, f'Error al procesar el archivo: {str(e)}')
             
         return redirect('academics:student_directory')
-    # ---------------------------------------
 
     students = GetStudentDirectoryUseCase(repo).execute()
+    
+    # CORRECCIÓN: Si es docente, filtramos solo sus alumnos
+    if request.user.role == 'DOCENTE':
+        from apps.assignments.infrastructure.models import TeacherAssignment
+        assigned_sections = TeacherAssignment.objects.filter(teacher_id=request.user.id, academic_year=timezone.now().year).values_list('section_id', flat=True)
+        students = [s for s in students if s.section_id in assigned_sections]
+
     sections = sorted(list(set(s.section_name for s in students if s.section_name != "Sin sección")))
     
     return render(request, 'academics/student_directory.html', {'students': students, 'sections': sections})
 
 @login_required(login_url='/auth/login/')
 def search_students_view(request):
-    # Normalizamos la búsqueda (ej. "gómez" -> "gomez")
+    if request.user.role not in ['DIRECTOR', 'SUBDIRECTOR', 'SUPERUSER', 'APOYO', 'DOCENTE']:
+        return HttpResponseForbidden()
+
     query = normalize_text(request.GET.get('q', ''))
     section = request.GET.get('section', '')
     
     repo = DjangoStudentRepository()
     students = GetStudentDirectoryUseCase(repo).execute()
     
+    if request.user.role == 'DOCENTE':
+        from apps.assignments.infrastructure.models import TeacherAssignment
+        assigned_sections = TeacherAssignment.objects.filter(teacher_id=request.user.id, academic_year=timezone.now().year).values_list('section_id', flat=True)
+        students = [s for s in students if s.section_id in assigned_sections]
+    
     if query:
-        # Normalizamos los campos antes de comparar
         students = [s for s in students if query in normalize_text(s.first_name) or query in normalize_text(s.last_name) or query in normalize_text(s.dni)]
     if section:
         students = [s for s in students if s.section_name == section]

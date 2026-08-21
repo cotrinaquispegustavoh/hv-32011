@@ -1,25 +1,36 @@
 {% extends 'base.html' %}
 
-{% block header_title %}Gestión de Personal{% endblock %}
+{% block header_title %}Asignación de Permisos{% endblock %}
 
 {% block content %}
-<div x-data="{ selectedUsers: [], selectAll: false, modalOpen: false, modalCsv: false }" 
-     x-init="$watch('selectAll', val => { 
-         const checkboxes = document.querySelectorAll('input[type=checkbox][x-model=selectedUsers]');
-         selectedUsers = val ? Array.from(checkboxes).map(cb => cb.value) : []; 
-     })"
-     class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 animate-in fade-in duration-300 relative">
+<div x-data="{ 
+        selectedUsers: [], 
+        selectAll: false, 
+        modalOpen: false, 
+        modalCsv: false, 
+        modalManual: false,
+        toggleAll() {
+            this.selectAll = !this.selectAll;
+            const checkboxes = document.querySelectorAll('input[type=checkbox][x-model=selectedUsers]');
+            this.selectedUsers = this.selectAll ? Array.from(checkboxes).map(cb => cb.value) : [];
+        }
+     }" 
+     class="max-w-[1400px] mx-auto h-[calc(100vh-140px)] flex flex-col animate-in fade-in duration-300 relative">
     
-    <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+    <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-            <h1 class="text-2xl font-black text-blue-900 uppercase tracking-wide">Gestión de Personal</h1>
-            <p class="text-sm font-medium text-gray-500 mt-1">Administración de accesos y permisos por módulos.</p>
+            <h1 class="text-2xl font-black text-blue-900 uppercase tracking-wide">Gestión de Roles y Permisos</h1>
+            <p class="text-sm font-medium text-gray-500 mt-1">Administración de accesos y seguridad del equipo institucional.</p>
         </div>
-        
-        <button @click="modalCsv = true" class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-bold py-2.5 px-4 rounded-lg shadow-sm transition-colors flex items-center gap-2">
-            <i class="fa-solid fa-file-csv text-emerald-600"></i> Importar Personal
-        </button>
-    </header>
+        <div class="flex items-center gap-3">
+            <button @click="modalCsv = true" class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-bold py-2.5 px-4 rounded-lg shadow-sm transition-colors flex items-center gap-2">
+                <i class="fa-solid fa-file-csv text-emerald-600"></i> Importar CSV
+            </button>
+            <button @click="modalManual = true" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2.5 px-4 rounded-lg shadow-sm transition-colors flex items-center gap-2">
+                <i class="fa-solid fa-user-plus"></i> Nuevo Usuario
+            </button>
+        </div>
+    </div>
 
     {% if messages %}
         <div class="mb-6 space-y-3">
@@ -31,67 +42,64 @@
         </div>
     {% endif %}
 
-    <!-- Buscador y Filtros -->
-    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 mb-6 flex flex-col sm:flex-row gap-4">
-        <div class="relative flex-grow">
-            <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-gray-400"></i>
-            <input type="text" name="q" 
-                   hx-get="{% url 'users:search_staff' %}" 
-                   hx-trigger="keyup changed delay:300ms, search" 
-                   hx-target="#tabla-personal" 
-                   hx-include="[name='role']"
-                   placeholder="Buscar por nombre, apellido o DNI..." 
-                   class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow">
-        </div>
+    <div class="flex flex-col lg:flex-row gap-6 flex-grow min-h-0 relative">
         
-        <select name="role" 
-                hx-get="{% url 'users:search_staff' %}" 
-                hx-trigger="change" 
-                hx-target="#tabla-personal"
-                hx-include="[name='q']"
-                class="w-full sm:w-64 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white cursor-pointer transition-shadow">
-            <option value="">Todos los Roles</option>
-            <option value="DOCENTE">Docentes</option>
-            <option value="SUBDIRECTOR">Subdirectores</option>
-            <option value="APOYO">Personal de Apoyo</option>
-        </select>
-    </div>
+        <div class="w-full lg:w-1/3 bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col overflow-hidden flex-shrink-0 relative">
+            
+            <div class="p-4 border-b border-gray-100 bg-gray-50/50 space-y-3">
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-gray-400 text-sm"></i>
+                    <input type="text" name="q" 
+                           hx-get="{% url 'users:search_staff' %}" 
+                           hx-trigger="keyup changed delay:300ms, search" 
+                           hx-target="#lista-personal" 
+                           hx-include="[name='role']"
+                           placeholder="Buscar usuario por nombre o DNI..." 
+                           class="w-full pl-9 pr-3 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow text-xs font-bold text-gray-800">
+                </div>
+                <div class="flex items-center justify-between gap-2">
+                    <button @click="toggleAll()" class="text-[10px] font-black uppercase tracking-wider text-blue-600 hover:text-blue-800 transition-colors bg-blue-50 px-3 py-2 rounded-lg border border-blue-100">
+                        <i class="fa-solid fa-check-double mr-1"></i> <span x-text="selectAll ? 'Deseleccionar' : 'Seleccionar Todos'"></span>
+                    </button>
 
-    <!-- Barra de Acciones en Bloque -->
-    <div x-show="selectedUsers.length > 0" x-transition.opacity style="display: none;" 
-         class="bg-blue-900 text-white p-4 rounded-2xl mb-6 flex items-center justify-between shadow-lg">
-        <div class="flex items-center gap-3">
-            <span class="w-8 h-8 bg-blue-800 rounded-full flex items-center justify-center font-black text-sm" x-text="selectedUsers.length"></span>
-            <span class="text-sm font-bold tracking-wide">Usuarios seleccionados</span>
+                    <select name="role" 
+                            hx-get="{% url 'users:search_staff' %}" 
+                            hx-trigger="change" 
+                            hx-target="#lista-personal"
+                            hx-include="[name='q']"
+                            class="flex-grow px-3 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer">
+                        <option value="">Todos los roles</option>
+                        <option value="DOCENTE">Docentes</option>
+                        <option value="SUBDIRECTOR">Subdirectores</option>
+                        <option value="APOYO">Personal de Apoyo</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="lista-personal" class="flex-grow overflow-y-auto bg-white pb-20">
+                {% include 'users/partials/staff_list_items.html' %}
+            </div>
+
+            <div x-show="selectedUsers.length > 0" x-transition.opacity style="display: none;" 
+                 class="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-40 bg-blue-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-4 border border-blue-700 w-max">
+                <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 bg-blue-800 rounded-full flex items-center justify-center font-black text-xs" x-text="selectedUsers.length"></span>
+                    <span class="text-xs font-bold tracking-wide">seleccionados</span>
+                </div>
+                <div class="w-px h-4 bg-blue-700"></div>
+                <button @click="modalOpen = true" class="text-xs font-black uppercase tracking-wider hover:text-blue-300 transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-key"></i> Permisos
+                </button>
+            </div>
         </div>
-        <button @click="modalOpen = true" class="bg-white text-blue-900 hover:bg-blue-50 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-colors shadow-sm">
-            <i class="fa-solid fa-key mr-1"></i> Asignar Permisos
-        </button>
-    </div>
 
-    <!-- Tabla -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="min-w-full text-left border-collapse">
-                <thead class="bg-gray-50">
-                    <tr class="border-b-2 border-gray-100 text-[10px] text-gray-500 uppercase tracking-widest">
-                        <th class="px-6 py-4 w-10">
-                            <input type="checkbox" x-model="selectAll" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer">
-                        </th>
-                        <th class="px-6 py-4 font-black">Usuario / DNI</th>
-                        <th class="px-6 py-4 font-black">Rol / Cargo</th>
-                        <th class="px-6 py-4 font-black">Módulos Asignados</th>
-                        <th class="px-6 py-4 font-black text-right">Acceso al Sistema</th>
-                    </tr>
-                </thead>
-                <tbody id="tabla-personal" class="divide-y divide-gray-100">
-                    {% include 'users/partials/staff_table_rows.html' %}
-                </tbody>
-            </table>
+        <div id="staff-detail-container" class="w-full lg:w-2/3 bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col overflow-hidden">
+            {% include 'users/partials/staff_detail.html' %}
         </div>
+
     </div>
 
-    <!-- MODAL DE PERMISOS -->
+    <!-- MODAL DE PERMISOS EN BLOQUE -->
     <div x-show="modalOpen" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
         <div @click.away="modalOpen = false" class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
             <div class="bg-slate-900 text-white px-6 py-5 flex justify-between items-center">
@@ -103,9 +111,11 @@
                 </button>
             </div>
 
+            <!-- CORRECCIÓN: Añadido hx-include para enviar los filtros actuales al backend -->
             <form hx-post="{% url 'users:bulk_permissions' %}" 
-                  hx-target="#tabla-personal"
+                  hx-target="#lista-personal"
                   hx-swap="innerHTML"
+                  hx-include="[name='q'], [name='role']"
                   @submit="setTimeout(() => { modalOpen = false; selectedUsers = []; selectAll = false; }, 100)"
                   class="p-6 space-y-6">
                 {% csrf_token %}
@@ -142,6 +152,67 @@
 
                 <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl transition-all shadow-md active:scale-95 text-xs uppercase tracking-wider">
                     Guardar Permisos
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: NUEVO USUARIO MANUAL -->
+    <div x-show="modalManual" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+        <div @click.away="modalManual = false" class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+            <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center">
+                <h3 class="font-black tracking-wide uppercase text-sm"><i class="fa-solid fa-user-plus text-blue-400 mr-2"></i> Nuevo Usuario</h3>
+                <button @click="modalManual = false" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            
+            <form method="POST" action="{% url 'users:staff_list' %}" class="p-6 space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="manual_create">
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">DNI</label>
+                        <input type="text" name="dni" required maxlength="8" pattern="\d{8}" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Correo Electrónico</label>
+                        <input type="email" name="correo" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Nombres</label>
+                        <input type="text" name="nombres" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Apellidos</label>
+                        <input type="text" name="apellidos" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Rol Institucional</label>
+                        <select name="rol" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
+                            <option value="DOCENTE" selected>Docente</option>
+                            <option value="SUBDIRECTOR">Subdirector</option>
+                            <option value="APOYO">Personal de Apoyo</option>
+                            <option value="DIRECTOR">Director</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Cargo Específico (Opcional)</label>
+                        <input type="text" name="cargo_especifico" placeholder="Ej: Psicólogo, Auxiliar" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 mt-2">
+                    <p class="text-[10px] text-blue-700 font-bold"><i class="fa-solid fa-circle-info mr-1"></i> La contraseña inicial del usuario será su número de DNI.</p>
+                </div>
+
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl transition-all shadow-md active:scale-95 text-xs uppercase tracking-wider mt-4">
+                    Guardar Usuario
                 </button>
             </form>
         </div>

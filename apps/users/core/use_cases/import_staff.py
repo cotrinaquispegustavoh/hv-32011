@@ -8,11 +8,8 @@ class ImportStaffUseCase:
 
     def execute(self, row_data: Dict[str, Any]) -> Tuple[bool, str]:
         dni = str(row_data.get('dni', '')).strip()
-        
-        # CORRECCIÓN: Usamos .title() para capitalizar correctamente (Ej: JUAN -> Juan)
         nombres = str(row_data.get('nombres', '')).strip().title()
         apellidos = str(row_data.get('apellidos', '')).strip().title()
-        
         correo = str(row_data.get('correo', '')).strip().lower()
         rol = str(row_data.get('rol', 'DOCENTE')).strip().upper()
         cargo = str(row_data.get('cargo_especifico', '')).strip().title()
@@ -27,6 +24,11 @@ class ImportStaffUseCase:
         if rol not in roles_permitidos:
             rol = 'DOCENTE'
 
+        # --- CORRECCIÓN: Permisos automáticos para Directivos ---
+        default_permissions = []
+        if rol in ['DIRECTOR', 'SUBDIRECTOR']:
+            default_permissions = ['almacen', 'disciplina', 'portafolio']
+
         existing_user = self.user_repo.get_by_dni(dni)
         
         if existing_user:
@@ -35,13 +37,17 @@ class ImportStaffUseCase:
             existing_user.email = correo
             existing_user.role = rol
             existing_user.support_role = cargo if cargo else None
+            # Si es directivo y no tenía permisos, se los damos
+            if rol in ['DIRECTOR', 'SUBDIRECTOR'] and not existing_user.module_permissions:
+                existing_user.module_permissions = default_permissions
             self.user_repo.save(existing_user)
             return False, f"{apellidos}, {nombres}"
         else:
             new_user = UserEntity(
                 id=None, dni=dni, role=rol, first_name=nombres, last_name=apellidos,
                 email=correo, password_changed=False, is_active=True,
-                support_role=cargo if cargo else None, module_permissions=[]
+                support_role=cargo if cargo else None, 
+                module_permissions=default_permissions # Asignamos los permisos por defecto
             )
             saved_user = self.user_repo.save(new_user)
             self.user_repo.set_password(saved_user.id, dni)

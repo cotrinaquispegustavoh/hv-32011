@@ -10,6 +10,7 @@ class Command(BaseCommand):
 
         # 1. Crear Usuarios
         users_data = [
+            {'dni': '00000000', 'role': 'SUPERUSER', 'first': 'Superuser', 'last': 'Técnico', 'support_role': None},
             {'dni': '11111111', 'role': 'DIRECTOR', 'first': 'Carlos', 'last': 'Director', 'support_role': None},
             {'dni': '22222222', 'role': 'SUBDIRECTOR', 'first': 'Ana', 'last': 'Subdir Uno', 'support_role': None},
             {'dni': '33333333', 'role': 'SUBDIRECTOR', 'first': 'Luis', 'last': 'Subdir Dos', 'support_role': None},

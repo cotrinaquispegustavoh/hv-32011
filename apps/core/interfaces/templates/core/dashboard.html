@@ -21,14 +21,15 @@
     <!-- 1. TARJETAS SUPERIORES -->
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         
-        <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl"><i class="fa-solid fa-user-graduate"></i></div>
+        <!-- CORRECCIÓN: Tarjeta Alumnos ahora es un enlace <a> -->
+        <a href="{% url 'academics:student_directory' %}" class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-4 hover:shadow-md hover:border-blue-200 transition-all group block">
+            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl group-hover:bg-blue-600 group-hover:text-white transition-colors"><i class="fa-solid fa-user-graduate"></i></div>
             <div>
-                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Alumnos</p>
+                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider group-hover:text-blue-500 transition-colors">Alumnos</p>
                 <p class="text-2xl font-black text-gray-900 leading-none mt-1">{{ metrics.top_cards.students }}</p>
                 <p class="text-[10px] font-bold text-emerald-500 mt-1">Activos</p>
             </div>
-        </div>
+        </a>
 
         <a href="{% url 'users:staff_list' %}" class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-4 hover:shadow-md hover:border-emerald-200 transition-all group block">
             <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl group-hover:bg-emerald-600 group-hover:text-white transition-colors"><i class="fa-solid fa-chalkboard-user"></i></div>
@@ -73,7 +74,6 @@
     <!-- 2. SECCIÓN CENTRAL (Gráficos y Alertas) -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
         
-        <!-- Gráfico de Líneas -->
         <div class="lg:col-span-6 bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex flex-col">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-sm font-black text-gray-800 uppercase tracking-wide">Solicitudes de materiales</h3>
@@ -88,7 +88,6 @@
             </div>
         </div>
 
-        <!-- Gráfico de Anillo -->
         <div class="lg:col-span-3 bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex flex-col">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-sm font-black text-gray-800 uppercase tracking-wide">Incidencias por tipo</h3>
@@ -108,7 +107,6 @@
             </div>
         </div>
 
-        <!-- Alertas Importantes -->
         <div class="lg:col-span-3 bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex flex-col">
             <h3 class="text-sm font-black text-gray-800 uppercase tracking-wide mb-4">Alertas importantes</h3>
             <div class="flex-grow space-y-4 overflow-y-auto max-h-[250px] pr-2 scrollbar-hide">
@@ -127,12 +125,11 @@
                 </div>
                 {% endfor %}
             </div>
-            <button class="w-full mt-4 text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors text-center">Ver todas las alertas</button>
         </div>
 
     </div>
 
-    <!-- 3. SECCIÓN INFERIOR (Eventos y Cumpleaños) -->
+    <!-- 3. SECCIÓN INFERIOR -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
             <h3 class="text-sm font-black text-gray-800 uppercase tracking-wide mb-6">Próximos eventos</h3>
@@ -177,13 +174,13 @@
     <!-- ACCESOS RÁPIDOS (Solo para Docentes) -->
     {% if role == 'DOCENTE' %}
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-        <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl"><i class="fa-solid fa-chalkboard-user"></i></div>
+        <a href="{% url 'assignments:my_sections' %}" class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-4 hover:shadow-md hover:border-blue-300 transition-all group block">
+            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl group-hover:bg-blue-600 group-hover:text-white transition-colors"><i class="fa-solid fa-chalkboard-user"></i></div>
             <div>
-                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Mis Aulas</p>
+                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider group-hover:text-blue-600 transition-colors">Mis Aulas</p>
                 <p class="text-2xl font-black text-gray-900 leading-none mt-1">{{ metrics.top_cards.sections }}</p>
             </div>
-        </div>
+        </a>
         <a href="{% url 'warehouse:loan_list' %}" class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-4 hover:shadow-md hover:border-amber-300 transition-all group block">
             <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl group-hover:bg-amber-500 group-hover:text-white transition-colors"><i class="fa-solid fa-clipboard-list"></i></div>
             <div>
@@ -319,7 +316,6 @@
         document.getElementById('lbl-grave').innerText = data.counts.GRAVE;
     }
 
-    // --- CORRECCIÓN: RECONEXIÓN AUTOMÁTICA DE WEBSOCKETS ---
     function connectWebSocket() {
         const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
         const wsUrl = protocol + window.location.host + '/ws/notificaciones/';
@@ -393,12 +389,10 @@
         };
 
         socket.onclose = function(e) {
-            console.error('WebSocket cerrado. Intentando reconectar en 3 segundos...');
-            setTimeout(connectWebSocket, 3000); // Intenta reconectar automáticamente
+            setTimeout(connectWebSocket, 3000);
         };
 
         socket.onerror = function(err) {
-            console.error('Error en WebSocket. Cerrando socket para forzar reconexión...');
             socket.close();
         };
     }
@@ -408,7 +402,6 @@
         const allowedRoles = ['DIRECTOR', 'SUBDIRECTOR', 'SUPERUSER'];
 
         if (allowedRoles.includes(userRole)) {
-            
             allLabels = JSON.parse(document.getElementById('chart-labels').textContent);
             allData = JSON.parse(document.getElementById('chart-data').textContent);
 
@@ -468,7 +461,6 @@
                 plugins: [centerTextPlugin]
             });
 
-            // Iniciamos la conexión WebSocket con auto-reconexión
             connectWebSocket();
         }
     });

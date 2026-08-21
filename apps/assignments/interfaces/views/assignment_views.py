@@ -44,6 +44,24 @@ def assignment_panel_view(request):
                 messages.error(request, 'Error: Una de las asignaciones ya existe o los datos son inválidos.')
             return redirect('assignments:panel')
 
+        # --- NUEVO: EDICIÓN DE ASIGNACIÓN ---
+        elif action == 'edit':
+            assignment_id = request.POST.get('assignment_id')
+            teacher_id = request.POST.get('teacher_id')
+            section_id = request.POST.get('section_id')
+            area = request.POST.get('area')
+            
+            try:
+                assign = TeacherAssignment.objects.get(id=assignment_id)
+                assign.teacher_id = teacher_id
+                assign.section_id = section_id
+                assign.area = area
+                assign.save()
+                messages.success(request, 'Asignación actualizada correctamente.')
+            except Exception as e:
+                messages.error(request, 'Error al actualizar la asignación.')
+            return redirect('assignments:panel')
+
         elif action == 'csv_upload':
             if 'csv_file' not in request.FILES:
                 messages.error(request, 'Debes adjuntar un archivo CSV.')
@@ -56,14 +74,11 @@ def assignment_panel_view(request):
 
             try:
                 decoded_file = csv_file.read().decode('utf-8-sig').splitlines()
-                
-                # CORRECCIÓN: Detector automático de separador (Tabulación, Coma o Punto y Coma)
                 delimiter = ';'
                 if decoded_file and '\t' in decoded_file[0]: delimiter = '\t'
                 elif decoded_file and ';' not in decoded_file[0] and ',' in decoded_file[0]: delimiter = ','
 
                 reader = csv.DictReader(decoded_file, delimiter=delimiter)
-                
                 if reader.fieldnames:
                     reader.fieldnames = [str(c).strip().lower().replace(' ', '_') for c in reader.fieldnames if c]
 
@@ -75,40 +90,28 @@ def assignment_panel_view(request):
                         except ValueError as ve:
                             errores.append(f"Fila {idx}: {str(ve)}")
                             
-                if creados > 0:
-                    messages.success(request, f'Se importaron {creados} asignaciones con éxito.')
+                if creados > 0: messages.success(request, f'Se importaron {creados} asignaciones con éxito.')
                 if errores:
-                    for err in errores[:5]:
-                        messages.error(request, err)
-                        
+                    for err in errores[:5]: messages.error(request, err)
             except Exception as e:
                 messages.error(request, f'Error al procesar el archivo: {str(e)}')
-                
             return redirect('assignments:panel')
 
-    context = {
-        'teachers': teachers,
-        'sections': sections,
-        'assignments': assignments,
-        'current_year': current_year
-    }
+    context = {'teachers': teachers, 'sections': sections, 'assignments': assignments, 'current_year': current_year}
     return render(request, 'assignments/panel.html', context)
 
 @login_required(login_url='/auth/login/')
 def remove_assignment_view(request, assignment_id):
     if request.method == 'POST' and request.user.role in ['DIRECTOR', 'SUPERUSER']:
         repo = DjangoTeacherAssignmentRepository()
-        use_case = RemoveAssignmentUseCase(repo)
-        use_case.execute(assignment_id)
+        RemoveAssignmentUseCase(repo).execute(assignment_id)
         return HttpResponse("") 
     return HttpResponse("No autorizado", status=403)
 
 @login_required(login_url='/auth/login/')
 def my_sections_view(request):
-    if request.user.role != 'DOCENTE':
-        return redirect('core:dashboard')
+    if request.user.role != 'DOCENTE': return redirect('core:dashboard')
     repo = DjangoTeacherAssignmentRepository()
-    use_case = GetTeacherAssignmentsUseCase(repo)
     current_year = timezone.now().year
-    assignments = use_case.execute(request.user.id, current_year)
+    assignments = GetTeacherAssignmentsUseCase(repo).execute(request.user.id, current_year)
     return render(request, 'assignments/my_sections.html', {'assignments': assignments, 'current_year': current_year})

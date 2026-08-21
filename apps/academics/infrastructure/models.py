@@ -3,7 +3,7 @@ from django.conf import settings
 
 class Section(models.Model):
     grade = models.CharField('Grado', max_length=20)
-    letter = models.CharField('Letra', max_length=5)
+    letter = models.CharField('Letra', max_length=50, default="-") # Lo dejamos con un guion por defecto
     name = models.CharField('Denominación', max_length=100)
     year = models.IntegerField('Año Escolar')
 
@@ -11,9 +11,12 @@ class Section(models.Model):
         app_label = 'academics'
         verbose_name = 'Sección'
         verbose_name_plural = 'Secciones'
-        unique_together = ['grade', 'letter', 'year']
+        # CORRECCIÓN: Ahora la combinación única es Grado + Nombre + Año
+        unique_together = ['grade', 'name', 'year']
 
     def __str__(self):
+        if self.letter == "-":
+            return f"{self.grade} - {self.name} ({self.year})"
         return f"{self.grade} {self.letter} - {self.name} ({self.year})"
 
 class Parent(models.Model):
@@ -28,7 +31,7 @@ class Parent(models.Model):
         return f"Apoderado: {self.user.first_name} {self.user.last_name}"
 
 class Student(models.Model):
-    dni = models.CharField('DNI', max_length=8, null=True, blank=True) # <-- NUEVO CAMPO
+    dni = models.CharField('DNI', max_length=8, null=True, blank=True)
     first_name = models.CharField('Nombres', max_length=100)
     last_name = models.CharField('Apellidos', max_length=100)
     parent = models.ForeignKey(Parent, on_delete=models.CASCADE, related_name='students', verbose_name='Apoderado')
