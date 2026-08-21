@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
 
-{% block title %}Gestión de Inventario - Intranet HV{% endblock %}
+{% block header_title %}Gestión de Inventario{% endblock %}
 
 {% block content %}
+<!-- CORRECCIÓN: Aseguramos que x-data envuelva toda la página, incluyendo los modales -->
 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 animate-in fade-in duration-300" x-data="{ modalManual: false, modalCsv: false }">
     
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
@@ -11,12 +12,13 @@
             <p class="text-sm font-medium text-gray-500 mt-1">Administración del catálogo de materiales y recursos didácticos.</p>
         </div>
         
-        <div class="flex items-center gap-3">
-            <button @click="modalCsv = true" class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-bold py-2.5 px-4 rounded-lg shadow-sm transition-colors flex items-center gap-2">
-                <i class="fa-solid fa-file-csv text-emerald-600"></i> Importar CSV
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+            <button @click="modalCsv = true" class="flex-1 sm:flex-none justify-center bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-bold py-2.5 px-4 rounded-lg shadow-sm transition-colors flex items-center gap-2">
+                <i class="fa-solid fa-file-csv text-emerald-600"></i> <span class="hidden sm:inline">Importar CSV</span><span class="sm:hidden">Importar</span>
             </button>
-            <button @click="modalManual = true" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2.5 px-4 rounded-lg shadow-sm transition-colors flex items-center gap-2">
-                <i class="fa-solid fa-plus"></i> Nuevo Material
+            <!-- CORRECCIÓN: Este botón activa modalManual = true -->
+            <button @click="modalManual = true" class="flex-1 sm:flex-none justify-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2.5 px-4 rounded-lg shadow-sm transition-colors flex items-center gap-2">
+                <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Nuevo Material</span><span class="sm:hidden">Nuevo</span>
             </button>
         </div>
     </div>
@@ -92,101 +94,113 @@
         </div>
     </div>
 
-    <!-- MODAL: CREACIÓN MANUAL -->
-            <form method="POST" action="{% url 'warehouse:inventory_panel' %}" enctype="multipart/form-data" class="p-6 space-y-4">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="manual">
-                
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Nombre del Material</label>
-                        <input type="text" name="name" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+    <!-- CORRECCIÓN: MODAL CREACIÓN MANUAL (Oculto por defecto y con scroll en móviles) -->
+    <div x-show="modalManual" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+        <div @click.away="modalManual = false" class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 max-h-[90vh]">
+            <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center flex-shrink-0">
+                <h3 class="font-black tracking-wide uppercase text-sm"><i class="fa-solid fa-box text-blue-400 mr-2"></i> Nuevo Material</h3>
+                <button @click="modalManual = false" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            
+            <div class="overflow-y-auto scrollbar-hide flex-grow">
+                <form method="POST" action="{% url 'warehouse:inventory_panel' %}" enctype="multipart/form-data" class="p-6 space-y-4">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="manual">
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Nombre del Material</label>
+                            <input type="text" name="name" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Categoría</label>
+                            <input type="text" name="category" placeholder="Ej: Matemática, Ciencia..." required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Categoría</label>
-                        <input type="text" name="category" placeholder="Ej: Matemática, Ciencia..." required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Stock Inicial</label>
+                            <input type="number" name="stock" min="0" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Unidad de Medida</label>
+                            <input type="text" name="unit" placeholder="Ej: Unidades, Cajas" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                        </div>
                     </div>
-                </div>
 
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Stock Inicial</label>
-                        <input type="number" name="stock" min="0" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Estado Físico</label>
+                            <select name="state" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
+                                <option value="OPERATIVO">Operativo / Nuevo</option>
+                                <option value="DETERIORADO">Deteriorado</option>
+                                <option value="MANTENIMIENTO">En Mantenimiento</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Ciclo</label>
+                            <select name="cycle" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
+                                <option value="TODOS">Todos los Ciclos</option>
+                                <option value="III">Ciclo III (1ro y 2do)</option>
+                                <option value="IV">Ciclo IV (3ro y 4to)</option>
+                                <option value="V">Ciclo V (5to y 6to)</option>
+                            </select>
+                        </div>
                     </div>
+
                     <div>
-                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Unidad de Medida</label>
-                        <input type="text" name="unit" placeholder="Ej: Unidades, Cajas" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Ubicación</label>
+                        <input type="text" name="location" placeholder="Ej: Almacén Central, Estante A" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
                     </div>
-                </div>
 
-                <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Estado Físico</label>
-                        <select name="state" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
-                            <option value="OPERATIVO">Operativo / Nuevo</option>
-                            <option value="DETERIORADO">Deteriorado</option>
-                            <option value="MANTENIMIENTO">En Mantenimiento</option>
-                        </select>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Uso Pedagógico (Opcional)</label>
+                        <textarea name="pedagogical_use" rows="2" placeholder="¿Para qué sirve este material en clase?" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none"></textarea>
                     </div>
+
                     <div>
-                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Ciclo</label>
-                        <select name="cycle" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
-                            <option value="TODOS">Todos los Ciclos</option>
-                            <option value="III">Ciclo III (1ro y 2do)</option>
-                            <option value="IV">Ciclo IV (3ro y 4to)</option>
-                            <option value="V">Ciclo V (5to y 6to)</option>
-                        </select>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Fotografía del Material (Opcional)</label>
+                        <input type="file" name="image" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border border-gray-200 rounded-xl">
                     </div>
-                </div>
 
-                <div>
-                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Ubicación</label>
-                    <input type="text" name="location" placeholder="Ej: Almacén Central, Estante A" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
-                </div>
-
-                <!-- NUEVOS CAMPOS -->
-                <div>
-                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Uso Pedagógico (Opcional)</label>
-                    <textarea name="pedagogical_use" rows="2" placeholder="¿Para qué sirve este material en clase?" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none"></textarea>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Fotografía del Material (Opcional)</label>
-                    <input type="file" name="image" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border border-gray-200 rounded-xl">
-                </div>
-
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl transition-all shadow-md active:scale-95 text-xs uppercase tracking-wider mt-4">
-                    Guardar Material
-                </button>
-            </form>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl transition-all shadow-md active:scale-95 text-xs uppercase tracking-wider mt-4">
+                        Guardar Material
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <!-- MODAL: CARGA MASIVA CSV -->
     <div x-show="modalCsv" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-        <div @click.away="modalCsv = false" class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
-            <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center">
+        <div @click.away="modalCsv = false" class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 max-h-[90vh]">
+            <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center flex-shrink-0">
                 <h3 class="font-black tracking-wide uppercase text-sm"><i class="fa-solid fa-file-csv text-emerald-400 mr-2"></i> Importar Inventario</h3>
                 <button @click="modalCsv = false" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             
-            <form method="POST" action="{% url 'warehouse:inventory_panel' %}" enctype="multipart/form-data" class="p-6 space-y-5">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="csv_upload">
-                
-                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                    <p class="text-xs font-bold text-blue-800 mb-2">El archivo CSV debe tener estas columnas (separadas por punto y coma):</p>
-                    <code class="text-[10px] bg-white px-2 py-1 rounded border border-blue-200 text-blue-600 font-black block">nombre; categoria; cantidad_disponible; unidad_medida; estado; ubicacion; ciclo</code>
-                </div>
+            <div class="overflow-y-auto scrollbar-hide flex-grow">
+                <form method="POST" action="{% url 'warehouse:inventory_panel' %}" enctype="multipart/form-data" class="p-6 space-y-5">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="csv_upload">
+                    
+                    <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                        <p class="text-xs font-bold text-blue-800 mb-2">El archivo CSV debe tener estas columnas (separadas por punto y coma):</p>
+                        <code class="text-[10px] bg-white px-2 py-1 rounded border border-blue-200 text-blue-600 font-black block">nombre; categoria; cantidad_disponible; unidad_medida; estado; ubicacion; ciclo</code>
+                    </div>
 
-                <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-500 hover:bg-blue-50 transition-colors">
-                    <i class="fa-solid fa-file-excel text-3xl text-gray-400 mb-3"></i>
-                    <input type="file" name="csv_file" required accept=".csv"
-                           class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer mx-auto">
-                </div>
+                    <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-500 hover:bg-blue-50 transition-colors">
+                        <i class="fa-solid fa-file-excel text-3xl text-gray-400 mb-3"></i>
+                        <input type="file" name="csv_file" required accept=".csv"
+                               class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer mx-auto">
+                    </div>
 
-                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 rounded-xl transition-all shadow-md active:scale-95 text-xs uppercase tracking-wider">
-                    Procesar Archivo CSV
-                </button>
-            </form>
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 rounded-xl transition-all shadow-md active:scale-95 text-xs uppercase tracking-wider">
+                        Procesar Archivo CSV
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 

@@ -1,15 +1,15 @@
 {% for member in staff %}
-<div class="flex items-center p-4 hover:bg-blue-50 transition-colors group">
+<div class="flex items-center p-4 border-b border-gray-100 hover:bg-blue-50 transition-colors group">
     
-    <!-- Checkbox para selección múltiple -->
     <div class="mr-4">
         <input type="checkbox" value="{{ member.id }}" x-model="selectedUsers" class="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 cursor-pointer">
     </div>
     
-    <!-- Área clickeable para ver detalles -->
+    <!-- CORRECCIÓN: Al hacer clic, HTMX carga los datos y Alpine cambia la vista a 'detail' -->
     <div hx-get="{% url 'users:staff_detail' member.id %}" 
          hx-target="#staff-detail-container" 
          hx-swap="innerHTML"
+         @click="mobileView = 'detail'; window.scrollTo({top: 0, behavior: 'smooth'});"
          class="flex items-center justify-between flex-grow cursor-pointer">
         
         <div class="flex items-center gap-3">

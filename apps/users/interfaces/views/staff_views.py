@@ -50,7 +50,11 @@ def staff_list_view(request):
 
             try:
                 decoded_file = csv_file.read().decode('utf-8-sig').splitlines()
-                reader = csv.DictReader(decoded_file, delimiter=';')
+                delimiter = ';'
+                if decoded_file and '\t' in decoded_file[0]: delimiter = '\t'
+                elif decoded_file and ';' not in decoded_file[0] and ',' in decoded_file[0]: delimiter = ','
+
+                reader = csv.DictReader(decoded_file, delimiter=delimiter)
                 if reader.fieldnames:
                     reader.fieldnames = [str(c).strip().lower().replace(' ', '_') for c in reader.fieldnames if c]
 
@@ -83,7 +87,9 @@ def search_staff_view(request):
     staff = GetStaffListUseCase(DjangoUserRepository()).execute()
     if query: staff = [u for u in staff if query in normalize_text(u.first_name) or query in normalize_text(u.last_name) or query in normalize_text(u.dni)]
     if role_filter: staff = [u for u in staff if u.role == role_filter]
-    return render(request, 'users/partials/staff_table_rows.html', {'staff': staff})
+    
+    # CORRECCIÓN: Aseguramos que devuelva staff_list_items.html (DIVs) y no staff_table_rows (TRs)
+    return render(request, 'users/partials/staff_list_items.html', {'staff': staff})
 
 @login_required(login_url='/auth/login/')
 def staff_detail_view(request, user_id):
@@ -127,16 +133,14 @@ def bulk_permissions_view(request):
         repo = DjangoUserRepository()
         try:
             BulkUpdatePermissionsUseCase(repo).execute(user_ids, modules)
-            
-            # CORRECCIÓN: Leemos los filtros desde request.POST porque es un envío de formulario
             query = normalize_text(request.POST.get('q', ''))
             role_filter = request.POST.get('role', '')
-            
             staff = GetStaffListUseCase(repo).execute()
             if query: staff = [u for u in staff if query in normalize_text(u.first_name) or query in normalize_text(u.last_name) or query in normalize_text(u.dni)]
             if role_filter: staff = [u for u in staff if u.role == role_filter]
             
-            return render(request, 'users/partials/staff_table_rows.html', {'staff': staff})
+            # CORRECCIÓN: Aseguramos que devuelva staff_list_items.html
+            return render(request, 'users/partials/staff_list_items.html', {'staff': staff})
         except ValueError as e:
-            return HttpResponse(f"<tr><td colspan='5' class='p-5 text-red-600 font-bold text-center'>Error: {str(e)}</td></tr>", status=400)
+            return HttpResponse(f"<div class='p-5 text-red-600 font-bold text-center'>Error: {str(e)}</div>", status=400)
     return HttpResponse("No autorizado", status=403)

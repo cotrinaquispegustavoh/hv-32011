@@ -1,4 +1,11 @@
 {% if selected_user %}
+<!-- CORRECCIÓN: Botón Volver (Solo visible en móvil) -->
+<div class="p-4 lg:hidden border-b border-gray-100 bg-gray-50">
+    <button @click="mobileView = 'list'" class="text-xs font-bold text-gray-500 hover:text-blue-600 flex items-center gap-2 transition-colors">
+        <i class="fa-solid fa-arrow-left"></i> Volver a la lista de personal
+    </button>
+</div>
+
 <!-- HEADER DEL USUARIO -->
 <div class="p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white">
     <div class="flex items-center gap-4">
@@ -31,8 +38,8 @@
 </div>
 
 <!-- TABS (Visuales) -->
-<div class="px-6 pt-4 border-b border-gray-100 bg-gray-50/50">
-    <div class="flex gap-6">
+<div class="px-6 pt-4 border-b border-gray-100 bg-gray-50/50 overflow-x-auto scrollbar-hide">
+    <div class="flex gap-6 min-w-max">
         <button class="pb-3 text-sm font-black text-blue-600 border-b-2 border-blue-600 uppercase tracking-wider">Permisos Específicos</button>
         <button class="pb-3 text-sm font-bold text-gray-400 hover:text-gray-600 uppercase tracking-wider transition-colors">Roles Asignados</button>
         <button class="pb-3 text-sm font-bold text-gray-400 hover:text-gray-600 uppercase tracking-wider transition-colors">Historial</button>
@@ -66,7 +73,7 @@
                 </div>
             </div>
             <div class="flex items-center gap-4">
-                <span class="text-[10px] font-black uppercase tracking-wider {% if 'almacen' in selected_user.module_permissions %}text-emerald-500{% else %}text-red-500{% endif %}">
+                <span class="text-[10px] font-black uppercase tracking-wider hidden sm:inline {% if 'almacen' in selected_user.module_permissions %}text-emerald-500{% else %}text-red-500{% endif %}">
                     {% if 'almacen' in selected_user.module_permissions %}Permitido{% else %}Denegado{% endif %}
                 </span>
                 <form hx-post="{% url 'users:toggle_permission' selected_user.id %}" hx-target="#staff-detail-container" hx-swap="innerHTML">
@@ -93,7 +100,7 @@
                 </div>
             </div>
             <div class="flex items-center gap-4">
-                <span class="text-[10px] font-black uppercase tracking-wider {% if 'disciplina' in selected_user.module_permissions %}text-emerald-500{% else %}text-red-500{% endif %}">
+                <span class="text-[10px] font-black uppercase tracking-wider hidden sm:inline {% if 'disciplina' in selected_user.module_permissions %}text-emerald-500{% else %}text-red-500{% endif %}">
                     {% if 'disciplina' in selected_user.module_permissions %}Permitido{% else %}Denegado{% endif %}
                 </span>
                 <form hx-post="{% url 'users:toggle_permission' selected_user.id %}" hx-target="#staff-detail-container" hx-swap="innerHTML">
@@ -120,7 +127,7 @@
                 </div>
             </div>
             <div class="flex items-center gap-4">
-                <span class="text-[10px] font-black uppercase tracking-wider {% if 'portafolio' in selected_user.module_permissions %}text-emerald-500{% else %}text-red-500{% endif %}">
+                <span class="text-[10px] font-black uppercase tracking-wider hidden sm:inline {% if 'portafolio' in selected_user.module_permissions %}text-emerald-500{% else %}text-red-500{% endif %}">
                     {% if 'portafolio' in selected_user.module_permissions %}Permitido{% else %}Denegado{% endif %}
                 </span>
                 <form hx-post="{% url 'users:toggle_permission' selected_user.id %}" hx-target="#staff-detail-container" hx-swap="innerHTML">
@@ -143,6 +150,6 @@
         <i class="fa-solid fa-user-shield"></i>
     </div>
     <h3 class="text-lg font-black text-gray-800">Selecciona un usuario</h3>
-    <p class="text-sm font-medium text-gray-500 mt-1 max-w-xs">Haz clic en un miembro del personal en la lista de la izquierda para ver y editar sus permisos.</p>
+    <p class="text-sm font-medium text-gray-500 mt-1 max-w-xs">Haz clic en un miembro del personal en la lista para ver y editar sus permisos.</p>
 </div>
 {% endif %}
