@@ -48,81 +48,101 @@
                 <button @click="open = false; step = 1" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <div class="overflow-y-auto scrollbar-hide flex-grow">
-                <form hx-post="{% url 'warehouse:request_material' item.id %}" hx-target="#form-error-{{ item.id }}" hx-swap="innerHTML" class="p-6 space-y-6">
-                    {% csrf_token %}
-                    <input type="hidden" name="quantity" :value="quantity">
-                    <input type="hidden" name="required_for" :value="getPickupDatetime()">
-                    <input type="hidden" name="expected_return_date" :value="getReturnDatetime()">
+                <form hx-post="{% url 'warehouse:request_material' item.id %}" 
+                  hx-target="#form-error-{{ item.id }}" 
+                  hx-swap="innerHTML" 
+                  @submit="isSubmitting = true"
+                  @htmx:after-request="isSubmitting = false"
+                  class="p-6 space-y-6">
+                {% csrf_token %}
+                <input type="hidden" name="quantity" :value="quantity">
+                <input type="hidden" name="required_for" :value="getPickupDatetime()">
+                <input type="hidden" name="expected_return_date" :value="getReturnDatetime()">
 
-                    <div id="form-error-{{ item.id }}" class="empty:hidden"></div>
+                <!-- CONTENEDOR DE ERRORES -->
+                <div id="form-error-{{ item.id }}" class="empty:hidden"></div>
 
-                    <div x-show="step === 1" class="space-y-6">
-                        <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                            <p class="text-xs font-bold text-gray-400 uppercase tracking-wide">Recurso Didáctico</p>
-                            <p class="text-xl font-black text-gray-900 mt-1">{{ item.name }}</p>
+                <!-- ... (Mantén el Paso 1 igual) ... -->
+                <div x-show="step === 1" class="space-y-6">
+                    <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wide">Recurso Didáctico</p>
+                        <p class="text-xl font-black text-gray-900 mt-1">{{ item.name }}</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-2">Fecha del Préstamo</label>
+                        <input type="date" x-model="date" required :min="today" class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-2">Cantidad Requerida (Max: {{ item.stock }})</label>
+                        <div class="flex items-center space-x-4 bg-gray-50 border border-gray-200 rounded-xl p-1 w-max">
+                            <button type="button" @mousedown="startDecrease" @mouseup="stopAction" @mouseleave="stopAction" @touchstart="startDecrease" @touchend="stopAction" class="w-10 h-10 bg-white rounded-lg shadow-sm font-black text-lg text-gray-600 hover:text-blue-600">-</button>
+                            <span class="w-8 text-center font-black text-lg text-gray-900" x-text="quantity"></span>
+                            <button type="button" @mousedown="startIncrease" @mouseup="stopAction" @mouseleave="stopAction" @touchstart="startIncrease" @touchend="stopAction" class="w-10 h-10 bg-white rounded-lg shadow-sm font-black text-lg text-gray-600 hover:text-blue-600">+</button>
                         </div>
+                    </div>
 
-                        <div>
-                            <label class="block text-xs font-bold text-gray-600 uppercase mb-2">Fecha del Préstamo</label>
-                            <input type="date" x-model="date" required :min="today" class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-bold text-gray-600 uppercase mb-2">Cantidad Requerida (Max: {{ item.stock }})</label>
-                            <div class="flex items-center space-x-4 bg-gray-50 border border-gray-200 rounded-xl p-1 w-max">
-                                <button type="button" @mousedown="startDecrease" @mouseup="stopAction" @mouseleave="stopAction" @touchstart="startDecrease" @touchend="stopAction" class="w-10 h-10 bg-white rounded-lg shadow-sm font-black text-lg text-gray-600 hover:text-blue-600">-</button>
-                                <span class="w-8 text-center font-black text-lg text-gray-900" x-text="quantity"></span>
-                                <button type="button" @mousedown="startIncrease" @mouseup="stopAction" @mouseleave="stopAction" @touchstart="startIncrease" @touchend="stopAction" class="w-10 h-10 bg-white rounded-lg shadow-sm font-black text-lg text-gray-600 hover:text-blue-600">+</button>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-bold text-gray-600 uppercase mb-3">Planificación del Tiempo</label>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div class="bg-gray-50 p-3 rounded-xl border border-gray-200">
-                                    <span class="block text-[10px] font-bold text-emerald-600 uppercase mb-2">RECOJO</span>
-                                    <div class="flex items-center gap-1">
-                                        <select x-model="p_hour" class="flex-1 min-w-0 bg-white border border-gray-200 rounded-lg px-1 py-2 text-sm font-bold text-center focus:outline-none focus:border-blue-500"><option value="" disabled selected>HH</option><template x-for="h in hours"><option :value="h" x-text="h"></option></template></select>
-                                        <span class="font-bold text-gray-400">:</span>
-                                        <select x-model="p_min" class="flex-1 min-w-0 bg-white border border-gray-200 rounded-lg px-1 py-2 text-sm font-bold text-center focus:outline-none focus:border-blue-500"><option value="" disabled selected>MM</option><template x-for="m in minutes"><option :value="m" x-text="m"></option></template></select>
-                                        <select x-model="p_ampm" class="flex-1 min-w-0 bg-white border border-gray-200 rounded-lg px-1 py-2 text-sm font-bold text-center focus:outline-none focus:border-blue-500"><option value="AM">AM</option><option value="PM">PM</option></select>
-                                    </div>
-                                </div>
-                                <div class="bg-blue-50 p-3 rounded-xl border border-blue-200">
-                                    <span class="block text-[10px] font-bold text-blue-600 uppercase mb-2">RETORNO</span>
-                                    <div class="flex items-center gap-1">
-                                        <select x-model="r_hour" class="flex-1 min-w-0 bg-white border border-blue-200 rounded-lg px-1 py-2 text-sm font-bold text-blue-700 text-center focus:outline-none focus:border-blue-500"><option value="" disabled selected>HH</option><template x-for="h in hours"><option :value="h" x-text="h"></option></template></select>
-                                        <span class="font-bold text-blue-400">:</span>
-                                        <select x-model="r_min" class="flex-1 min-w-0 bg-white border border-blue-200 rounded-lg px-1 py-2 text-sm font-bold text-blue-700 text-center focus:outline-none focus:border-blue-500"><option value="" disabled selected>MM</option><template x-for="m in minutes"><option :value="m" x-text="m"></option></template></select>
-                                        <select x-model="r_ampm" class="flex-1 min-w-0 bg-white border border-blue-200 rounded-lg px-1 py-2 text-sm font-bold text-blue-700 text-center focus:outline-none focus:border-blue-500"><option value="AM">AM</option><option value="PM">PM</option></select>
-                                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-3">Planificación del Tiempo</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="bg-gray-50 p-3 rounded-xl border border-gray-200">
+                                <span class="block text-[10px] font-bold text-emerald-600 uppercase mb-2">RECOJO</span>
+                                <div class="flex items-center gap-1">
+                                    <select x-model="p_hour" class="flex-1 min-w-0 bg-white border border-gray-200 rounded-lg px-1 py-2 text-sm font-bold text-center focus:outline-none focus:border-blue-500"><option value="" disabled selected>HH</option><template x-for="h in hours"><option :value="h" x-text="h"></option></template></select>
+                                    <span class="font-bold text-gray-400">:</span>
+                                    <select x-model="p_min" class="flex-1 min-w-0 bg-white border border-gray-200 rounded-lg px-1 py-2 text-sm font-bold text-center focus:outline-none focus:border-blue-500"><option value="" disabled selected>MM</option><template x-for="m in minutes"><option :value="m" x-text="m"></option></template></select>
+                                    <select x-model="p_ampm" class="flex-1 min-w-0 bg-white border border-gray-200 rounded-lg px-1 py-2 text-sm font-bold text-center focus:outline-none focus:border-blue-500"><option value="AM">AM</option><option value="PM">PM</option></select>
                                 </div>
                             </div>
-                            <div x-show="hasTimeError() && p_hour && r_hour" class="mt-3 text-[11px] font-bold text-red-700 bg-red-50 border border-red-100 p-3 rounded-xl">
-                                <i class="fa-solid fa-circle-exclamation text-red-500 mr-1"></i> La hora de retorno debe ser posterior al recojo.
+                            <div class="bg-blue-50 p-3 rounded-xl border border-blue-200">
+                                <span class="block text-[10px] font-bold text-blue-600 uppercase mb-2">RETORNO</span>
+                                <div class="flex items-center gap-1">
+                                    <select x-model="r_hour" class="flex-1 min-w-0 bg-white border border-blue-200 rounded-lg px-1 py-2 text-sm font-bold text-blue-700 text-center focus:outline-none focus:border-blue-500"><option value="" disabled selected>HH</option><template x-for="h in hours"><option :value="h" x-text="h"></option></template></select>
+                                    <span class="font-bold text-blue-400">:</span>
+                                    <select x-model="r_min" class="flex-1 min-w-0 bg-white border border-blue-200 rounded-lg px-1 py-2 text-sm font-bold text-blue-700 text-center focus:outline-none focus:border-blue-500"><option value="" disabled selected>MM</option><template x-for="m in minutes"><option :value="m" x-text="m"></option></template></select>
+                                    <select x-model="r_ampm" class="flex-1 min-w-0 bg-white border border-blue-200 rounded-lg px-1 py-2 text-sm font-bold text-blue-700 text-center focus:outline-none focus:border-blue-500"><option value="AM">AM</option><option value="PM">PM</option></select>
+                                </div>
                             </div>
                         </div>
+                        <div x-show="hasTimeError() && p_hour && r_hour" class="mt-3 text-[11px] font-bold text-red-700 bg-red-50 border border-red-100 p-3 rounded-xl">
+                            <i class="fa-solid fa-circle-exclamation text-red-500 mr-1"></i> La hora de retorno debe ser posterior al recojo.
+                        </div>
+                    </div>
 
-                        <button type="button" @click="if(!hasTimeError() && date) step = 2" :disabled="hasTimeError() || !date" class="w-full bg-slate-900 text-white font-black rounded-xl px-4 py-4 mt-2 hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs uppercase tracking-wider">
-                            VERIFICAR SOLICITUD <i class="fa-solid fa-arrow-right ml-1"></i>
+                    <button type="button" @click="if(!hasTimeError() && date) step = 2" :disabled="hasTimeError() || !date" class="w-full bg-slate-900 text-white font-black rounded-xl px-4 py-4 mt-2 hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs uppercase tracking-wider">
+                        VERIFICAR SOLICITUD <i class="fa-solid fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+
+                <!-- PASO 2: VERIFICACIÓN -->
+                <div x-show="step === 2" style="display: none;" class="space-y-6 text-center">
+                    <div class="w-16 h-16 bg-amber-50 text-amber-500 border border-amber-100 rounded-full flex items-center justify-center text-2xl mx-auto shadow-inner">
+                        <i class="fa-solid fa-circle-question"></i>
+                    </div>
+                    
+                    <h4 class="font-black text-xl text-slate-900 tracking-tight uppercase">¿Confirmar Reserva?</h4>
+                    
+                    <div class="bg-gray-50 p-5 rounded-2xl border border-gray-200 text-left space-y-3 shadow-inner">
+                        <div class="flex justify-between border-b border-gray-200 pb-2"><span class="text-[10px] font-black text-gray-500 uppercase">Fecha:</span><span class="text-xs font-black text-gray-900" x-text="date"></span></div>
+                        <div class="flex justify-between border-b border-gray-200 pb-2"><span class="text-[10px] font-black text-gray-500 uppercase">Unidades:</span><span class="text-xs font-black text-gray-900" x-text="quantity"></span></div>
+                        <div class="flex justify-between border-b border-gray-200 pb-2"><span class="text-[10px] font-black text-gray-500 uppercase">Recojo:</span><span class="text-xs font-black text-emerald-600" x-text="`${p_hour}:${p_min} ${p_ampm}`"></span></div>
+                        <div class="flex justify-between pt-1"><span class="text-[10px] font-black text-gray-500 uppercase">Retorno:</span><span class="text-xs font-black text-blue-600" x-text="`${r_hour}:${r_min} ${r_ampm}`"></span></div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <button type="button" @click="step = 1" :disabled="isSubmitting" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-black py-4 rounded-xl text-xs uppercase transition-colors disabled:opacity-50">
+                            Corregir
+                        </button>
+                        
+                        <!-- CORRECCIÓN: Botón dinámico que muestra "Procesando..." y se bloquea -->
+                        <button type="submit" :disabled="isSubmitting" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl text-xs uppercase shadow-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2">
+                            <span x-show="!isSubmitting">Confirmar <i class="fa-solid fa-check"></i></span>
+                            <span x-show="isSubmitting" style="display: none;">Procesando... <i class="fa-solid fa-spinner fa-spin"></i></span>
                         </button>
                     </div>
-
-                    <div x-show="step === 2" style="display: none;" class="space-y-6 text-center">
-                        <div class="w-16 h-16 bg-amber-50 text-amber-500 border border-amber-100 rounded-full flex items-center justify-center text-2xl mx-auto shadow-inner"><i class="fa-solid fa-circle-question"></i></div>
-                        <h4 class="font-black text-xl text-slate-900 tracking-tight uppercase">¿Confirmar Reserva?</h4>
-                        <div class="bg-gray-50 p-5 rounded-2xl border border-gray-200 text-left space-y-3 shadow-inner">
-                            <div class="flex justify-between border-b border-gray-200 pb-2"><span class="text-[10px] font-black text-gray-500 uppercase">Fecha:</span><span class="text-xs font-black text-gray-900" x-text="date"></span></div>
-                            <div class="flex justify-between border-b border-gray-200 pb-2"><span class="text-[10px] font-black text-gray-500 uppercase">Unidades:</span><span class="text-xs font-black text-gray-900" x-text="quantity"></span></div>
-                            <div class="flex justify-between border-b border-gray-200 pb-2"><span class="text-[10px] font-black text-gray-500 uppercase">Recojo:</span><span class="text-xs font-black text-emerald-600" x-text="`${p_hour}:${p_min} ${p_ampm}`"></span></div>
-                            <div class="flex justify-between pt-1"><span class="text-[10px] font-black text-gray-500 uppercase">Retorno:</span><span class="text-xs font-black text-blue-600" x-text="`${r_hour}:${r_min} ${r_ampm}`"></span></div>
-                        </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <button type="button" @click="step = 1" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-black py-4 rounded-xl text-xs uppercase transition-colors">Corregir</button>
-                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl text-xs uppercase shadow-md transition-colors">Confirmar <i class="fa-solid fa-check ml-1"></i></button>
-                        </div>
-                    </div>
-                </form>
+                </div>
+            </form>
             </div>
         </div>
     </div>

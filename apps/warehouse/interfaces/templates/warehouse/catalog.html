@@ -68,6 +68,7 @@
             date: new Date().toISOString().split('T')[0],
             today: new Date().toISOString().split('T')[0],
             interval: null,
+            isSubmitting: false, // <-- NUEVO: Estado de carga para bloquear el botón
             
             hours: ['01','02','03','04','05','06','07','08','09','10','11','12'],
             minutes: ['00','05','10','15','20','25','30','35','40','45','50','55'],
@@ -106,7 +107,6 @@
         }))
     });
 
-    // --- SOLUCIÓN PUNTO 10: Escuchar WebSockets para actualizar stock sin recargar ---
     document.addEventListener('DOMContentLoaded', function() {
         const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
         const wsUrl = protocol + window.location.host + '/ws/notificaciones/';
@@ -115,7 +115,6 @@
         socket.onmessage = function(e) {
             const data = JSON.parse(e.data);
             if (data.type === 'stock_update') {
-                // Disparamos el evento de HTMX para que recargue el grid de materiales
                 htmx.trigger('#grid-materiales', 'actualizarCatalogo');
             }
         };

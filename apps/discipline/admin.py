@@ -6,6 +6,12 @@ def soft_delete_action(modeladmin, request, queryset):
     for obj in queryset:
         obj.delete()
 
+# --- NUEVA ACCIÓN: HARD DELETE ---
+@admin.action(description="⚠️ Destruir permanentemente (Hard Delete)")
+def hard_delete_action(modeladmin, request, queryset):
+    for obj in queryset:
+        obj.delete(hard=True) # Borra el registro de la base de datos real
+
 @admin.register(Incident)
 class IncidentAdmin(admin.ModelAdmin):
     list_display = ('student', 'severity', 'subtype', 'reported_by', 'date_reported', 'is_deleted')
@@ -13,7 +19,8 @@ class IncidentAdmin(admin.ModelAdmin):
     search_fields = ('student__first_name', 'student__last_name', 'description')
     date_hierarchy = 'date_reported'
     
-    actions = [soft_delete_action]
+    # Añadimos ambas acciones al menú
+    actions = [soft_delete_action, hard_delete_action]
     
     def get_actions(self, request):
         actions = super().get_actions(request)

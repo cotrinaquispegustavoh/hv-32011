@@ -25,22 +25,22 @@ class DjangoNotificationRepository(INotificationRepository):
         return [
             NotificationEntity(
                 id=m.id, user_id=m.user_id, title=m.title, 
-                message=m.message, is_read=m.is_read, created_at=m.created_at
+                message=m.message, is_read=m.is_read, link=m.link, created_at=m.created_at
             ) for m in models
         ]
 
     def mark_as_read(self, notification_id: int) -> bool:
         return InternalNotification.objects.filter(id=notification_id).update(is_read=True) > 0
 
+    # --- CORRECCIÓN: Esta es la función que exigía el contrato y faltaba ---
+    def mark_all_as_read(self, user_id: int) -> bool:
+        return InternalNotification.objects.filter(user_id=user_id, is_read=False).update(is_read=True) > 0
+
 class DjangoAuditRepository(IAuditRepository):
     def save(self, log: AuditLogEntity) -> AuditLogEntity:
         model = AuditLog.objects.create(
-            user_id=log.user_id,
-            action=log.action,
-            model_name=log.model_name,
-            object_id=log.object_id,
-            changes=log.changes,
-            ip_address=log.ip_address
+            user_id=log.user_id, action=log.action, model_name=log.model_name,
+            object_id=log.object_id, changes=log.changes, ip_address=log.ip_address
         )
         log.id = model.id
         log.timestamp = model.timestamp

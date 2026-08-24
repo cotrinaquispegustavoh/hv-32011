@@ -26,29 +26,36 @@ def request_material_view(request, material_id):
         use_case = CreateLoanRequestUseCase(material_repo, loan_repo)
 
         try:
+            # 1. Guardamos el pedido en la base de datos
             use_case.execute(
                 teacher_id=teacher_id, items=[(material_id, quantity)], 
                 required_for=required_for, expected_return_date=expected_return_date
             )
             
-            notif_repo = DjangoNotificationRepository()
-            NotifyAdminsUseCase(notif_repo).execute(
-                title="Nueva Solicitud de Material",
-                message=f"Un docente ha solicitado materiales. Revisa el panel de despacho.",
-                link="/almacen/despacho/"
-            )
+            # 2. CORRECCIÓN: Envolvemos las notificaciones en un try-except
+            # Si el WebSocket falla, el pedido ya está guardado y el usuario no se queda atrapado.
+            try:
+                notif_repo = DjangoNotificationRepository()
+                NotifyAdminsUseCase(notif_repo).execute(
+                    title="Nueva Solicitud de Material",
+                    message=f"Un docente ha solicitado materiales. Revisa el panel de despacho.",
+                    link="/almacen/despacho/"
+                )
 
-            channel_layer = get_channel_layer()
-            async_to_sync(channel_layer.group_send)(
-                "directors_group",
-                {
-                    "type": "send_alert", "alert_type": "new_loan",
-                    "message": f"Nueva solicitud de material pendiente de despacho.", "severity": "LEVE" 
-                }
-            )
+                channel_layer = get_channel_layer()
+                async_to_sync(channel_layer.group_send)(
+                    "directors_group",
+                    {
+                        "type": "send_alert", "alert_type": "new_loan",
+                        "message": f"Nueva solicitud de material pendiente de despacho.", "severity": "LEVE" 
+                    }
+                )
+            except Exception as e:
+                print(f"Advertencia: No se pudo enviar la notificación en tiempo real: {e}")
 
+            # 3. CORRECCIÓN: Usamos HX-Trigger para recargar el catálogo y cerrar el modal
             response = HttpResponse('<span class="text-green-600 font-bold text-sm bg-green-50 px-3 py-2 rounded-xl block text-center mt-2">¡Pedido Confirmado!</span>')
-            response['HX-Refresh'] = 'true'
+            response['HX-Trigger'] = 'actualizarCatalogo'
             return response
             
         except ValueError as e:
@@ -56,7 +63,6 @@ def request_material_view(request, material_id):
             
     return HttpResponse("Método no permitido", status=405)
 
-# --- NUEVA VISTA: Historial de Solicitudes del Docente ---
 @login_required(login_url='/auth/login/')
 @require_module_permission('almacen')
 def teacher_loans_view(request):
