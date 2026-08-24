@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from apps.core.core.use_cases.manage_dashboards import GetDirectorMetricsUseCase, GetTeacherMetricsUseCase
 from apps.core.infrastructure.repositories.core_repository import DjangoNotificationRepository
 from apps.core.core.use_cases.manage_notifications import MarkNotificationsReadUseCase
+from apps.core.infrastructure.models import InternalNotification
 
 @login_required(login_url='/auth/login/')
 def dashboard_view(request):
@@ -35,3 +36,18 @@ def mark_notifications_read_view(request):
         MarkNotificationsReadUseCase(repo).execute(request.user.id)
         return HttpResponse("") # HTMX no necesita recargar la página, Alpine ocultará la campanita
     return HttpResponseForbidden()
+
+@login_required(login_url='/auth/login/')
+def read_notification_view(request, notif_id):
+    """Marca una notificación individual como leída y redirige a su enlace."""
+    try:
+        notif = InternalNotification.objects.get(id=notif_id, user=request.user)
+        notif.is_read = True
+        notif.save()
+        
+        if notif.link:
+            return redirect(notif.link)
+    except InternalNotification.DoesNotExist:
+        pass
+        
+    return redirect('core:dashboard')

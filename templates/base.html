@@ -225,7 +225,7 @@
                         </div>
                         <div class="max-h-64 overflow-y-auto p-2" id="notification-dropdown-list">
                             {% for notif in latest_notifs %}
-                            <a href="{{ notif.link|default:'#' }}" class="block p-3 hover:bg-gray-50 rounded-xl transition-colors border-b border-gray-50 last:border-0 flex gap-3 items-start">
+                            <a href="{% url 'core:read_notification' notif.id %}" class="block p-3 hover:bg-gray-50 rounded-xl transition-colors border-b border-gray-50 last:border-0 flex gap-3 items-start">
                                 <div class="mt-0.5 {% if not notif.is_read %}text-blue-500{% else %}text-gray-300{% endif %}">
                                     <i class="fa-solid fa-circle text-[8px]"></i>
                                 </div>

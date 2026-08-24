@@ -1,8 +1,10 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone
 from apps.academics.infrastructure.models import Parent, Student
 from apps.discipline.infrastructure.repositories.discipline_repository import DjangoIncidentRepository
 from apps.portfolio.infrastructure.repositories.portfolio_repository import DjangoPortfolioRepository
+from apps.core.infrastructure.models import InstitutionalEvent
 
 @login_required(login_url='/auth/login/')
 def parent_dashboard_view(request):
@@ -15,7 +17,13 @@ def parent_dashboard_view(request):
     except Parent.DoesNotExist:
         children = []
 
-    return render(request, 'academics/parent_dashboard.html', {'children': children})
+    # Añadimos los próximos eventos para que el padre esté informado
+    upcoming_events = InstitutionalEvent.objects.filter(event_date__gte=timezone.now().date()).order_by('event_date')[:4]
+
+    return render(request, 'academics/parent_dashboard.html', {
+        'children': children,
+        'upcoming_events': upcoming_events
+    })
 
 @login_required(login_url='/auth/login/')
 def child_detail_view(request, student_id):
@@ -24,12 +32,10 @@ def child_detail_view(request, student_id):
     
     try:
         parent = Parent.objects.get(user=request.user)
-        # Verificamos que el alumno realmente sea hijo de este apoderado por seguridad
         child = Student.objects.select_related('section').get(id=student_id, parent=parent)
     except (Parent.DoesNotExist, Student.DoesNotExist):
         return redirect('academics:parent_dashboard')
 
-    # Obtenemos las incidencias y las fichas usando nuestros repositorios limpios
     incident_repo = DjangoIncidentRepository()
     incidents = incident_repo.get_by_student(child.id)
 
