@@ -39,7 +39,6 @@ class DjangoMaterialRepository(IMaterialRepository):
             }
         )
         
-        # Si se subió una nueva imagen, borramos la anterior y guardamos la nueva
         if material.new_image_path:
             MaterialImage.objects.filter(material=model, is_main=True).delete()
             MaterialImage.objects.create(material=model, image=material.new_image_path, is_main=True)
@@ -55,9 +54,9 @@ class DjangoMaterialRepository(IMaterialRepository):
             return False
 
     def _to_entity(self, model: Material) -> MaterialEntity:
-        # Buscamos la imagen principal
         main_img = model.images.filter(is_main=True).first()
-        img_url = main_img.image.name if main_img and main_img.image else None
+        # CORRECCIÓN: Usamos .url para que Django genere la ruta web perfecta
+        img_url = main_img.image.url if main_img and main_img.image else None
         
         return MaterialEntity(
             id=model.id, name=model.name, category=model.category, stock=model.stock, unit=model.unit,

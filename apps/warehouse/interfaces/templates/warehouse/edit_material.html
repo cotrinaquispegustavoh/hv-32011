@@ -84,7 +84,8 @@
 
             <div class="border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center hover:border-blue-500 hover:bg-blue-50 transition-colors">
                 {% if material.main_image_url %}
-                    <img src="/media/{{ material.main_image_url }}" alt="Imagen actual" class="h-32 object-contain mx-auto mb-4 rounded-lg shadow-sm">
+                    <!-- CORRECCIÓN: Usamos la URL directa que nos da Django -->
+                    <img src="{{ material.main_image_url }}" alt="Imagen actual" class="h-32 object-contain mx-auto mb-4 rounded-lg shadow-sm">
                     <p class="text-xs font-bold text-gray-500 mb-4">Sube una nueva imagen solo si deseas reemplazar la actual.</p>
                 {% else %}
                     <i class="fa-solid fa-image text-3xl text-gray-400 mb-3"></i>

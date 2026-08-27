@@ -4,12 +4,12 @@
     <!-- Contenedor de Imagen -->
     <div class="h-40 bg-gray-50 relative overflow-hidden border-b border-gray-100 flex items-center justify-center">
         {% if item.main_image_url %}
-            <img src="/media/{{ item.main_image_url }}" alt="{{ item.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+            <!-- CORRECCIÓN: Usamos la URL directa que nos da Django -->
+            <img src="{{ item.main_image_url }}" alt="{{ item.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
         {% else %}
             <i class="fa-solid fa-image text-4xl text-gray-200"></i>
         {% endif %}
         
-        <!-- Etiqueta de Ciclo superpuesta -->
         <span class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-gray-700 text-[9px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider shadow-sm">
             {{ item.cycle }}
         </span>

@@ -1,11 +1,10 @@
 import csv
-import os
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import transaction
-from django.core.files.storage import FileSystemStorage
+from django.core.files.storage import default_storage # <-- IMPORTACIÓN CORREGIDA
 from apps.warehouse.infrastructure.repositories.warehouse_repository import DjangoMaterialRepository
 from apps.warehouse.core.use_cases.manage_materials import SaveMaterialUseCase, DeleteMaterialUseCase
 from apps.warehouse.core.use_cases.import_materials import ImportMaterialUseCase
@@ -30,13 +29,12 @@ def inventory_panel_view(request):
             cycle = request.POST.get('cycle')
             pedagogical_use = request.POST.get('pedagogical_use', '')
             
-            # Procesar imagen
             image_path = None
             if 'image' in request.FILES:
                 file = request.FILES['image']
-                fs = FileSystemStorage(location='media/materials/')
-                filename = fs.save(file.name, file)
-                image_path = f'materials/{filename}'
+                # CORRECCIÓN: Guardado seguro usando default_storage
+                filename = default_storage.save(f'materials/{file.name}', file)
+                image_path = filename
             
             try:
                 SaveMaterialUseCase(repo).execute(None, name, category, stock, unit, state, location, cycle, pedagogical_use, image_path)
@@ -110,9 +108,9 @@ def edit_material_view(request, material_id):
         image_path = None
         if 'image' in request.FILES:
             file = request.FILES['image']
-            fs = FileSystemStorage(location='media/materials/')
-            filename = fs.save(file.name, file)
-            image_path = f'materials/{filename}'
+            # CORRECCIÓN: Guardado seguro usando default_storage
+            filename = default_storage.save(f'materials/{file.name}', file)
+            image_path = filename
         
         try:
             SaveMaterialUseCase(repo).execute(material_id, name, category, stock, unit, state, location, cycle, pedagogical_use, image_path)
