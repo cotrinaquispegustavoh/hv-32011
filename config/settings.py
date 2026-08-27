@@ -117,13 +117,14 @@ USE_I18N = True
 USE_TZ = True
 
 # --- ARCHIVOS ESTÁTICOS Y MULTIMEDIA ---
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-MEDIA_URL = 'media/'
+# CORRECCIÓN: Barras al inicio y al final
+MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -134,11 +135,8 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE = 1800 
 SESSION_SAVE_EVERY_REQUEST = True
 
-# --- SEGURIDAD EN PRODUCCIÓN (HTTPS) ---
 if not DEBUG:
     CSRF_COOKIE_SECURE = True
     SESSION_COOKIE_SECURE = True
     SECURE_SSL_REDIRECT = False
-    
-    # CORRECCIÓN: Le decimos a Django que confíe en el dominio de Render para los formularios
     CSRF_TRUSTED_ORIGINS = ['https://intranet-hv.onrender.com']
