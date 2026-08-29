@@ -20,6 +20,9 @@ def student_directory_view(request):
     repo = DjangoStudentRepository()
 
     if request.method == 'POST' and request.POST.get('action') == 'csv_upload':
+        if request.user.role not in ['DIRECTOR', 'SUBDIRECTOR', 'SUPERUSER']:
+            return HttpResponseForbidden("No tienes permiso para importar matrículas.")
+
         if 'csv_file' not in request.FILES:
             messages.error(request, 'Debes adjuntar un archivo CSV.')
             return redirect('academics:student_directory')

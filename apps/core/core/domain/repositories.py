@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List
+from datetime import date
 from .entities import NotificationEntity, AuditLogEntity, EventEntity
 
 class INotificationRepository(ABC):
@@ -29,4 +30,10 @@ class IAuditRepository(ABC):
 class IEventRepository(ABC):
     @abstractmethod
     def get_upcoming_events(self, limit: int = 5) -> List[EventEntity]:
+        pass
+        
+    # --- NUEVA FUNCIÓN ---
+    @abstractmethod
+    def get_events_in_range(self, start_date: date, end_date: date) -> List[EventEntity]:
+        """Obtiene todos los eventos en un rango de fechas (Para el Calendario)."""
         pass

@@ -13,6 +13,12 @@ class IMaterialRepository(ABC):
     def update_stock(self, material_id: int, new_stock: int) -> bool: pass
 
     @abstractmethod
+    def decrease_stock(self, material_id: int, quantity: int) -> bool: pass
+
+    @abstractmethod
+    def increase_stock(self, material_id: int, quantity: int) -> bool: pass
+
+    @abstractmethod
     def get_by_name(self, name: str) -> Optional[MaterialEntity]: pass
 
     @abstractmethod
@@ -34,3 +40,6 @@ class ILoanRequestRepository(ABC):
 
     @abstractmethod
     def get_by_id(self, loan_id: int) -> Optional[LoanRequestEntity]: pass
+
+    @abstractmethod
+    def get_by_id_for_update(self, loan_id: int) -> Optional[LoanRequestEntity]: pass

@@ -1,7 +1,8 @@
-from django.test import TestCase
-from apps.warehouse.infrastructure.models import Material
+from django.test import Client, TestCase
+from django.urls import reverse
+from apps.warehouse.infrastructure.models import Material, LoanRequest
 from apps.warehouse.infrastructure.repositories.warehouse_repository import DjangoMaterialRepository, DjangoLoanRequestRepository
-from apps.warehouse.core.use_cases.manage_loans import CreateLoanRequestUseCase
+from apps.warehouse.core.use_cases.manage_loans import CreateLoanRequestUseCase, UpdateLoanStatusUseCase
 from apps.users.infrastructure.models import User
 from datetime import datetime, timedelta
 
@@ -16,6 +17,7 @@ class WarehouseLogicTests(TestCase):
         self.material_repo = DjangoMaterialRepository()
         self.loan_repo = DjangoLoanRequestRepository()
         self.use_case = CreateLoanRequestUseCase(self.material_repo, self.loan_repo)
+        self.client = Client()
 
     def test_soft_delete_material(self):
         """Prueba que al eliminar un material, no se borre de la BD, solo se oculte."""
@@ -46,3 +48,93 @@ class WarehouseLogicTests(TestCase):
         
         # Verificamos que el error exacto sea el de stock insuficiente
         self.assertIn("Stock insuficiente", str(context.exception))
+
+    def test_rejects_zero_and_negative_quantities_without_changing_stock(self):
+        future_pickup = (datetime.now() + timedelta(days=1)).isoformat()
+        future_return = (datetime.now() + timedelta(days=2)).isoformat()
+
+        for invalid_quantity in (0, -1):
+            with self.subTest(quantity=invalid_quantity):
+                with self.assertRaisesMessage(ValueError, "mayor que cero"):
+                    self.use_case.execute(
+                        teacher_id=self.teacher.id,
+                        items=[(self.material.id, invalid_quantity)],
+                        required_for=future_pickup,
+                        expected_return_date=future_return,
+                    )
+
+        self.material.refresh_from_db()
+        self.assertEqual(self.material.stock, 5)
+        self.assertEqual(LoanRequest.objects.count(), 0)
+
+    def test_valid_request_decrements_stock_and_creates_loan(self):
+        future_pickup = (datetime.now() + timedelta(days=1)).isoformat()
+        future_return = (datetime.now() + timedelta(days=2)).isoformat()
+
+        loan = self.use_case.execute(
+            teacher_id=self.teacher.id,
+            items=[(self.material.id, 2)],
+            required_for=future_pickup,
+            expected_return_date=future_return,
+        )
+
+        self.material.refresh_from_db()
+        self.assertEqual(self.material.stock, 3)
+        self.assertEqual(loan.status, 'PENDING')
+
+    def test_invalid_status_transition_does_not_change_loan_or_stock(self):
+        future_pickup = (datetime.now() + timedelta(days=1)).isoformat()
+        future_return = (datetime.now() + timedelta(days=2)).isoformat()
+        loan = self.use_case.execute(
+            teacher_id=self.teacher.id,
+            items=[(self.material.id, 1)],
+            required_for=future_pickup,
+            expected_return_date=future_return,
+        )
+
+        status_use_case = UpdateLoanStatusUseCase(self.material_repo, self.loan_repo)
+        with self.assertRaisesMessage(ValueError, "Cambio de estado no permitido"):
+            status_use_case.execute(loan.id, 'RETURNED')
+
+        self.material.refresh_from_db()
+        saved_loan = LoanRequest.objects.get(id=loan.id)
+        self.assertEqual(self.material.stock, 4)
+        self.assertEqual(saved_loan.status, 'PENDING')
+
+    def test_normal_dispatch_and_return_flow_restores_stock_only_once(self):
+        future_pickup = (datetime.now() + timedelta(days=1)).isoformat()
+        future_return = (datetime.now() + timedelta(days=2)).isoformat()
+        loan = self.use_case.execute(
+            teacher_id=self.teacher.id,
+            items=[(self.material.id, 1)],
+            required_for=future_pickup,
+            expected_return_date=future_return,
+        )
+        status_use_case = UpdateLoanStatusUseCase(self.material_repo, self.loan_repo)
+
+        status_use_case.execute(loan.id, 'DISPATCHED')
+        status_use_case.execute(loan.id, 'RETURNED')
+        status_use_case.execute(loan.id, 'RETURNED')
+
+        self.material.refresh_from_db()
+        saved_loan = LoanRequest.objects.get(id=loan.id)
+        detail = saved_loan.details.get()
+        self.assertEqual(self.material.stock, 5)
+        self.assertEqual(saved_loan.status, 'RETURNED')
+        self.assertEqual(detail.quantity_returned, 1)
+
+    def test_non_numeric_quantity_returns_controlled_error(self):
+        self.teacher.password_changed = True
+        self.teacher.module_permissions = ['almacen']
+        self.teacher.save(update_fields=['password_changed', 'module_permissions'])
+        self.client.force_login(self.teacher)
+
+        response = self.client.post(
+            reverse('warehouse:request_material', args=[self.material.id]),
+            {'quantity': 'no-es-un-numero'},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertContains(response, 'Cantidad inválida', status_code=400)
+        self.material.refresh_from_db()
+        self.assertEqual(self.material.stock, 5)

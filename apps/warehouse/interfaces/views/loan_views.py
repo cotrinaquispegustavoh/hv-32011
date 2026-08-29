@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
+from django.utils.html import escape
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from apps.users.interfaces.middlewares import require_module_permission
@@ -13,7 +14,13 @@ from apps.core.core.use_cases.manage_notifications import NotifyAdminsUseCase
 @require_module_permission('almacen')
 def request_material_view(request, material_id):
     if request.method == 'POST':
-        quantity = int(request.POST.get('quantity', 1))
+        try:
+            quantity = int(request.POST.get('quantity', 1))
+        except (TypeError, ValueError):
+            return HttpResponse(
+                '<span class="text-red-600 font-bold text-xs">Cantidad inválida.</span>',
+                status=400,
+            )
         required_for = request.POST.get('required_for')
         expected_return_date = request.POST.get('expected_return_date')
         teacher_id = request.user.id
@@ -59,7 +66,7 @@ def request_material_view(request, material_id):
             return response
             
         except ValueError as e:
-            return HttpResponse(f'<span class="text-red-600 font-bold text-xs">{str(e)}</span>')
+            return HttpResponse(f'<span class="text-red-600 font-bold text-xs">{escape(str(e))}</span>')
             
     return HttpResponse("Método no permitido", status=405)
 

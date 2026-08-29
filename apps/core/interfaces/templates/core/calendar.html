@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block header_title %}Calendario Institucional{% endblock %}
+
+{% block content %}
+<!-- Librerías de FullCalendar -->
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.11/locales/es.global.min.js'></script>
+
+<!-- CORRECCIÓN: max-w-5xl para hacerlo más compacto y centrado -->
+<div class="max-w-5xl mx-auto py-6 px-4 sm:px-6 lg:px-8 animate-in fade-in duration-300" x-data="{ modalOpen: false, eventTitle: '', eventDesc: '', isHoliday: false }">
+    
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <div>
+            <h1 class="text-2xl font-black text-blue-900 uppercase tracking-wide">Calendario Institucional</h1>
+            <p class="text-sm font-medium text-gray-500 mt-1">Agenda de actividades, reuniones y feriados oficiales.</p>
+        </div>
+        
+        {% if user.role in 'DIRECTOR,SUPERUSER' %}
+        <a href="/hv-panel-secreto-2026/core/institutionalevent/" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow-sm transition-colors flex items-center gap-2 uppercase tracking-wider">
+            <i class="fa-solid fa-calendar-plus"></i> Gestionar Eventos
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Contenedor del Calendario -->
+    <div class="bg-white p-4 sm:p-6 rounded-3xl shadow-sm border border-gray-200">
+        <!-- Quitamos el min-h para que FullCalendar controle la altura -->
+        <div id="calendar" class="w-full"></div>
+    </div>
+
+    <!-- Modal para ver detalles del evento -->
+    <div x-show="modalOpen" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+        <div @click.away="modalOpen = false" class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+            <div :class="isHoliday ? 'bg-red-600' : 'bg-blue-600'" class="text-white px-6 py-4 flex justify-between items-center">
+                <h3 class="font-black tracking-wide uppercase text-sm flex items-center gap-2">
+                    <i class="fa-solid" :class="isHoliday ? 'fa-calendar-xmark' : 'fa-calendar-check'"></i> 
+                    <span x-text="isHoliday ? 'Feriado Oficial' : 'Evento Institucional'"></span>
+                </h3>
+                <button @click="modalOpen = false" class="text-white/70 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <h4 class="text-xl font-black text-gray-900 leading-tight" x-text="eventTitle"></h4>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    <p class="text-sm text-gray-600 font-medium leading-relaxed" x-text="eventDesc || 'Sin descripción adicional.'"></p>
+                </div>
+                <button @click="modalOpen = false" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-black py-3 rounded-xl transition-colors text-xs uppercase tracking-wider">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    .fc { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .fc-theme-standard .fc-scrollgrid { border: 1px solid #E5E7EB; border-radius: 0.5rem; overflow: hidden; }
+    .fc-theme-standard td, .fc-theme-standard th { border-color: #E5E7EB; }
+    .fc-col-header-cell { background-color: #F9FAFB; padding: 10px 0; }
+    .fc-col-header-cell-cushion { color: #4B5563; font-weight: 800; text-transform: uppercase; font-size: 0.70rem; letter-spacing: 0.05em; }
+    .fc-daygrid-day-number { color: #111827; font-weight: 700; padding: 6px !important; font-size: 0.85rem; }
+    .fc-day-today { background-color: #EFF6FF !important; }
+    .fc-event { border-radius: 4px; padding: 2px 4px; font-size: 0.70rem; font-weight: 700; border: none; cursor: pointer; transition: transform 0.2s; margin-bottom: 2px; }
+    .fc-event:hover { transform: scale(1.02); }
+    .fc-button-primary { background-color: #2563EB !important; border-color: #2563EB !important; font-weight: 700 !important; text-transform: capitalize !important; border-radius: 0.5rem !important; font-size: 0.85rem !important; padding: 0.4rem 0.8rem !important; }
+    .fc-button-primary:hover { background-color: #1D4ED8 !important; }
+    .fc-button-active { background-color: #1E3A8A !important; }
+    .fc-toolbar-title { font-weight: 900 !important; color: #111827 !important; text-transform: capitalize; font-size: 1.25rem !important; }
+    
+    /* Ajustes para móviles */
+    @media (max-width: 640px) {
+        .fc-toolbar { flex-direction: column; gap: 10px; }
+        .fc-toolbar-title { font-size: 1.1rem !important; }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            locale: 'es',
+            initialView: 'dayGridMonth',
+            height: 650, // CORRECCIÓN: Altura fija para que no se estire demasiado
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,listMonth' // Quitamos la vista de semana para mantenerlo limpio
+            },
+            buttonText: {
+                today: 'Hoy',
+                month: 'Mes',
+                list: 'Agenda'
+            },
+            events: '/api/calendario/', 
+            eventClick: function(info) {
+                const alpineData = document.querySelector('[x-data]')._x_dataStack[0];
+                alpineData.eventTitle = info.event.title;
+                alpineData.eventDesc = info.event.extendedProps.description;
+                alpineData.isHoliday = info.event.extendedProps.is_holiday;
+                alpineData.modalOpen = true;
+            }
+        });
+        calendar.render();
+    });
+</script>
+{% endblock %}

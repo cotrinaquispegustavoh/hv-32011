@@ -1,6 +1,7 @@
 from typing import List, Tuple
 from datetime import datetime
 from django.utils import timezone
+from django.db import transaction
 from apps.warehouse.core.domain.entities import LoanRequestEntity, LoanDetailEntity
 from apps.warehouse.core.domain.repositories import IMaterialRepository, ILoanRequestRepository
 
@@ -9,6 +10,7 @@ class CreateLoanRequestUseCase:
         self.material_repo = material_repo
         self.loan_repo = loan_repo
 
+    @transaction.atomic
     def execute(self, teacher_id: int, items: List[Tuple[int, int]], required_for: str, expected_return_date: str) -> LoanRequestEntity:
         
         # --- CORRECCIÓN: Manejo estricto de Zonas Horarias ---
@@ -33,14 +35,14 @@ class CreateLoanRequestUseCase:
 
         details = []
         for material_id, quantity in items:
+            if quantity <= 0:
+                raise ValueError("La cantidad solicitada debe ser mayor que cero.")
+
             material = self.material_repo.get_by_id(material_id)
             if not material: 
                 raise ValueError(f"El material con ID {material_id} no existe.")
-            if material.stock < quantity: 
+            if not self.material_repo.decrease_stock(material_id, quantity):
                 raise ValueError(f"Stock insuficiente. Solo quedan {material.stock} unidades de '{material.name}'.")
-            
-            new_stock = material.stock - quantity
-            self.material_repo.update_stock(material_id, new_stock)
             
             details.append(LoanDetailEntity(
                 id=None, material_id=material_id, quantity_requested=quantity,
@@ -59,20 +61,30 @@ class UpdateLoanStatusUseCase:
         self.material_repo = material_repo
         self.loan_repo = loan_repo
 
+    @transaction.atomic
     def execute(self, loan_id: int, new_status: str) -> LoanRequestEntity:
-        loan = self.loan_repo.get_by_id(loan_id)
+        loan = self.loan_repo.get_by_id_for_update(loan_id)
         if not loan:
             raise ValueError("La solicitud no existe.")
 
+        if new_status == loan.status:
+            return loan
+
+        allowed_transitions = {
+            'PENDING': {'DISPATCHED', 'CANCELLED'},
+            'DISPATCHED': {'RETURNED', 'CANCELLED'},
+            'RETURNED': set(),
+            'CANCELLED': set(),
+        }
+        if new_status not in allowed_transitions.get(loan.status, set()):
+            raise ValueError("Cambio de estado no permitido.")
+
         if new_status in ['RETURNED', 'CANCELLED'] and loan.status not in ['RETURNED', 'CANCELLED']:
             for detail in loan.details:
-                material = self.material_repo.get_by_id(detail.material_id)
-                if material:
-                    if new_status == 'RETURNED':
-                        detail.quantity_returned = detail.quantity_requested
-                    
-                    new_stock = material.stock + detail.quantity_requested
-                    self.material_repo.update_stock(material.id, new_stock)
+                if new_status == 'RETURNED':
+                    detail.quantity_returned = detail.quantity_requested
+                if not self.material_repo.increase_stock(detail.material_id, detail.quantity_requested):
+                    raise ValueError("No se pudo actualizar el stock del material.")
 
         loan.status = new_status
         return self.loan_repo.save(loan)

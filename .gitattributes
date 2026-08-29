@@ -1,0 +1,12 @@
+# Mantener los archivos de texto en formato Unix para Linux y Render.
+* text=auto eol=lf
+
+# Los archivos binarios no deben someterse a conversión de líneas.
+*.gif binary
+*.ico binary
+*.jpeg binary
+*.jpg binary
+*.pdf binary
+*.png binary
+*.pyc binary
+*.xlsx binary

@@ -65,3 +65,24 @@ class DjangoEventRepository(IEventRepository):
                 event_date=m.event_date, is_holiday=m.is_holiday
             ) for m in models
         ]
+        
+class DjangoEventRepository(IEventRepository):
+    def get_upcoming_events(self, limit: int = 5) -> List[EventEntity]:
+        today = timezone.now().date()
+        models = InstitutionalEvent.objects.filter(event_date__gte=today).order_by('event_date')[:limit]
+        return [
+            EventEntity(
+                id=m.id, title=m.title, description=m.description, 
+                event_date=m.event_date, is_holiday=m.is_holiday
+            ) for m in models
+        ]
+
+    # --- NUEVA FUNCIÓN ---
+    def get_events_in_range(self, start_date, end_date) -> List[EventEntity]:
+        models = InstitutionalEvent.objects.filter(event_date__gte=start_date, event_date__lte=end_date)
+        return [
+            EventEntity(
+                id=m.id, title=m.title, description=m.description, 
+                event_date=m.event_date, is_holiday=m.is_holiday
+            ) for m in models
+        ]

@@ -1,5 +1,6 @@
 from typing import List, Optional
 from django.db import transaction
+from django.db.models import F
 from apps.warehouse.core.domain.entities import MaterialEntity, LoanRequestEntity, LoanDetailEntity
 from apps.warehouse.core.domain.repositories import IMaterialRepository, ILoanRequestRepository
 from apps.warehouse.infrastructure.models import Material, MaterialImage, LoanRequest, LoanDetail
@@ -16,6 +17,21 @@ class DjangoMaterialRepository(IMaterialRepository):
 
     def update_stock(self, material_id: int, new_stock: int) -> bool:
         return Material.objects.filter(id=material_id).update(stock=new_stock) > 0
+
+    def decrease_stock(self, material_id: int, quantity: int) -> bool:
+        if quantity <= 0:
+            return False
+        return Material.objects.filter(
+            id=material_id,
+            stock__gte=quantity,
+        ).update(stock=F('stock') - quantity) > 0
+
+    def increase_stock(self, material_id: int, quantity: int) -> bool:
+        if quantity <= 0:
+            return False
+        return Material.objects.filter(id=material_id).update(
+            stock=F('stock') + quantity
+        ) > 0
 
     def get_by_name(self, name: str) -> Optional[MaterialEntity]:
         try:
@@ -119,6 +135,15 @@ class DjangoLoanRequestRepository(ILoanRequestRepository):
     def get_by_id(self, loan_id: int) -> Optional[LoanRequestEntity]:
         try:
             model = LoanRequest.objects.prefetch_related('details__material', 'teacher').get(id=loan_id)
+            return self._to_entity(model)
+        except LoanRequest.DoesNotExist:
+            return None
+
+    def get_by_id_for_update(self, loan_id: int) -> Optional[LoanRequestEntity]:
+        try:
+            model = LoanRequest.objects.select_for_update().prefetch_related(
+                'details__material', 'teacher'
+            ).get(id=loan_id)
             return self._to_entity(model)
         except LoanRequest.DoesNotExist:
             return None

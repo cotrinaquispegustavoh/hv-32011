@@ -4,6 +4,8 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from django.contrib import messages
 from django.contrib.messages import get_messages
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 
 @never_cache
 def login_view(request):
@@ -45,9 +47,16 @@ def password_change_view(request):
         
         if new_password and new_password == confirm_password:
             user = request.user
+            try:
+                validate_password(new_password, user=user)
+            except ValidationError as exc:
+                for error in exc.messages:
+                    messages.error(request, error)
+                return render(request, 'users/password_change.html')
+
             user.set_password(new_password)
             user.password_changed = True
-            user.save()
+            user.save(update_fields=['password', 'password_changed'])
             
             update_session_auth_hash(request, user) 
             messages.success(request, '¡Contraseña actualizada con éxito!')

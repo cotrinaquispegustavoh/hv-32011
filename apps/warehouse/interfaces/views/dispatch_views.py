@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
+from django.utils.html import escape
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from apps.warehouse.infrastructure.repositories.warehouse_repository import DjangoMaterialRepository, DjangoLoanRequestRepository
@@ -53,6 +54,6 @@ def update_loan_status_view(request, loan_id):
                 return HttpResponse('<span class="bg-red-50 text-red-600 border border-red-100 text-[10px] font-black px-3 py-2 rounded-lg uppercase block text-center"><i class="fa-solid fa-ban mr-1"></i> Rechazado</span>')
                 
         except ValueError as e:
-            return HttpResponse(f'<span class="text-red-600 text-xs font-bold">{str(e)}</span>')
+            return HttpResponse(f'<span class="text-red-600 text-xs font-bold">{escape(str(e))}</span>')
 
     return HttpResponse("Método no permitido", status=405)

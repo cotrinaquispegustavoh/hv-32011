@@ -31,3 +31,35 @@ class SecurityRoleTests(TestCase):
         
         # Verificamos que la página cargue correctamente (200 OK)
         self.assertEqual(response.status_code, 200)
+
+    def test_password_change_rejects_common_numeric_password(self):
+        user = User.objects.create_user(
+            dni='12345678', role='DOCENTE', password='initial-password', password_changed=False
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(reverse('users:password_change'), {
+            'new_password': '12345678',
+            'confirm_password': '12345678',
+        })
+
+        user.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(user.password_changed)
+        self.assertTrue(user.check_password('initial-password'))
+
+    def test_password_change_accepts_valid_password(self):
+        user = User.objects.create_user(
+            dni='87654321', role='DOCENTE', password='initial-password', password_changed=False
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(reverse('users:password_change'), {
+            'new_password': 'ClaveSegura!2026',
+            'confirm_password': 'ClaveSegura!2026',
+        })
+
+        user.refresh_from_db()
+        self.assertRedirects(response, reverse('core:dashboard'))
+        self.assertTrue(user.password_changed)
+        self.assertTrue(user.check_password('ClaveSegura!2026'))

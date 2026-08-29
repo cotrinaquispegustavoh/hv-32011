@@ -9,9 +9,11 @@
         <div>
             <h1 class="text-2xl font-black text-blue-900 uppercase tracking-wide">Directorio de Alumnos</h1>
             <p class="text-sm font-medium text-gray-500 mt-1">Consulta rápida de estudiantes, tutores y contactos de emergencia.</p>
-            <button @click="modalCsv = true" class="mt-4 sm:mt-0 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2.5 px-4 rounded-lg shadow-sm transition-colors flex items-center gap-2">
-            <i class="fa-solid fa-file-csv"></i> Importar Matrícula
-        </button>
+            {% if user.role == 'DIRECTOR' or user.role == 'SUBDIRECTOR' or user.role == 'SUPERUSER' %}
+                <button @click="modalCsv = true" class="mt-4 sm:mt-0 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2.5 px-4 rounded-lg shadow-sm transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-file-csv"></i> Importar Matrícula
+                </button>
+            {% endif %}
         </div>
     </div>
 
@@ -40,6 +42,7 @@
         </select>
     </div>
 
+{% if user.role == 'DIRECTOR' or user.role == 'SUBDIRECTOR' or user.role == 'SUPERUSER' %}
 <!-- MODAL: CARGA MASIVA CSV -->
     <div x-show="modalCsv" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
         <div @click.away="modalCsv = false" class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
@@ -69,6 +72,7 @@
             </form>
         </div>
     </div>
+{% endif %}
 
     <!-- TABLA DE ALUMNOS -->
     <div class="bg-white shadow-sm border border-gray-200 rounded-2xl overflow-hidden">
