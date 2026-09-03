@@ -8,6 +8,7 @@ from apps.users.infrastructure.repositories.user_repository import DjangoUserRep
 from apps.academics.infrastructure.repositories.academics_repository import DjangoSectionRepository, DjangoParentRepository, DjangoStudentRepository
 from apps.academics.core.use_cases.import_students import ImportStudentsUseCase
 from apps.academics.core.use_cases.manage_students import GetStudentDirectoryUseCase
+from apps.core.file_validation import UploadValidationError, validate_csv_upload
 from apps.core.utils import normalize_text
 from django.http import HttpResponseForbidden
 
@@ -28,6 +29,12 @@ def student_directory_view(request):
             return redirect('academics:student_directory')
             
         csv_file = request.FILES['csv_file']
+        try:
+            validate_csv_upload(csv_file)
+        except UploadValidationError as e:
+            messages.error(request, str(e))
+            return redirect('academics:student_directory')
+
         user_repo = DjangoUserRepository()
         section_repo = DjangoSectionRepository()
         parent_repo = DjangoParentRepository()

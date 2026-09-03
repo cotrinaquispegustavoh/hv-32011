@@ -8,7 +8,7 @@ from apps.academics.infrastructure.models import Student
 from apps.discipline.infrastructure.models import Incident
 from apps.warehouse.infrastructure.models import Material, LoanRequest
 from apps.portfolio.infrastructure.models import PortfolioItem
-from apps.core.infrastructure.models import InstitutionalEvent, InternalNotification, AuditLog
+from apps.core.infrastructure.models import InternalNotification
 from apps.assignments.infrastructure.models import TeacherAssignment
 
 class GetDirectorMetricsUseCase:
@@ -55,7 +55,6 @@ class GetDirectorMetricsUseCase:
         }
 
         alerts = InternalNotification.objects.filter(user_id=user_id).order_by('-created_at')[:5]
-        upcoming_events = InstitutionalEvent.objects.filter(event_date__gte=today).order_by('event_date')[:4]
         upcoming_birthdays = User.objects.filter(is_active=True, birth_date__month=today.month, birth_date__day__gte=today.day).order_by('birth_date__day')[:3]
 
         return {
@@ -72,7 +71,6 @@ class GetDirectorMetricsUseCase:
             },
             'chart_incidents': incidents_data,
             'alerts': alerts,
-            'upcoming_events': upcoming_events,
             'upcoming_birthdays': upcoming_birthdays
         }
 
@@ -88,27 +86,6 @@ class GetTeacherMetricsUseCase:
         
         latest_loan = LoanRequest.objects.filter(teacher_id=user_id).prefetch_related('details__material').order_by('-request_date').first()
         
-        # CORRECCIÓN: Filtramos LoanDetail para no hacer spam, y traemos los últimos 6 eventos
-        recent_activity = AuditLog.objects.filter(user_id=user_id).exclude(
-            action__in=['LOGIN', 'LOGOUT']
-        ).exclude(
-            model_name='LoanDetail'
-        ).order_by('-timestamp')[:6]
-        
-        # CORRECCIÓN: Diccionario de traducción para nombres amigables
-        model_names_es = {
-            'Incident': 'Incidencia',
-            'LoanRequest': 'Solicitud de Material',
-            'PortfolioItem': 'Ficha Académica',
-            'User': 'Perfil de Usuario'
-        }
-        
-        # Inyectamos el nombre amigable en cada registro
-        for log in recent_activity:
-            log.friendly_model_name = model_names_es.get(log.model_name, log.model_name)
-        
-        upcoming_events = InstitutionalEvent.objects.filter(event_date__gte=today).order_by('event_date')[:4]
-
         return {
             'top_cards': {
                 'sections': my_sections,
@@ -117,6 +94,4 @@ class GetTeacherMetricsUseCase:
                 'portfolio': my_portfolio
             },
             'latest_loan': latest_loan,
-            'recent_activity': recent_activity,
-            'upcoming_events': upcoming_events
         }

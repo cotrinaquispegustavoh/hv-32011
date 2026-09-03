@@ -1,10 +1,9 @@
 {% for item in materials %}
-<div x-data="loanModal({{ item.stock }})" class="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all flex flex-col overflow-hidden group">
+<div x-data="loanModal({{ item.stock }})" class="ui-card hover:shadow-md transition-all flex flex-col overflow-hidden group">
     
     <!-- Contenedor de Imagen -->
     <div class="h-40 bg-gray-50 relative overflow-hidden border-b border-gray-100 flex items-center justify-center">
         {% if item.main_image_url %}
-            <!-- CORRECCIÓN: Usamos la URL directa que nos da Django -->
             <img src="{{ item.main_image_url }}" alt="{{ item.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
         {% else %}
             <i class="fa-solid fa-image text-4xl text-gray-200"></i>
@@ -16,8 +15,8 @@
     </div>
 
     <!-- Info de la Tarjeta -->
-    <div class="p-5 flex-grow flex flex-col">
-        <h3 class="font-black text-gray-900 text-base leading-tight mb-1">{{ item.name }}</h3>
+    <div class="p-4 flex-grow flex flex-col">
+        <h3 class="font-bold text-gray-900 text-base leading-tight mb-1">{{ item.name }}</h3>
         <p class="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-2">{{ item.category }}</p>
         
         <p class="text-xs text-gray-500 font-medium leading-relaxed mb-3 line-clamp-2 flex-grow" title="{{ item.pedagogical_use }}">
@@ -28,24 +27,31 @@
     </div>
     
     <!-- Footer de la Tarjeta -->
-    <div class="px-5 py-4 border-t border-gray-100 bg-gray-50 flex justify-between items-center">
+    <div class="px-4 py-3 border-t border-gray-100 bg-gray-50 flex justify-between items-center">
         <div class="flex flex-col">
             <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Stock</span>
             <span class="text-sm font-black {% if item.stock > 0 %}text-emerald-600{% else %}text-red-600{% endif %}">{{ item.stock }} {{ item.unit }}</span>
         </div>
-        <button @click="open = true" 
-                class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2.5 rounded-lg transition-colors shadow-sm disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
+        {% if user.role == 'DOCENTE' %}
+        <button @click="open = true"
+                class="ui-button ui-button--primary text-xs disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
                 {% if item.stock == 0 %}disabled{% endif %}>
             {% if item.stock == 0 %}AGOTADO{% else %}SOLICITAR{% endif %}
         </button>
+        {% else %}
+        <span class="px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider border {% if item.state == 'OPERATIVO' %}bg-emerald-50 text-emerald-700 border-emerald-200{% else %}bg-amber-50 text-amber-700 border-amber-200{% endif %}">
+            {{ item.state }}
+        </span>
+        {% endif %}
     </div>
 
-    <!-- MODAL DE RESERVA (Mantenemos el mismo modal que ya arreglamos) -->
-    <div x-show="open" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-        <div @click.away="open = false" class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 max-h-[90vh]">
+    {% if user.role == 'DOCENTE' %}
+    <!-- MODAL DE RESERVA -->
+    <div x-show="open" x-cloak @keydown.escape.window="open = false; step = 1" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+        <div @click.away="open = false" class="ui-dialog w-full max-w-md overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 max-h-[90vh]" role="dialog" aria-modal="true" aria-labelledby="loan-title-{{ item.id }}">
             <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center flex-shrink-0">
-                <h3 class="font-black tracking-wide uppercase text-sm" x-text="step === 1 ? 'Configurar Reserva' : 'Verificar Solicitud'"></h3>
-                <button @click="open = false; step = 1" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+                <h3 id="loan-title-{{ item.id }}" class="font-black tracking-wide uppercase text-sm" x-text="step === 1 ? 'Configurar reserva' : 'Verificar solicitud'"></h3>
+                <button @click="open = false; step = 1" class="text-slate-400 hover:text-white transition-colors" aria-label="Cerrar solicitud"><i class="fa-solid fa-xmark text-xl" aria-hidden="true"></i></button>
             </div>
             <div class="overflow-y-auto scrollbar-hide flex-grow">
                 <form hx-post="{% url 'warehouse:request_material' item.id %}" 
@@ -53,6 +59,7 @@
                   hx-swap="innerHTML" 
                   @submit="isSubmitting = true"
                   @htmx:after-request="isSubmitting = false"
+                  :aria-busy="isSubmitting.toString()"
                   class="p-6 space-y-6">
                 {% csrf_token %}
                 <input type="hidden" name="quantity" :value="quantity">
@@ -70,16 +77,16 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-gray-600 uppercase mb-2">Fecha del Préstamo</label>
-                        <input type="date" x-model="date" required :min="today" class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                        <label for="loan-date-{{ item.id }}" class="block text-xs font-bold text-gray-600 uppercase mb-2">Fecha del préstamo</label>
+                        <input id="loan-date-{{ item.id }}" type="date" x-model="date" required :min="today" class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
                     </div>
 
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-2">Cantidad Requerida (Max: {{ item.stock }})</label>
                         <div class="flex items-center space-x-4 bg-gray-50 border border-gray-200 rounded-xl p-1 w-max">
-                            <button type="button" @mousedown="startDecrease" @mouseup="stopAction" @mouseleave="stopAction" @touchstart="startDecrease" @touchend="stopAction" class="w-10 h-10 bg-white rounded-lg shadow-sm font-black text-lg text-gray-600 hover:text-blue-600">-</button>
-                            <span class="w-8 text-center font-black text-lg text-gray-900" x-text="quantity"></span>
-                            <button type="button" @mousedown="startIncrease" @mouseup="stopAction" @mouseleave="stopAction" @touchstart="startIncrease" @touchend="stopAction" class="w-10 h-10 bg-white rounded-lg shadow-sm font-black text-lg text-gray-600 hover:text-blue-600">+</button>
+                            <button type="button" @mousedown="startDecrease" @mouseup="stopAction" @mouseleave="stopAction" @touchstart="startDecrease" @touchend="stopAction" class="w-10 h-10 bg-white rounded-lg shadow-sm font-black text-lg text-gray-600 hover:text-blue-600" aria-label="Reducir cantidad">−</button>
+                            <span class="w-8 text-center font-black text-lg text-gray-900" x-text="quantity" aria-live="polite"></span>
+                            <button type="button" @mousedown="startIncrease" @mouseup="stopAction" @mouseleave="stopAction" @touchstart="startIncrease" @touchend="stopAction" class="w-10 h-10 bg-white rounded-lg shadow-sm font-black text-lg text-gray-600 hover:text-blue-600" aria-label="Aumentar cantidad">+</button>
                         </div>
                     </div>
 
@@ -89,19 +96,19 @@
                             <div class="bg-gray-50 p-3 rounded-xl border border-gray-200">
                                 <span class="block text-[10px] font-bold text-emerald-600 uppercase mb-2">RECOJO</span>
                                 <div class="flex items-center gap-1">
-                                    <select x-model="p_hour" class="flex-1 min-w-0 bg-white border border-gray-200 rounded-lg px-1 py-2 text-sm font-bold text-center focus:outline-none focus:border-blue-500"><option value="" disabled selected>HH</option><template x-for="h in hours"><option :value="h" x-text="h"></option></template></select>
+                                    <select x-model="p_hour" aria-label="Hora de recojo" class="flex-1 min-w-0 bg-white border border-gray-200 rounded-lg px-1 py-2 text-sm font-bold text-center focus:outline-none focus:border-blue-500"><option value="" disabled selected>HH</option><template x-for="h in hours"><option :value="h" x-text="h"></option></template></select>
                                     <span class="font-bold text-gray-400">:</span>
-                                    <select x-model="p_min" class="flex-1 min-w-0 bg-white border border-gray-200 rounded-lg px-1 py-2 text-sm font-bold text-center focus:outline-none focus:border-blue-500"><option value="" disabled selected>MM</option><template x-for="m in minutes"><option :value="m" x-text="m"></option></template></select>
-                                    <select x-model="p_ampm" class="flex-1 min-w-0 bg-white border border-gray-200 rounded-lg px-1 py-2 text-sm font-bold text-center focus:outline-none focus:border-blue-500"><option value="AM">AM</option><option value="PM">PM</option></select>
+                                    <select x-model="p_min" aria-label="Minutos de recojo" class="flex-1 min-w-0 bg-white border border-gray-200 rounded-lg px-1 py-2 text-sm font-bold text-center focus:outline-none focus:border-blue-500"><option value="" disabled selected>MM</option><template x-for="m in minutes"><option :value="m" x-text="m"></option></template></select>
+                                    <select x-model="p_ampm" aria-label="Periodo de recojo" class="flex-1 min-w-0 bg-white border border-gray-200 rounded-lg px-1 py-2 text-sm font-bold text-center focus:outline-none focus:border-blue-500"><option value="AM">AM</option><option value="PM">PM</option></select>
                                 </div>
                             </div>
                             <div class="bg-blue-50 p-3 rounded-xl border border-blue-200">
                                 <span class="block text-[10px] font-bold text-blue-600 uppercase mb-2">RETORNO</span>
                                 <div class="flex items-center gap-1">
-                                    <select x-model="r_hour" class="flex-1 min-w-0 bg-white border border-blue-200 rounded-lg px-1 py-2 text-sm font-bold text-blue-700 text-center focus:outline-none focus:border-blue-500"><option value="" disabled selected>HH</option><template x-for="h in hours"><option :value="h" x-text="h"></option></template></select>
+                                    <select x-model="r_hour" aria-label="Hora de retorno" class="flex-1 min-w-0 bg-white border border-blue-200 rounded-lg px-1 py-2 text-sm font-bold text-blue-700 text-center focus:outline-none focus:border-blue-500"><option value="" disabled selected>HH</option><template x-for="h in hours"><option :value="h" x-text="h"></option></template></select>
                                     <span class="font-bold text-blue-400">:</span>
-                                    <select x-model="r_min" class="flex-1 min-w-0 bg-white border border-blue-200 rounded-lg px-1 py-2 text-sm font-bold text-blue-700 text-center focus:outline-none focus:border-blue-500"><option value="" disabled selected>MM</option><template x-for="m in minutes"><option :value="m" x-text="m"></option></template></select>
-                                    <select x-model="r_ampm" class="flex-1 min-w-0 bg-white border border-blue-200 rounded-lg px-1 py-2 text-sm font-bold text-blue-700 text-center focus:outline-none focus:border-blue-500"><option value="AM">AM</option><option value="PM">PM</option></select>
+                                    <select x-model="r_min" aria-label="Minutos de retorno" class="flex-1 min-w-0 bg-white border border-blue-200 rounded-lg px-1 py-2 text-sm font-bold text-blue-700 text-center focus:outline-none focus:border-blue-500"><option value="" disabled selected>MM</option><template x-for="m in minutes"><option :value="m" x-text="m"></option></template></select>
+                                    <select x-model="r_ampm" aria-label="Periodo de retorno" class="flex-1 min-w-0 bg-white border border-blue-200 rounded-lg px-1 py-2 text-sm font-bold text-blue-700 text-center focus:outline-none focus:border-blue-500"><option value="AM">AM</option><option value="PM">PM</option></select>
                                 </div>
                             </div>
                         </div>
@@ -138,7 +145,7 @@
                         <!-- CORRECCIÓN: Botón dinámico que muestra "Procesando..." y se bloquea -->
                         <button type="submit" :disabled="isSubmitting" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl text-xs uppercase shadow-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2">
                             <span x-show="!isSubmitting">Confirmar <i class="fa-solid fa-check"></i></span>
-                            <span x-show="isSubmitting" style="display: none;">Procesando... <i class="fa-solid fa-spinner fa-spin"></i></span>
+                            <span x-show="isSubmitting" x-cloak role="status">Procesando... <i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i></span>
                         </button>
                     </div>
                 </div>
@@ -146,9 +153,10 @@
             </div>
         </div>
     </div>
+    {% endif %}
 </div>
 {% empty %}
-<div class="col-span-full bg-white p-12 rounded-3xl shadow-sm border border-gray-200 text-center">
+<div class="ui-card col-span-full p-12 text-center">
     <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
         <i class="fa-solid fa-box-open text-3xl text-gray-300"></i>
     </div>

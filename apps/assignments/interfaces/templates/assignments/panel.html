@@ -3,18 +3,21 @@
 {% block header_title %}Asignación Docente-Aula{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 animate-in fade-in duration-300" x-data="{ activeTab: 'manual', modalCsv: false, modalEdit: false, editId: '', editTeacher: '', editSection: '', editArea: '' }">
+<div class="max-w-7xl mx-auto animate-in fade-in duration-300" x-data="{ modalCreate: false, modalCsv: false, modalEdit: false, editId: '', editTeacher: '', editSection: '', editArea: '' }">
     
     <!-- HEADER -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+    <div class="ui-page-header">
         <div>
-            <h1 class="text-2xl font-black text-blue-900 uppercase tracking-wide">Asignación Docente-Aula</h1>
-            <p class="text-sm font-medium text-gray-500 mt-1">Vincula a los profesores con sus respectivas secciones y áreas.</p>
+            <h1 class="ui-page-title md:hidden">Asignación docente–aula</h1>
+            <p class="ui-page-subtitle">Vincula a los profesores con sus respectivas secciones y áreas.</p>
         </div>
         
         <div class="flex items-center gap-3 w-full sm:w-auto">
-            <button @click="modalCsv = true" class="flex-1 sm:flex-none justify-center bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-bold py-2.5 px-4 rounded-lg shadow-sm transition-colors flex items-center gap-2">
+            <button @click="modalCsv = true" class="ui-button ui-button--secondary flex-1 sm:flex-none">
                 <i class="fa-solid fa-file-csv text-emerald-600"></i> <span class="hidden sm:inline">Importar CSV</span><span class="sm:hidden">Importar</span>
+            </button>
+            <button @click="modalCreate = true" class="ui-button ui-button--primary flex-1 sm:flex-none">
+                <i class="fa-solid fa-user-plus"></i> Nueva asignación
             </button>
         </div>
     </div>
@@ -29,94 +32,41 @@
         </div>
     {% endif %}
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        <!-- COLUMNA IZQUIERDA: Formulario Manual -->
-        <div class="lg:col-span-1 space-y-6">
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 animate-in fade-in duration-300">
-                <h3 class="text-sm font-black text-gray-800 mb-4 uppercase tracking-wide border-b border-gray-100 pb-3"><i class="fa-solid fa-user-plus text-blue-500 mr-2"></i> Nueva Asignación</h3>
-                
-                <form method="POST" action="{% url 'assignments:panel' %}" class="space-y-4">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="manual">
-                    
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Docente</label>
-                        <select name="teacher_id" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
-                            <option value="" disabled selected>Selecciona un docente...</option>
-                            {% for teacher in teachers %}
-                                <option value="{{ teacher.id }}">{{ teacher.last_name }}, {{ teacher.first_name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Área / Especialidad</label>
-                        <select name="area" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
-                            <option value="Polidocencia (Tutor/a)" selected>Polidocencia (Tutor/a)</option>
-                            <option value="Educación Física">Educación Física</option>
-                            <option value="Inglés">Inglés</option>
-                            <option value="Arte y Cultura">Arte y Cultura</option>
-                            <option value="Computación">Computación</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 uppercase mb-2">Aulas Asignadas (Selección Múltiple)</label>
-                        <div class="bg-gray-50 border border-gray-200 rounded-xl p-3 max-h-48 overflow-y-auto">
-                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                                {% for section in sections %}
-                                <label class="cursor-pointer">
-                                    <input type="checkbox" name="section_ids" value="{{ section.id }}" class="peer sr-only">
-                                    <div class="px-3 py-2 rounded-lg border border-gray-200 bg-white peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 hover:bg-gray-100 transition-all text-center text-xs font-bold text-gray-600 select-none">
-                                        {{ section.grade }} "{{ section.letter }}"
-                                    </div>
-                                </label>
-                                {% endfor %}
-                            </div>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl transition-all shadow-md active:scale-95 text-xs uppercase tracking-wider mt-2">
-                        Vincular Docente
-                    </button>
-                </form>
+    <div class="ui-card overflow-hidden">
+        <div class="bg-gray-50 px-5 sm:px-6 py-4 border-b border-gray-200 flex items-center justify-between gap-4">
+            <div>
+                <h2 class="text-sm font-black text-gray-800 uppercase tracking-wide">Asignaciones vigentes ({{ current_year }})</h2>
+                <p class="text-xs font-medium text-gray-500 mt-1">{{ assignments|length }} vinculaciones registradas</p>
             </div>
+            <span class="hidden sm:inline-flex w-10 h-10 rounded-xl bg-blue-50 text-blue-600 items-center justify-center border border-blue-100"><i class="fa-solid fa-chalkboard-user"></i></span>
         </div>
 
-        <!-- COLUMNA DERECHA: Tabla de Asignaciones -->
-        <div class="lg:col-span-2">
-            <div class="bg-white shadow-sm border border-gray-200 rounded-2xl overflow-hidden">
-                <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                    <h2 class="text-sm font-black text-gray-800 uppercase tracking-wide">Asignaciones Vigentes ({{ current_year }})</h2>
-                </div>
-                <!-- CORRECCIÓN: overflow-x-auto para que la tabla se pueda deslizar en móviles -->
-                <div class="overflow-x-auto">
-                    <table class="min-w-full text-left">
+        <!-- Tabla para pantallas amplias -->
+        <div class="hidden lg:block">
+            <table class="ui-table min-w-full text-left table-fixed">
                         <thead>
                             <tr class="border-b-2 border-gray-100">
-                                <th scope="col" class="px-6 py-3 text-xs font-bold text-gray-900 whitespace-nowrap">Sección</th>
-                                <th scope="col" class="px-6 py-3 text-xs font-bold text-gray-900 whitespace-nowrap">Docente</th>
-                                <th scope="col" class="px-6 py-3 text-xs font-bold text-gray-900 whitespace-nowrap">Área</th>
-                                <th scope="col" class="px-6 py-3 text-right text-xs font-bold text-gray-900 whitespace-nowrap">Acción</th>
+                                <th scope="col" class="w-1/4 px-6 py-3 text-xs font-bold text-gray-900">Aula</th>
+                                <th scope="col" class="w-2/5 px-6 py-3 text-xs font-bold text-gray-900">Docente</th>
+                                <th scope="col" class="w-1/4 px-6 py-3 text-xs font-bold text-gray-900">Área</th>
+                                <th scope="col" class="w-[10%] px-6 py-3 text-right text-xs font-bold text-gray-900">Acción</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
                             {% for assign in assignments %}
-                            <tr class="hover:bg-gray-50 transition-colors" id="row-{{ assign.id }}">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-black text-gray-900">{{ assign.section.grade }} "{{ assign.section.letter }}"</div>
-                                    <div class="text-[10px] font-bold text-gray-500 uppercase mt-0.5">{{ assign.section.name }}</div>
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4">
+                                    <div class="text-sm font-black text-gray-900">{{ assign.section.display_name }}</div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-6 py-4">
                                     <div class="flex items-center gap-3">
                                         <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-black text-xs border border-blue-100">
                                             {{ assign.teacher.first_name|make_list|first|upper }}
                                         </div>
-                                        <div class="text-sm font-bold text-gray-800">{{ assign.teacher.last_name }}, {{ assign.teacher.first_name }}</div>
+                                        <div class="text-sm font-bold text-gray-800 min-w-0">{{ assign.teacher.last_name }}, {{ assign.teacher.first_name }}</div>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-6 py-4">
                                     <span class="px-3 py-1 inline-flex text-[10px] font-black uppercase tracking-wider rounded-lg {% if 'Polidocencia' in assign.area %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-amber-50 text-amber-700 border border-amber-200{% endif %}">
                                         {{ assign.area }}
                                     </span>
@@ -128,8 +78,7 @@
                                             <i class="fa-solid fa-pen"></i>
                                         </button>
                                         <button hx-post="{% url 'assignments:remove' assign.id %}" 
-                                                hx-target="#row-{{ assign.id }}" 
-                                                hx-swap="outerHTML"
+                                                hx-swap="none"
                                                 hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                                                 hx-confirm="¿Desvincular a este docente del aula?"
                                                 class="w-8 h-8 inline-flex items-center justify-center rounded-lg bg-white text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors border border-gray-200 hover:border-red-200 shadow-sm" title="Eliminar asignación">
@@ -149,17 +98,121 @@
                             </tr>
                             {% endfor %}
                         </tbody>
-                    </table>
-                </div>
-            </div>
+            </table>
         </div>
 
+        <!-- Tarjetas para móvil y tablet, sin desplazamiento horizontal -->
+        <div class="lg:hidden divide-y divide-gray-100">
+            {% for assign in assignments %}
+            <article class="p-5 space-y-4">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="text-[10px] font-black text-blue-600 uppercase tracking-widest">Aula</p>
+                        <h3 class="text-base font-black text-gray-900 mt-1">{{ assign.section.display_name }}</h3>
+                    </div>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <button @click="modalEdit = true; editId = '{{ assign.id }}'; editTeacher = '{{ assign.teacher_id }}'; editSection = '{{ assign.section_id }}'; editArea = '{{ assign.area|escapejs }}';"
+                                class="w-9 h-9 flex items-center justify-center rounded-lg bg-amber-50 text-amber-600 border border-amber-200" title="Editar asignación" aria-label="Editar asignación de {{ assign.section.display_name }}">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button hx-post="{% url 'assignments:remove' assign.id %}"
+                                hx-swap="none"
+                                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                hx-confirm="¿Desvincular a este docente del aula?"
+                                class="w-9 h-9 flex items-center justify-center rounded-lg bg-red-50 text-red-600 border border-red-200" title="Eliminar asignación" aria-label="Eliminar asignación de {{ assign.section.display_name }}">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 rounded-xl bg-gray-50 border border-gray-100 p-3">
+                    <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-black text-sm border border-blue-100 flex-shrink-0">
+                        {{ assign.teacher.first_name|make_list|first|upper }}
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-wider">Docente</p>
+                        <p class="text-sm font-bold text-gray-800 leading-snug">{{ assign.teacher.last_name }}, {{ assign.teacher.first_name }}</p>
+                    </div>
+                </div>
+                <span class="px-3 py-1.5 inline-flex text-[10px] font-black uppercase tracking-wider rounded-lg {% if 'Polidocencia' in assign.area %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-amber-50 text-amber-700 border border-amber-200{% endif %}">
+                    {{ assign.area }}
+                </span>
+            </article>
+            {% empty %}
+            <div class="px-6 py-12 text-center text-gray-500 text-sm">
+                <i class="fa-solid fa-link-slash text-2xl text-gray-300 mb-3"></i>
+                <p class="font-bold text-gray-600">No hay asignaciones registradas para el año {{ current_year }}.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- MODAL: NUEVA ASIGNACIÓN -->
+    <div x-show="modalCreate" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+        <div @click.away="modalCreate = false" class="ui-dialog w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="bg-slate-900 text-white px-6 py-5 flex justify-between items-center flex-shrink-0">
+                <div>
+                    <h3 class="font-black tracking-wide uppercase text-sm"><i class="fa-solid fa-user-plus text-blue-400 mr-2"></i> Nueva asignación</h3>
+                    <p class="text-xs text-slate-400 mt-1">Vincula un docente con una o más aulas.</p>
+                </div>
+                <button @click="modalCreate = false" class="text-slate-400 hover:text-white transition-colors" aria-label="Cerrar"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+
+            <form method="POST" action="{% url 'assignments:panel' %}" class="p-6 space-y-5 overflow-y-auto">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="manual">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Docente</label>
+                        <select name="teacher_id" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
+                            <option value="" disabled selected>Selecciona un docente...</option>
+                            {% for teacher in teachers %}
+                            <option value="{{ teacher.id }}">{{ teacher.last_name }}, {{ teacher.first_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Área / Especialidad</label>
+                        <select name="area" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
+                            <option value="Polidocencia (Tutor/a)" selected>Polidocencia (Tutor/a)</option>
+                            <option value="Educación Física">Educación Física</option>
+                            <option value="Inglés">Inglés</option>
+                            <option value="Arte y Cultura">Arte y Cultura</option>
+                            <option value="Computación">Computación</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 uppercase mb-2">Aulas asignadas (selección múltiple)</label>
+                    <div class="bg-gray-50 border border-gray-200 rounded-xl p-3 max-h-72 overflow-y-auto">
+                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                            {% for section in sections %}
+                            <label class="cursor-pointer">
+                                <input type="checkbox" name="section_ids" value="{{ section.id }}" class="peer sr-only">
+                                <div class="h-full px-3 py-3 rounded-lg border border-gray-200 bg-white peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 hover:bg-gray-100 transition-all text-center text-xs font-bold text-gray-600 select-none flex items-center justify-center">
+                                    {{ section.display_name }}
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-2">
+                    <button type="button" @click="modalCreate = false" class="px-5 py-3 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-bold transition-colors">Cancelar</button>
+                    <button type="submit" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl shadow-md active:scale-95 text-xs uppercase tracking-wider transition-all">
+                        Vincular docente
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- MODAL: EDITAR ASIGNACIÓN -->
     <div x-show="modalEdit" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
         <!-- CORRECCIÓN: max-h-[90vh] y overflow-y-auto para celulares -->
-        <div @click.away="modalEdit = false" class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 max-h-[90vh]">
+        <div @click.away="modalEdit = false" class="ui-dialog w-full max-w-md overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 max-h-[90vh]">
             <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center flex-shrink-0">
                 <h3 class="font-black tracking-wide uppercase text-sm"><i class="fa-solid fa-pen text-amber-400 mr-2"></i> Editar Asignación</h3>
                 <button @click="modalEdit = false" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
@@ -184,7 +237,7 @@
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Sección</label>
                         <select name="section_id" x-model="editSection" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
                             {% for section in sections %}
-                                <option value="{{ section.id }}">{{ section.grade }} "{{ section.letter }}" - {{ section.name }}</option>
+                                <option value="{{ section.id }}">{{ section.display_name }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -211,7 +264,7 @@
     <!-- MODAL: CARGA MASIVA CSV -->
     <div x-show="modalCsv" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
         <!-- CORRECCIÓN: max-h-[90vh] y overflow-y-auto para celulares -->
-        <div @click.away="modalCsv = false" class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 max-h-[90vh]">
+        <div @click.away="modalCsv = false" class="ui-dialog w-full max-w-md overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 max-h-[90vh]">
             <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center flex-shrink-0">
                 <h3 class="font-black tracking-wide uppercase text-sm"><i class="fa-solid fa-file-csv text-emerald-400 mr-2"></i> Importar Asignaciones</h3>
                 <button @click="modalCsv = false" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>

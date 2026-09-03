@@ -9,6 +9,9 @@ class ISectionRepository(ABC):
     @abstractmethod
     def get_by_grade_letter(self, grade: str, letter: str, year: int) -> Optional[SectionEntity]: pass
 
+    @abstractmethod
+    def get_by_grade_name(self, grade: str, name: str, year: int) -> Optional[SectionEntity]: pass
+
 class IParentRepository(ABC):
     @abstractmethod
     def get_by_user_id(self, user_id: int) -> Optional[ParentEntity]: pass

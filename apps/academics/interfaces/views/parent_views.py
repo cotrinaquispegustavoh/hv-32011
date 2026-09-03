@@ -1,10 +1,9 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from django.utils import timezone
 from apps.academics.infrastructure.models import Parent, Student
 from apps.discipline.infrastructure.repositories.discipline_repository import DjangoIncidentRepository
 from apps.portfolio.infrastructure.repositories.portfolio_repository import DjangoPortfolioRepository
-from apps.core.infrastructure.models import InstitutionalEvent
+from apps.core.calendar_services import get_upcoming_calendar_items
 
 @login_required(login_url='/auth/login/')
 def parent_dashboard_view(request):
@@ -17,8 +16,7 @@ def parent_dashboard_view(request):
     except Parent.DoesNotExist:
         children = []
 
-    # Añadimos los próximos eventos para que el padre esté informado
-    upcoming_events = InstitutionalEvent.objects.filter(event_date__gte=timezone.now().date()).order_by('event_date')[:4]
+    upcoming_events = get_upcoming_calendar_items(request.user)
 
     return render(request, 'academics/parent_dashboard.html', {
         'children': children,

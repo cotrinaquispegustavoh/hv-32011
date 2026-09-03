@@ -14,7 +14,7 @@ class DjangoPortfolioRepository(IPortfolioRepository):
         return PortfolioItemEntity(
             id=model.id, teacher_id=model.teacher_id,
             section_id=model.section_id,
-            section_name=f"{model.section.grade} {model.section.letter}" if model.section else "General",
+            section_name=model.section.display_name if model.section else "General",
             item_type=model.item_type, title=model.title, description=model.description,
             file_path=model.file.name if model.file else "", created_at=model.created_at,
             observations=observations,

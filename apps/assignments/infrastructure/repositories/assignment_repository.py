@@ -11,7 +11,7 @@ class DjangoTeacherAssignmentRepository(ITeacherAssignmentRepository):
         
         # Si la consulta incluyó la sección y los alumnos, los mapeamos
         if hasattr(model, 'section') and model.section:
-            section_name = f"{model.section.grade} '{model.section.letter}' - {model.section.name}"
+            section_name = model.section.display_name
             if hasattr(model.section, 'students'):
                 for student in model.section.students.all().order_by('last_name'):
                     students.append(StudentSimpleEntity(

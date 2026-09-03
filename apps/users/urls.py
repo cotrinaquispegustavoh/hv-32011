@@ -1,5 +1,5 @@
 from django.urls import path
-from .interfaces.views import auth_views, staff_views
+from .interfaces.views import auth_views, profile_views, staff_views
 
 app_name = 'users'
 
@@ -8,6 +8,8 @@ urlpatterns = [
     path('login/', auth_views.login_view, name='login'),
     path('logout/', auth_views.logout_view, name='logout'),
     path('cambiar-password/', auth_views.password_change_view, name='password_change'),
+    path('perfil/', profile_views.profile_view, name='profile'),
+    path('seguridad/', profile_views.security_view, name='security'),
     
     # Gestión de Personal (Master-Detail)
     path('personal/', staff_views.staff_list_view, name='staff_list'),

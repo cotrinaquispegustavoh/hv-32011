@@ -1,0 +1,476 @@
+/*
+ * Fundamentos visuales de la intranet HV.
+ *
+ * Esta capa centraliza decisiones de identidad y normaliza las utilidades
+ * existentes sin acoplarse a la lógica de ningún módulo. Los componentes
+ * semánticos (.ui-*) quedan disponibles para las siguientes etapas.
+ */
+
+:root {
+    --hv-navy-950: #081525;
+    --hv-navy-900: #0b1b2d;
+    --hv-navy-800: #173b7a;
+    --hv-blue-700: #1d4ed8;
+    --hv-blue-600: #2563eb;
+    --hv-blue-500: #3b82f6;
+    --hv-blue-50: #eff6ff;
+    --hv-surface: #ffffff;
+    --hv-canvas: #f6f8fb;
+    --hv-muted: #64748b;
+    --hv-text: #1e293b;
+    --hv-border: #e2e8f0;
+    --hv-border-strong: #cbd5e1;
+    --hv-success: #059669;
+    --hv-warning: #d97706;
+    --hv-danger: #dc2626;
+
+    --hv-radius-sm: 6px;
+    --hv-radius-control: 8px;
+    --hv-radius-card: 12px;
+    --hv-radius-dialog: 14px;
+
+    --hv-shadow-xs: 0 1px 2px rgb(15 23 42 / 0.04);
+    --hv-shadow-sm: 0 1px 3px rgb(15 23 42 / 0.07), 0 1px 2px rgb(15 23 42 / 0.04);
+    --hv-shadow-md: 0 8px 24px rgb(15 23 42 / 0.09);
+    --hv-focus-ring: 0 0 0 3px rgb(37 99 235 / 0.18);
+}
+
+html {
+    color-scheme: light;
+}
+
+body.app-shell {
+    background: var(--hv-canvas);
+    color: var(--hv-text);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.ui-skip-link {
+    background: var(--hv-navy-950);
+    border-radius: 0 0 var(--hv-radius-control) var(--hv-radius-control);
+    color: #fff;
+    font-weight: 700;
+    left: 1rem;
+    padding: 0.65rem 1rem;
+    position: fixed;
+    top: 0;
+    transform: translateY(-120%);
+    transition: transform 150ms ease;
+    z-index: 200;
+}
+
+.ui-skip-link:focus {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+    transform: translateY(0);
+}
+
+.ui-request-indicator {
+    background: linear-gradient(90deg, var(--hv-blue-500), var(--hv-blue-700));
+    box-shadow: 0 1px 4px rgb(37 99 235 / 0.25);
+    height: 3px;
+    left: 0;
+    opacity: 0;
+    pointer-events: none;
+    position: fixed;
+    top: 0;
+    transition: opacity 120ms ease;
+    width: 100%;
+    z-index: 250;
+}
+
+.htmx-request .ui-request-indicator,
+.htmx-request.ui-request-indicator {
+    opacity: 1;
+}
+
+.app-shell ::selection {
+    background: rgb(37 99 235 / 0.18);
+    color: var(--hv-navy-950);
+}
+
+.app-shell *,
+.app-shell *::before,
+.app-shell *::after {
+    scrollbar-color: #cbd5e1 transparent;
+    scrollbar-width: thin;
+}
+
+.app-shell *::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+}
+
+.app-shell *::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background-clip: padding-box;
+}
+
+.app-shell *::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8;
+}
+
+/* Conserva la utilidad usada en navegaciones donde el scroll no debe distraer. */
+.app-shell .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.app-shell .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+.app-shell :is(a, button, input, select, textarea) {
+    -webkit-tap-highlight-color: transparent;
+}
+
+.app-shell :is(a, button, input, select, textarea):focus-visible {
+    outline: 2px solid var(--hv-blue-600);
+    outline-offset: 2px;
+}
+
+.app-shell input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.app-shell select,
+.app-shell textarea {
+    border-color: var(--hv-border);
+    border-radius: var(--hv-radius-control);
+    color: var(--hv-text);
+    font: inherit;
+}
+
+.app-shell input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
+.app-shell select:focus,
+.app-shell textarea:focus {
+    border-color: var(--hv-blue-500);
+    box-shadow: var(--hv-focus-ring);
+    outline: none;
+}
+
+.app-shell input::placeholder,
+.app-shell textarea::placeholder {
+    color: #94a3b8;
+}
+
+/* Normalización gradual de las formas ya usadas por Tailwind. */
+.app-shell .rounded-lg {
+    border-radius: var(--hv-radius-control);
+}
+
+.app-shell .rounded-xl {
+    border-radius: 10px;
+}
+
+.app-shell .rounded-2xl {
+    border-radius: var(--hv-radius-card);
+}
+
+.app-shell .rounded-3xl,
+.app-shell .rounded-\[2rem\],
+.app-shell .rounded-\[2\.5rem\] {
+    border-radius: var(--hv-radius-dialog);
+}
+
+.app-shell .shadow-sm {
+    box-shadow: var(--hv-shadow-xs);
+}
+
+.app-shell .shadow-md {
+    box-shadow: var(--hv-shadow-sm);
+}
+
+.app-shell :is(.shadow-lg, .shadow-xl, .shadow-2xl) {
+    box-shadow: var(--hv-shadow-md);
+}
+
+.app-shell main h1 {
+    color: var(--hv-navy-800);
+    font-size: clamp(1.35rem, 1.1rem + 0.6vw, 1.55rem);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.25;
+    text-transform: none;
+}
+
+.app-shell main h1.text-white {
+    color: #fff;
+}
+
+.app-shell .app-sidebar {
+    background: var(--hv-navy-950);
+}
+
+.app-shell .app-sidebar-nav a {
+    border-radius: var(--hv-radius-control);
+    font-weight: 600;
+}
+
+.app-shell .app-topbar {
+    border-color: var(--hv-border);
+    box-shadow: var(--hv-shadow-xs);
+}
+
+.app-shell .app-main {
+    background: var(--hv-canvas);
+}
+
+/* Componentes semánticos para migrar las pantallas módulo por módulo. */
+.ui-page-header {
+    align-items: flex-start;
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.ui-page-header.items-center {
+    align-items: center;
+}
+
+.ui-page-title {
+    color: var(--hv-navy-800);
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.25;
+}
+
+.ui-page-subtitle {
+    color: var(--hv-muted);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.ui-card {
+    background: var(--hv-surface);
+    border: 1px solid var(--hv-border);
+    border-radius: var(--hv-radius-card);
+    box-shadow: var(--hv-shadow-xs);
+}
+
+.ui-stat-card {
+    padding: 1rem;
+    transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+
+.ui-stat-card:hover {
+    box-shadow: var(--hv-shadow-sm);
+    transform: translateY(-1px);
+}
+
+.ui-panel {
+    padding: 1.25rem;
+}
+
+.ui-section-title {
+    color: var(--hv-text);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.035em;
+    line-height: 1.35;
+    text-transform: uppercase;
+}
+
+.ui-dialog {
+    background: var(--hv-surface);
+    border: 1px solid rgb(255 255 255 / 0.4);
+    border-radius: var(--hv-radius-dialog);
+    box-shadow: var(--hv-shadow-md);
+}
+
+.ui-icon-button {
+    align-items: center;
+    background: var(--hv-surface);
+    border: 1px solid var(--hv-border);
+    border-radius: var(--hv-radius-control);
+    display: inline-flex;
+    height: 2rem;
+    justify-content: center;
+    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+    width: 2rem;
+}
+
+.ui-table thead {
+    background: #f8fafc;
+}
+
+.ui-table th {
+    color: #475569;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.ui-table tbody tr {
+    transition: background-color 150ms ease;
+}
+
+.ui-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+.ui-button {
+    align-items: center;
+    border: 1px solid transparent;
+    border-radius: var(--hv-radius-control);
+    display: inline-flex;
+    font-size: 0.875rem;
+    font-weight: 600;
+    gap: 0.5rem;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0.625rem 1rem;
+    transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease, color 150ms ease, transform 150ms ease;
+}
+
+.ui-button:active {
+    transform: translateY(1px);
+}
+
+.ui-button--primary {
+    background: var(--hv-blue-600);
+    color: #fff;
+}
+
+.ui-button--primary:hover {
+    background: var(--hv-blue-700);
+}
+
+.ui-button--secondary {
+    background: var(--hv-surface);
+    border-color: var(--hv-border);
+    color: var(--hv-text);
+}
+
+.ui-button--secondary:hover {
+    background: #f8fafc;
+    border-color: var(--hv-border-strong);
+}
+
+.ui-button--danger {
+    background: #fff;
+    border-color: #fecaca;
+    color: var(--hv-danger);
+}
+
+.ui-field {
+    background: var(--hv-surface);
+    border: 1px solid var(--hv-border);
+    border-radius: var(--hv-radius-control);
+    min-height: 40px;
+    padding: 0.625rem 0.75rem;
+    width: 100%;
+}
+
+.ui-badge {
+    align-items: center;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    display: inline-flex;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    gap: 0.375rem;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    padding: 0.35rem 0.6rem;
+    text-transform: uppercase;
+}
+
+.password-help ul {
+    list-style: disc;
+    margin: 0.5rem 0 0 1.1rem;
+}
+
+.password-help li + li {
+    margin-top: 0.25rem;
+}
+
+@media (max-width: 639px) {
+    .ui-page-header {
+        flex-direction: column;
+        margin-bottom: 1.25rem;
+    }
+
+    .app-shell .app-main {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
+
+@media (max-width: 767px) {
+    .ui-table--responsive,
+    .ui-table--responsive tbody {
+        display: block;
+        width: 100%;
+    }
+
+    .ui-table--responsive thead {
+        display: none;
+    }
+
+    .ui-table--responsive tbody {
+        padding: 0.75rem;
+    }
+
+    .ui-table--responsive tbody tr {
+        background: var(--hv-surface);
+        border: 1px solid var(--hv-border);
+        border-radius: var(--hv-radius-control);
+        display: block;
+        margin-bottom: 0.75rem;
+        overflow: hidden;
+    }
+
+    .ui-table--responsive tbody tr:last-child {
+        margin-bottom: 0;
+    }
+
+    .ui-table--responsive tbody td {
+        align-items: flex-start;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex !important;
+        gap: 1rem;
+        justify-content: space-between;
+        max-width: none;
+        padding: 0.75rem !important;
+        text-align: right !important;
+        white-space: normal !important;
+        width: 100%;
+    }
+
+    .ui-table--responsive tbody td::before {
+        color: var(--hv-muted);
+        content: attr(data-label);
+        flex: 0 0 30%;
+        font-size: 0.625rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-align: left;
+        text-transform: uppercase;
+    }
+
+    .ui-table--responsive tbody td:last-child {
+        border-bottom: 0;
+    }
+
+    .ui-table--responsive tbody td[colspan] {
+        display: block !important;
+        text-align: center !important;
+    }
+
+    .ui-table--responsive tbody td[colspan]::before {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .app-shell *,
+    .app-shell *::before,
+    .app-shell *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}

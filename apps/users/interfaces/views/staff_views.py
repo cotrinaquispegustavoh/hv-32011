@@ -7,6 +7,7 @@ from django.db import transaction
 from apps.users.infrastructure.repositories.user_repository import DjangoUserRepository
 from apps.users.core.use_cases.manage_users import GetStaffListUseCase, ToggleUserStatusUseCase, BulkUpdatePermissionsUseCase
 from apps.users.core.use_cases.import_staff import ImportStaffUseCase
+from apps.core.file_validation import UploadValidationError, validate_csv_upload
 from apps.core.utils import normalize_text
 
 @login_required(login_url='/auth/login/')
@@ -40,8 +41,10 @@ def staff_list_view(request):
                 return redirect('users:staff_list')
                 
             csv_file = request.FILES['csv_file']
-            if not csv_file.name.endswith('.csv'):
-                messages.error(request, 'El archivo debe tener extensión .csv')
+            try:
+                validate_csv_upload(csv_file)
+            except UploadValidationError as e:
+                messages.error(request, str(e))
                 return redirect('users:staff_list')
 
             use_case = ImportStaffUseCase(repo)

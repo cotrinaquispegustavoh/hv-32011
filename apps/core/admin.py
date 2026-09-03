@@ -1,5 +1,11 @@
 from django.contrib import admin
-from .infrastructure.models import AuditLog, InternalNotification, InstitutionalEvent
+from .infrastructure.models import (
+    AnnouncementAcknowledgement,
+    AuditLog,
+    InstitutionalAnnouncement,
+    InstitutionalEvent,
+    InternalNotification,
+)
 
 @admin.register(AuditLog)
 class AuditLogAdmin(admin.ModelAdmin):
@@ -28,6 +34,27 @@ class InstitutionalEventAdmin(admin.ModelAdmin):
     list_filter = ('is_holiday', 'event_date')
     search_fields = ('title', 'description')
     date_hierarchy = 'event_date'
+
+
+@admin.register(InstitutionalAnnouncement)
+class InstitutionalAnnouncementAdmin(admin.ModelAdmin):
+    list_display = ('title', 'audience', 'event_date', 'is_active', 'created_by', 'created_at', 'valid_until')
+    list_filter = ('audience', 'is_active', 'event_date', 'created_at')
+    search_fields = ('title', 'message', 'created_by__dni')
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(AnnouncementAcknowledgement)
+class AnnouncementAcknowledgementAdmin(admin.ModelAdmin):
+    list_display = ('announcement', 'user', 'acknowledged_at')
+    search_fields = ('announcement__title', 'user__dni', 'user__first_name', 'user__last_name')
+    readonly_fields = ('announcement', 'user', 'acknowledged_at')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 @admin.register(InternalNotification)
 class InternalNotificationAdmin(admin.ModelAdmin):

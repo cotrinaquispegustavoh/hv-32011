@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Auditoría técnica - Intranet HV{% endblock %}
+{% block header_title %}Auditoría técnica{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto w-full animate-in fade-in duration-300">
+    <div class="ui-page-header">
+        <div>
+            <h1 class="ui-page-title md:hidden">Auditoría técnica</h1>
+            <p class="ui-page-subtitle">Registro cronológico reservado para la administración técnica.</p>
+        </div>
+    </div>
+
+    <form method="get" class="ui-card p-4 mb-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        <label class="relative lg:col-span-2">
+            <span class="sr-only">Buscar actividad</span>
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-gray-400" aria-hidden="true"></i>
+            <input type="search" name="q" value="{{ query }}" placeholder="Usuario, DNI, módulo o identificador..." class="w-full pl-10 pr-3 py-2.5 border border-gray-200 text-sm">
+        </label>
+        <label>
+            <span class="sr-only">Tipo de acción</span>
+            <select name="action" class="w-full px-3 py-2.5 border border-gray-200 bg-white text-sm font-semibold">
+                <option value="">Todas las acciones</option>
+                {% for value, label in action_choices %}<option value="{{ value }}" {% if action == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+            </select>
+        </label>
+        <label>
+            <span class="sr-only">Módulo</span>
+            <select name="model" class="w-full px-3 py-2.5 border border-gray-200 bg-white text-sm font-semibold">
+                <option value="">Todos los módulos</option>
+                {% for value, label in model_choices %}<option value="{{ value }}" {% if model_name == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+            </select>
+        </label>
+        <div class="flex gap-2 lg:col-span-5 lg:justify-end">
+            {% if query or action or model_name %}<a href="{% url 'core:activity' %}" class="ui-button ui-button--secondary">Limpiar</a>{% endif %}
+            <button type="submit" class="ui-button ui-button--primary">Filtrar actividad</button>
+        </div>
+    </form>
+
+    <div class="ui-card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="ui-table ui-table--responsive min-w-full text-left">
+                <thead>
+                    <tr class="border-b border-gray-100">
+                        <th scope="col" class="px-5 py-3">Fecha</th>
+                        {% if can_view_all and scope == 'all' %}<th scope="col" class="px-5 py-3">Usuario</th>{% endif %}
+                        <th scope="col" class="px-5 py-3">Acción</th>
+                        <th scope="col" class="px-5 py-3">Recurso</th>
+                        <th scope="col" class="px-5 py-3">Detalle</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for log in page_obj %}
+                    <tr>
+                        <td data-label="Fecha" class="px-5 py-4 whitespace-nowrap">
+                            <time datetime="{{ log.timestamp|date:'c' }}" class="text-sm font-semibold text-gray-800">{{ log.timestamp|date:"d/m/Y" }}<span class="block text-[10px] text-gray-400 mt-0.5">{{ log.timestamp|date:"H:i:s" }}</span></time>
+                        </td>
+                        {% if can_view_all and scope == 'all' %}
+                        <td data-label="Usuario" class="px-5 py-4">
+                            {% if log.user %}<p class="text-sm font-semibold text-gray-900">{{ log.user.first_name|default:log.user.dni }} {{ log.user.last_name }}</p><p class="text-[10px] text-gray-400">DNI {{ log.user.dni }}</p>{% else %}<span class="text-sm text-gray-400">Sistema</span>{% endif %}
+                        </td>
+                        {% endif %}
+                        <td data-label="Acción" class="px-5 py-4">
+                            <span class="ui-badge {% if log.action == 'CREATE' %}bg-emerald-50 text-emerald-700 border-emerald-200{% elif log.action == 'DELETE' or log.action == 'HARD_DELETE' %}bg-red-50 text-red-700 border-red-200{% elif log.action == 'LOGIN' or log.action == 'LOGOUT' %}bg-blue-50 text-blue-700 border-blue-200{% else %}bg-amber-50 text-amber-700 border-amber-200{% endif %}">{{ log.get_action_display }}</span>
+                        </td>
+                        <td data-label="Recurso" class="px-5 py-4"><p class="text-sm font-semibold text-gray-900">{{ log.friendly_model_name }}</p><p class="text-[10px] text-gray-400">ID {{ log.object_id }}</p></td>
+                        <td data-label="Detalle" class="px-5 py-4 text-sm text-gray-600">{{ log.summary|default:"Acción registrada por el sistema." }}{% if log.ip_address %}<span class="block text-[10px] text-gray-400 mt-1">IP {{ log.ip_address }}</span>{% endif %}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="{% if can_view_all and scope == 'all' %}5{% else %}4{% endif %}" class="px-6 py-12 text-center"><i class="fa-solid fa-clock-rotate-left text-3xl text-gray-300" aria-hidden="true"></i><p class="font-bold text-gray-900 mt-3">No hay actividad registrada</p><p class="text-sm text-gray-500 mt-1">Prueba con otros filtros.</p></td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+    <nav class="mt-5 flex justify-center items-center gap-2" aria-label="Paginación de actividad">
+        {% if page_obj.has_previous %}<a class="ui-button ui-button--secondary" href="?{% if query_suffix %}{{ query_suffix }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">Anterior</a>{% endif %}
+        <span class="text-xs font-semibold text-gray-500">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}<a class="ui-button ui-button--secondary" href="?{% if query_suffix %}{{ query_suffix }}&amp;{% endif %}page={{ page_obj.next_page_number }}">Siguiente</a>{% endif %}
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

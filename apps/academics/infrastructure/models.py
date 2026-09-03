@@ -14,10 +14,13 @@ class Section(models.Model):
         # CORRECCIÓN: Ahora la combinación única es Grado + Nombre + Año
         unique_together = ['grade', 'name', 'year']
 
+    @property
+    def display_name(self):
+        """Nombre institucional del grupo: grado y localidad, sin letra ficticia."""
+        return f"{self.grade} - {self.name}" if self.name else self.grade
+
     def __str__(self):
-        if self.letter == "-":
-            return f"{self.grade} - {self.name} ({self.year})"
-        return f"{self.grade} {self.letter} - {self.name} ({self.year})"
+        return f"{self.display_name} ({self.year})"
 
 class Parent(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='parent_profile')

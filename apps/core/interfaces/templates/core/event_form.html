@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}Añadir fecha - Intranet HV{% endblock %}
+{% block header_title %}Añadir fecha institucional{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto w-full animate-in fade-in duration-300">
+    <div class="ui-page-header items-center">
+        <div>
+            <h1 class="ui-page-title md:hidden">Añadir fecha institucional</h1>
+            <p class="ui-page-subtitle">Registra actividades, feriados locales o asuetos internos.</p>
+        </div>
+        <a href="{% url 'core:calendar' %}" class="ui-button ui-button--secondary w-full sm:w-auto"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Volver al calendario</a>
+    </div>
+
+    <form method="post" class="ui-card overflow-hidden" novalidate>
+        {% csrf_token %}
+        <div class="p-5 sm:p-6 space-y-5">
+            {% for field in form %}
+            <div>
+                <label for="{{ field.id_for_label }}" class="block text-xs font-bold text-gray-600 uppercase mb-1.5">{{ field.label }}</label>
+                {{ field }}
+                {% if field.name == 'event_date' %}<p class="text-xs text-gray-500 mt-1.5">Usa el formato día/mes/año. Ejemplo: 28/07/2027.</p>{% endif %}
+                {% for error in field.errors %}<p class="text-xs font-semibold text-red-600 mt-1.5">{{ error }}</p>{% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+        <div class="px-5 sm:px-6 py-4 bg-gray-50 border-t border-gray-100 flex flex-col-reverse sm:flex-row justify-end gap-3">
+            <a href="{% url 'core:calendar' %}" class="ui-button ui-button--secondary">Cancelar</a>
+            <button type="submit" class="ui-button ui-button--primary"><i class="fa-solid fa-calendar-check" aria-hidden="true"></i> Guardar y notificar</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

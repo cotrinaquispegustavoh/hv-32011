@@ -138,3 +138,67 @@ class WarehouseLogicTests(TestCase):
         self.assertContains(response, 'Cantidad inválida', status_code=400)
         self.material.refresh_from_db()
         self.assertEqual(self.material.stock, 5)
+
+    def test_teacher_warehouse_opens_catalog_with_history_and_request_actions(self):
+        self.teacher.password_changed = True
+        self.teacher.module_permissions = ['almacen']
+        self.teacher.save(update_fields=['password_changed', 'module_permissions'])
+        self.client.force_login(self.teacher)
+
+        response = self.client.get(reverse('warehouse:catalog'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Historial')
+        self.assertContains(response, 'SOLICITAR')
+
+    def test_teacher_loan_history_displays_domain_entity_status(self):
+        self.teacher.password_changed = True
+        self.teacher.module_permissions = ['almacen']
+        self.teacher.save(update_fields=['password_changed', 'module_permissions'])
+        self.client.force_login(self.teacher)
+        self.use_case.execute(
+            teacher_id=self.teacher.id,
+            items=[(self.material.id, 1)],
+            required_for=(datetime.now() + timedelta(days=1)).isoformat(),
+            expected_return_date=(datetime.now() + timedelta(days=2)).isoformat(),
+        )
+
+        response = self.client.get(reverse('warehouse:loan_list'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Pendiente')
+        self.assertContains(response, 'ui-table--responsive')
+
+    def test_director_catalog_is_read_only_and_links_to_inventory(self):
+        director = User.objects.create_user(
+            dni='11111111', role='DIRECTOR', password_changed=True
+        )
+        self.client.force_login(director)
+
+        response = self.client.get(reverse('warehouse:catalog'))
+        forbidden_request = self.client.post(
+            reverse('warehouse:request_material', args=[self.material.id]),
+            {
+                'quantity': '1',
+                'required_for': (datetime.now() + timedelta(days=1)).isoformat(),
+                'expected_return_date': (datetime.now() + timedelta(days=2)).isoformat(),
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Gestionar inventario')
+        self.assertNotContains(response, '>SOLICITAR<', html=False)
+        self.assertEqual(forbidden_request.status_code, 403)
+        self.material.refresh_from_db()
+        self.assertEqual(self.material.stock, 5)
+
+    def test_inventory_table_links_to_visual_catalog(self):
+        director = User.objects.create_user(
+            dni='11111112', role='DIRECTOR', password_changed=True
+        )
+        self.client.force_login(director)
+
+        response = self.client.get(reverse('warehouse:inventory_panel'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Vista catálogo')

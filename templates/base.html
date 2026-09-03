@@ -26,47 +26,54 @@
     </style>
     <script>
         tailwind.config = {
-            theme: { extend: { colors: { hv: { dark: '#0B1727', blue: '#2563EB', gray: '#F3F4F6' } } } }
+            theme: { extend: { colors: { hv: { dark: '#081525', blue: '#2563EB', gray: '#F6F8FB' } } } }
         }
     </script>
+    <link rel="stylesheet" href="{% static 'css/design-system.css' %}">
 </head>
 
 <!-- ================================================================================================== -->
 <!-- ESTRUCTURA PRINCIPAL DEL BODY                                                                      -->
 <!-- x-data inicializa las variables de Alpine.js para controlar los menús desplegables y la barra      -->
 <!-- ================================================================================================== -->
-<body class="text-gray-800 antialiased min-h-screen flex overflow-hidden" x-data="{ mobileMenuOpen: false, sidebarCollapsed: false, profileMenuOpen: false, notifMenuOpen: false }">
+<body class="app-shell text-gray-800 antialiased min-h-screen flex overflow-hidden"
+      x-data="{ mobileMenuOpen: false, sidebarCollapsed: false, profileMenuOpen: false, notifMenuOpen: false, announcementOpen: {% if pending_announcement %}true{% else %}false{% endif %} }"
+      @keydown.escape.window="mobileMenuOpen = false; profileMenuOpen = false; notifMenuOpen = false; announcementOpen = false"
+      hx-indicator="#global-request-indicator">
+    <a href="#main-content" class="ui-skip-link">Saltar al contenido principal</a>
+    <div id="global-request-indicator" class="htmx-indicator ui-request-indicator" aria-hidden="true"></div>
+    <div id="global-realtime-alerts" class="fixed top-20 right-4 z-[120] flex flex-col gap-2 w-[calc(100vw-2rem)] max-w-sm" aria-live="polite"></div>
 
     <!-- ============================================================================================== -->
     <!-- 1. SIDEBAR DESKTOP (BARRA LATERAL IZQUIERDA PARA COMPUTADORAS)                                 -->
     <!-- Se oculta en pantallas pequeñas (hidden lg:flex). Su ancho cambia según 'sidebarCollapsed'     -->
     <!-- ============================================================================================== -->
-    <aside :class="sidebarCollapsed ? 'w-20' : 'w-64'" class="hidden lg:flex flex-col bg-[#0B1727] text-white h-screen sticky top-0 border-r border-slate-800 flex-shrink-0 transition-all duration-300 z-50">
+    <aside :class="sidebarCollapsed ? 'w-20' : 'w-60'" class="app-sidebar hidden lg:flex flex-col bg-[#0B1727] text-white h-screen sticky top-0 border-r border-slate-800 flex-shrink-0 transition-all duration-300 z-50">
         
         <!-- 1.1 HEADER DEL SIDEBAR (Logo y Botón de Colapsar) -->
-        <div class="h-20 border-b border-gray-800 flex items-center transition-all duration-300 relative" :class="sidebarCollapsed ? 'justify-center' : 'justify-between px-6'">
+        <div class="h-16 border-b border-gray-800 flex items-center transition-all duration-300 relative" :class="sidebarCollapsed ? 'justify-center' : 'justify-between px-5'">
             
             <!-- Logo y Texto (Visible cuando está expandido) -->
             <div class="flex items-center gap-3 overflow-hidden" x-show="!sidebarCollapsed">
                 <div class="min-w-[40px] w-10 h-10 bg-white rounded-lg flex items-center justify-center p-1">
                     <img src="{% static 'img/logo_hv_32011.png' %}" alt="Logo" class="w-full h-full object-contain">
                 </div>
-                <span class="font-black text-lg tracking-tight uppercase whitespace-nowrap">I.E. 32011</span>
+                <span class="font-bold text-lg tracking-tight uppercase whitespace-nowrap">I.E. 32011</span>
             </div>
             
             <!-- Botón para colapsar la barra (Flecha Izquierda) -->
-            <button x-show="!sidebarCollapsed" @click="sidebarCollapsed = true" class="text-gray-500 hover:text-white transition-colors flex-shrink-0">
+            <button x-show="!sidebarCollapsed" @click="sidebarCollapsed = true" class="text-gray-500 hover:text-white transition-colors flex-shrink-0" aria-label="Contraer menú lateral" title="Contraer menú lateral">
                 <i class="fa-solid fa-chevron-left"></i>
             </button>
             
             <!-- Logo Clickeable (Visible cuando está colapsado, sirve para expandir) -->
-            <button x-show="sidebarCollapsed" @click="sidebarCollapsed = false" class="w-10 h-10 bg-white rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors p-1">
+            <button x-show="sidebarCollapsed" @click="sidebarCollapsed = false" class="w-10 h-10 bg-white rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors p-1" aria-label="Expandir menú lateral" title="Expandir menú lateral">
                 <img src="{% static 'img/logo_hv_32011.png' %}" alt="Logo" class="w-full h-full object-contain">
             </button>
         </div>
 
         <!-- 1.2 NAVEGACIÓN PRINCIPAL (Enlaces del menú) -->
-        <nav class="flex-grow px-4 py-2 space-y-1 overflow-y-auto scrollbar-hide">
+        <nav class="app-sidebar-nav flex-grow px-3 py-2 space-y-1 overflow-y-auto scrollbar-hide">
             
             <!-- Título de Sección: Principal -->
             <div x-show="!sidebarCollapsed" class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 mt-4 px-2 whitespace-nowrap">Principal</div>
@@ -90,7 +97,7 @@
                 <div x-show="sidebarCollapsed" class="text-center text-gray-600 mt-6 mb-2"><i class="fa-solid fa-ellipsis"></i></div>
                 
                 {% if 'almacen' in user.module_permissions %}
-                <a href="{% url 'warehouse:loan_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'almacen' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
+                <a href="{% url 'warehouse:catalog' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'almacen' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
                     <i class="fa-solid fa-boxes-stacked w-5 text-center"></i>
                     <span x-show="!sidebarCollapsed" class="whitespace-nowrap">Almacén</span>
                 </a>
@@ -160,13 +167,17 @@
                     <i class="fa-solid fa-chalkboard-user w-5 text-center"></i>
                     <span x-show="!sidebarCollapsed" class="whitespace-nowrap">Asignar Aulas</span>
                 </a>
+                {% if user.is_superuser %}<a href="{% url 'core:activity' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if request.resolver_match.url_name == 'activity' %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
+                    <i class="fa-solid fa-clock-rotate-left w-5 text-center"></i>
+                    <span x-show="!sidebarCollapsed" class="whitespace-nowrap">Auditoría</span>
+                </a>{% endif %}
                 {% endif %}
             {% endif %}
         </nav>
 
         <!-- 1.3 FOOTER DEL SIDEBAR (Perfil y Salir) -->
         <div class="p-4 border-t border-gray-800">
-            <div class="px-4 py-3 mb-2 flex items-center gap-3" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
+            <a href="{% url 'users:profile' %}" class="px-4 py-3 mb-2 flex items-center gap-3 rounded-xl hover:bg-white/5 transition-colors" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
                 <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
                     {{ user.first_name|default:user.dni|make_list|first|upper }}
                 </div>
@@ -174,7 +185,7 @@
                     <p class="text-[11px] font-bold text-white truncate">{{ user.first_name|default:"Usuario" }} {{ user.last_name }}</p>
                     <p class="text-[9px] text-gray-400 uppercase">{{ user.get_role_display }}</p>
                 </div>
-            </div>
+            </a>
             
             <a href="{% url 'users:logout' %}" class="flex items-center gap-3 px-4 py-3 w-full text-left rounded-xl text-red-400 hover:bg-red-500/10 font-bold text-sm transition-all" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
                 <i class="fa-solid fa-power-off w-5 text-center"></i>
@@ -193,14 +204,14 @@
     <div class="flex-1 flex flex-col h-screen overflow-hidden bg-[#F8FAFC]">
         
         <!-- 2.1 TOP HEADER (Barra superior blanca) -->
-        <header class="bg-white h-20 border-b border-gray-200 flex items-center justify-between px-4 lg:px-8 flex-shrink-0 z-40">
+        <header class="app-topbar bg-white h-16 border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 flex-shrink-0 z-40">
             
             <!-- Título y Botón Hamburguesa (Móvil) -->
             <div class="flex items-center gap-4">
-                <button @click="mobileMenuOpen = true" class="lg:hidden text-gray-500 hover:text-gray-800 focus:outline-none">
+                <button @click="mobileMenuOpen = true" class="lg:hidden text-gray-500 hover:text-gray-800 focus:outline-none" aria-label="Abrir menú principal" aria-controls="mobile-navigation" :aria-expanded="mobileMenuOpen.toString()">
                     <i class="fa-solid fa-bars text-2xl"></i>
                 </button>
-                <h2 class="hidden md:block text-xl font-black text-gray-800 tracking-tight">{% block header_title %}Intranet HV{% endblock %}</h2>
+                <h2 class="hidden md:block text-lg font-bold text-gray-800 tracking-tight">{% block header_title %}Intranet HV{% endblock %}</h2>
             </div>
             
             <!-- Iconos de la derecha (Campanita y Perfil) -->
@@ -208,7 +219,7 @@
                 
                 <!-- Campanita de Notificaciones -->
                 <div class="relative">
-                    <button @click="notifMenuOpen = !notifMenuOpen" @click.away="notifMenuOpen = false" class="text-gray-400 hover:text-blue-600 transition-colors relative focus:outline-none">
+                    <button @click="notifMenuOpen = !notifMenuOpen" @click.away="notifMenuOpen = false" class="text-gray-400 hover:text-blue-600 transition-colors relative focus:outline-none" aria-label="Abrir notificaciones" aria-controls="notification-menu" :aria-expanded="notifMenuOpen.toString()">
                         <i class="fa-regular fa-bell text-xl"></i>
                         {% if unread_notifs_count > 0 %}
                         <span id="bell-badge" class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white text-[8px] font-black text-white flex items-center justify-center">{{ unread_notifs_count }}</span>
@@ -218,16 +229,18 @@
                     </button>
                     
                     <!-- Dropdown de Notificaciones -->
-                    <div x-show="notifMenuOpen" x-transition style="display: none;" class="absolute right-0 mt-4 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+                    <div id="notification-menu" x-show="notifMenuOpen" x-cloak x-transition class="absolute right-0 mt-4 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden" role="region" aria-label="Notificaciones recientes">
                         <div class="bg-gray-50 px-4 py-3 border-b border-gray-100 flex justify-between items-center">
                             <h3 class="text-xs font-black text-gray-800 uppercase tracking-wider">Notificaciones</h3>
+                            {% if unread_notifs_count > 0 %}
                             <button hx-post="{% url 'core:mark_notifications_read' %}" 
                                     hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                                     hx-swap="none"
-                                    @click="document.getElementById('bell-badge').classList.add('hidden'); document.getElementById('notification-dropdown-list').innerHTML='<div class=\'p-4 text-center text-gray-400 text-xs font-bold\'>No tienes notificaciones nuevas.</div>';"
+                                    @click="document.getElementById('bell-badge').classList.add('hidden')"
                                     class="text-[10px] font-bold text-blue-600 hover:underline cursor-pointer focus:outline-none">
                                 Marcar leídas
                             </button>
+                            {% endif %}
                         </div>
                         <div class="max-h-64 overflow-y-auto p-2" id="notification-dropdown-list">
                             {% for notif in latest_notifs %}
@@ -242,15 +255,18 @@
                                 </div>
                             </a>
                             {% empty %}
-                            <div class="p-4 text-center text-gray-400 text-xs font-bold">No tienes notificaciones.</div>
+                            <div data-notification-empty class="p-4 text-center text-gray-400 text-xs font-bold">No tienes notificaciones.</div>
                             {% endfor %}
                         </div>
+                        <a href="{% url 'core:notifications' %}" class="flex items-center justify-center gap-2 px-4 py-3 border-t border-gray-100 bg-gray-50 text-xs font-bold text-blue-700 hover:bg-blue-50 transition-colors">
+                            Ver todas las notificaciones <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                        </a>
                     </div>
                 </div>
                 
                 <!-- Menú de Perfil -->
                 <div class="relative">
-                    <button @click="profileMenuOpen = !profileMenuOpen" @click.away="profileMenuOpen = false" class="flex items-center gap-3 focus:outline-none">
+                    <button @click="profileMenuOpen = !profileMenuOpen" @click.away="profileMenuOpen = false" class="flex items-center gap-3 focus:outline-none" aria-label="Abrir menú de usuario" aria-controls="profile-menu" :aria-expanded="profileMenuOpen.toString()">
                         <div class="text-right hidden sm:block">
                             <p class="text-sm font-bold text-gray-800 leading-tight">{{ user.first_name }} {{ user.last_name }}</p>
                             <p class="text-[10px] font-bold text-gray-500 uppercase">{{ user.get_role_display }}</p>
@@ -261,9 +277,11 @@
                         <i class="fa-solid fa-chevron-down text-xs text-gray-400"></i>
                     </button>
 
-                    <div x-show="profileMenuOpen" x-transition style="display: none;" class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2">
-                        <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 font-medium"><i class="fa-regular fa-user mr-2"></i> Mi Perfil</a>
-                        <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 font-medium"><i class="fa-solid fa-gear mr-2"></i> Configuración</a>
+                    <div id="profile-menu" x-show="profileMenuOpen" x-cloak x-transition class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2" role="region" aria-label="Menú de usuario">
+                        <a href="{% url 'users:profile' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 font-medium"><i class="fa-regular fa-user mr-2"></i> Mi Perfil</a>
+                        <a href="{% url 'core:notifications' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 font-medium"><i class="fa-regular fa-bell mr-2"></i> Notificaciones</a>
+                        {% if user.is_superuser %}<a href="{% url 'core:activity' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 font-medium"><i class="fa-solid fa-clock-rotate-left mr-2"></i> Auditoría técnica</a>{% endif %}
+                        <a href="{% url 'users:security' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 font-medium"><i class="fa-solid fa-shield-halved mr-2"></i> Seguridad</a>
                         <div class="border-t border-gray-100 my-1"></div>
                         <a href="{% url 'users:logout' %}" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 font-bold"><i class="fa-solid fa-power-off mr-2"></i> Cerrar Sesión</a>
                     </div>
@@ -273,7 +291,7 @@
         <!-- FIN: Top Header -->
 
         <!-- 2.2 ÁREA DE CONTENIDO DINÁMICO (Aquí se inyectan las demás pantallas) -->
-        <main class="flex-grow p-6 lg:p-8 overflow-y-auto">
+        <main id="main-content" tabindex="-1" class="app-main flex-grow p-4 sm:p-5 lg:p-6 overflow-y-auto">
             {% block content %}{% endblock %}
         </main>
 
@@ -287,7 +305,7 @@
     <!-- INICIO: SIDEBAR MÓVIL (Overlay)            -->
     <!-- Se muestra solo en celulares al tocar el menú hamburguesa -->
     <!-- ========================================== -->
-    <div x-show="mobileMenuOpen" x-cloak class="fixed inset-0 z-[100] lg:hidden">
+    <div id="mobile-navigation" x-show="mobileMenuOpen" x-cloak class="fixed inset-0 z-[100] lg:hidden" role="dialog" aria-modal="true" aria-label="Menú principal">
         <div x-show="mobileMenuOpen" x-transition.opacity class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="mobileMenuOpen = false"></div>
         
         <div x-show="mobileMenuOpen" 
@@ -302,16 +320,17 @@
                     </div>
                     <span class="font-black text-lg tracking-tight uppercase">I.E. 32011</span>
                 </div>
-                <button @click="mobileMenuOpen = false" class="text-gray-400 hover:text-white text-2xl focus:outline-none"><i class="fa-solid fa-xmark"></i></button>
+                <button @click="mobileMenuOpen = false" class="text-gray-400 hover:text-white text-2xl focus:outline-none" aria-label="Cerrar menú principal"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
             </div>
             
             <nav class="flex-grow p-4 space-y-2 overflow-y-auto scrollbar-hide">
                 <a href="{% url 'core:dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if request.resolver_match.url_name == 'dashboard' %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-house w-5 text-center"></i> Dashboard</a>
+                <a href="{% url 'core:calendar' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'calendario' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-regular fa-calendar-days w-5 text-center"></i> Calendario</a>
                 
                 {% if user.role == 'DOCENTE' %}
                     <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 mt-6 px-2">Módulos</div>
                     {% if 'almacen' in user.module_permissions %}
-                    <a href="{% url 'warehouse:loan_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'almacen' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-boxes-stacked w-5 text-center"></i> Almacén</a>
+                    <a href="{% url 'warehouse:catalog' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'almacen' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-boxes-stacked w-5 text-center"></i> Almacén</a>
                     {% endif %}
                     {% if 'disciplina' in user.module_permissions %}
                     <a href="{% url 'discipline:incident_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'disciplina' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-triangle-exclamation w-5 text-center"></i> Incidencias</a>
@@ -338,10 +357,15 @@
                     <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 mt-6 px-2">Administración</div>
                     <a href="{% url 'users:staff_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'personal' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-users-gear w-5 text-center"></i> Usuarios y Permisos</a>
                     <a href="{% url 'assignments:panel' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'asignaciones' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-chalkboard-user w-5 text-center"></i> Asignar Aulas</a>
+                    {% if user.is_superuser %}<a href="{% url 'core:activity' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if request.resolver_match.url_name == 'activity' %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-clock-rotate-left w-5 text-center"></i> Auditoría</a>{% endif %}
                     {% endif %}
                 {% endif %}
             </nav>
             <div class="p-4 border-t border-gray-800">
+                <a href="{% url 'users:profile' %}" class="flex items-center gap-3 px-4 py-3 w-full text-left rounded-xl text-gray-300 hover:bg-white/5 font-bold text-sm"><i class="fa-regular fa-user w-5 text-center"></i> Mi Perfil</a>
+                <a href="{% url 'core:notifications' %}" class="flex items-center gap-3 px-4 py-3 w-full text-left rounded-xl text-gray-300 hover:bg-white/5 font-bold text-sm"><i class="fa-regular fa-bell w-5 text-center"></i> Notificaciones{% if unread_notifs_count > 0 %}<span class="ml-auto bg-blue-600 text-white text-[10px] min-w-5 h-5 px-1.5 rounded-full flex items-center justify-center">{{ unread_notifs_count }}</span>{% endif %}</a>
+                {% if user.is_superuser %}<a href="{% url 'core:activity' %}" class="flex items-center gap-3 px-4 py-3 w-full text-left rounded-xl text-gray-300 hover:bg-white/5 font-bold text-sm"><i class="fa-solid fa-clock-rotate-left w-5 text-center"></i> Auditoría técnica</a>{% endif %}
+                <a href="{% url 'users:security' %}" class="flex items-center gap-3 px-4 py-3 w-full text-left rounded-xl text-gray-300 hover:bg-white/5 font-bold text-sm"><i class="fa-solid fa-shield-halved w-5 text-center"></i> Seguridad</a>
                 <a href="{% url 'users:logout' %}" class="flex items-center gap-3 px-4 py-3 w-full text-left rounded-xl text-red-400 font-bold text-sm"><i class="fa-solid fa-power-off w-5 text-center"></i> Cerrar Sesión</a>
             </div>
         </div>
@@ -350,11 +374,155 @@
     <!-- FIN: SIDEBAR MÓVIL                         -->
     <!-- ========================================== -->
 
+    {% if pending_announcement %}
+    <div x-show="announcementOpen" x-cloak class="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4" role="dialog" aria-modal="true" aria-labelledby="pending-announcement-title">
+        <article class="ui-dialog w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            {% if pending_announcement.image %}<img src="{{ pending_announcement.image.url }}" alt="Imagen del comunicado {{ pending_announcement.title }}" class="w-full max-h-72 object-cover">{% endif %}
+            <div class="p-5 sm:p-7">
+                <div class="flex items-start gap-4">
+                    <span class="w-11 h-11 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-bullhorn" aria-hidden="true"></i></span>
+                    <div>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-blue-700">Comunicado institucional</span>
+                        <h2 id="pending-announcement-title" class="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{{ pending_announcement.title }}</h2>
+                        <p class="text-xs font-semibold text-gray-400 mt-1">Publicado el {{ pending_announcement.created_at|date:"d/m/Y H:i" }}{% if pending_announcement.event_date %} · Evento: {{ pending_announcement.event_date|date:"d/m/Y" }}{% endif %}</p>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-700 leading-relaxed whitespace-pre-line mt-5">{{ pending_announcement.message|truncatechars:420 }}</p>
+                <p class="text-xs text-gray-500 mt-5 bg-gray-50 border border-gray-100 rounded-lg p-3">Al confirmar, quedará registrada la fecha y hora de lectura en la intranet.</p>
+                <div class="mt-5 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+                    <button type="button" @click="announcementOpen = false" class="ui-button ui-button--secondary">Recordarme después</button>
+                    <a href="{% url 'core:announcement_detail' pending_announcement.id %}" class="ui-button ui-button--secondary">Ver comunicado completo</a>
+                    <form method="post" action="{% url 'core:acknowledge_announcement' pending_announcement.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <button type="submit" class="ui-button ui-button--primary w-full"><i class="fa-solid fa-check-double" aria-hidden="true"></i> Entendido</button>
+                    </form>
+                </div>
+            </div>
+        </article>
+    </div>
+    {% endif %}
+
     <!-- Script Anti-Botón-Atrás -->
     <script>
         window.addEventListener('pageshow', function(event) {
             if (event.persisted) { window.location.reload(); }
         });
+
+        (function initializeRealtimeNotifications() {
+            let reconnectDelay = 1000;
+            let reconnectTimer = null;
+            let shouldReconnect = true;
+            let socket = null;
+
+            function updateBellBadge() {
+                const badge = document.getElementById('bell-badge');
+                if (!badge) return;
+                const current = Number.parseInt(badge.textContent, 10) || 0;
+                const next = current + 1;
+                badge.textContent = next > 99 ? '99+' : String(next);
+                badge.classList.remove('hidden');
+            }
+
+            function prependNotification(data) {
+                if (!data.notification_id) return;
+                const list = document.getElementById('notification-dropdown-list');
+                if (!list) return;
+                const empty = list.querySelector('[data-notification-empty]');
+                if (empty) empty.remove();
+
+                const link = document.createElement('a');
+                link.href = `/notificaciones/ir/${data.notification_id}/`;
+                link.dataset.liveNotification = 'true';
+                link.className = 'block p-3 hover:bg-gray-50 rounded-xl transition-colors border-b border-gray-50 flex gap-3 items-start';
+
+                const marker = document.createElement('div');
+                marker.className = 'mt-0.5 text-blue-500';
+                const dot = document.createElement('i');
+                dot.className = 'fa-solid fa-circle text-[8px]';
+                dot.setAttribute('aria-hidden', 'true');
+                marker.appendChild(dot);
+
+                const content = document.createElement('div');
+                const title = document.createElement('p');
+                title.className = 'text-xs font-bold text-gray-800';
+                title.textContent = data.title || 'Nueva notificación';
+                const message = document.createElement('p');
+                message.className = 'text-[10px] font-medium text-gray-500 mt-0.5';
+                message.textContent = data.message || '';
+                const time = document.createElement('p');
+                time.className = 'text-[9px] font-bold text-gray-400 mt-1';
+                time.textContent = 'Ahora';
+                content.append(title, message, time);
+                link.append(marker, content);
+                list.prepend(link);
+
+                const items = list.querySelectorAll('a');
+                if (items.length > 5) items[items.length - 1].remove();
+            }
+
+            function showNotificationToast(data) {
+                const container = document.getElementById('global-realtime-alerts');
+                if (!container) return;
+                const toast = document.createElement('a');
+                toast.href = data.notification_id ? `/notificaciones/ir/${data.notification_id}/` : '/notificaciones/';
+                toast.className = 'bg-white border border-gray-200 border-l-4 border-l-blue-600 shadow-xl rounded-xl p-4 flex items-start gap-3 transition-all';
+                const icon = document.createElement('span');
+                icon.className = 'w-9 h-9 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center flex-shrink-0';
+                const iconGlyph = document.createElement('i');
+                iconGlyph.className = 'fa-regular fa-bell';
+                iconGlyph.setAttribute('aria-hidden', 'true');
+                icon.appendChild(iconGlyph);
+                const copy = document.createElement('span');
+                const title = document.createElement('strong');
+                title.className = 'block text-sm text-gray-900';
+                title.textContent = data.title || 'Nueva notificación';
+                const message = document.createElement('span');
+                message.className = 'block text-xs text-gray-500 mt-1';
+                message.textContent = data.message || '';
+                copy.append(title, message);
+                toast.append(icon, copy);
+                container.appendChild(toast);
+                window.setTimeout(() => {
+                    toast.classList.add('opacity-0', 'translate-x-4');
+                    window.setTimeout(() => toast.remove(), 200);
+                }, 6000);
+            }
+
+            function connect() {
+                const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+                document.documentElement.dataset.realtimeStatus = 'connecting';
+                socket = new WebSocket(`${protocol}${window.location.host}/ws/notificaciones/`);
+                socket.onopen = function() {
+                    reconnectDelay = 1000;
+                    document.documentElement.dataset.realtimeStatus = 'connected';
+                };
+                socket.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    window.dispatchEvent(new CustomEvent('hv:realtime', { detail: data }));
+                    if (data.type === 'notification') {
+                        updateBellBadge();
+                        prependNotification(data);
+                        showNotificationToast(data);
+                    }
+                };
+                socket.onclose = function() {
+                    document.documentElement.dataset.realtimeStatus = 'reconnecting';
+                    if (!shouldReconnect) return;
+                    window.clearTimeout(reconnectTimer);
+                    reconnectTimer = window.setTimeout(connect, reconnectDelay);
+                    reconnectDelay = Math.min(reconnectDelay * 2, 30000);
+                };
+                socket.onerror = function() { socket.close(); };
+            }
+
+            document.addEventListener('DOMContentLoaded', connect);
+            window.addEventListener('pagehide', function() {
+                shouldReconnect = false;
+                window.clearTimeout(reconnectTimer);
+                if (socket) socket.close();
+            });
+        })();
     </script>
 </body>
 </html>

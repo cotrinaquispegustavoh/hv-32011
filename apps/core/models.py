@@ -1,1 +1,7 @@
-from .infrastructure.models import InternalNotification, AuditLog, InstitutionalEvent
+from .infrastructure.models import (
+    AnnouncementAcknowledgement,
+    AuditLog,
+    InstitutionalAnnouncement,
+    InstitutionalEvent,
+    InternalNotification,
+)

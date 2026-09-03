@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.core.files.storage import FileSystemStorage
+from django.core.files.storage import default_storage
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from apps.discipline.infrastructure.repositories.discipline_repository import DjangoIncidentRepository
@@ -12,6 +12,7 @@ from apps.users.interfaces.middlewares import require_module_permission
 from apps.core.infrastructure.repositories.core_repository import DjangoNotificationRepository
 from apps.core.core.use_cases.manage_notifications import NotifyAdminsUseCase, NotifyUserUseCase
 from apps.core.utils import normalize_text
+from apps.core.file_validation import UploadValidationError, validate_evidence_upload
 
 @login_required(login_url='/auth/login/')
 @require_module_permission('disciplina')
@@ -25,9 +26,13 @@ def report_incident_view(request):
         evidence_paths = []
         if 'evidence' in request.FILES:
             file = request.FILES['evidence']
-            fs = FileSystemStorage(location='media/discipline_evidences/')
-            filename = fs.save(file.name, file)
-            evidence_paths.append(f'discipline_evidences/{filename}')
+            try:
+                validate_evidence_upload(file)
+            except UploadValidationError as e:
+                messages.error(request, str(e))
+                return redirect('discipline:report_incident')
+            filename = default_storage.save(f'discipline_evidences/{file.name}', file)
+            evidence_paths.append(filename)
 
         repo = DjangoIncidentRepository()
         use_case = ReportIncidentUseCase(repo)

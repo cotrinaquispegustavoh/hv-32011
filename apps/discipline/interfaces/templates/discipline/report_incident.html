@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}Nueva Incidencia — I.E. 32011{% endblock %}
+{% block header_title %}Nueva incidencia{% endblock %}
 
 {% block content %}
 <div class="max-w-3xl mx-auto animate-in fade-in duration-500">
@@ -11,7 +12,7 @@
         </a>
     </div>
 
-    <div class="bg-white rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/50 p-8 md:p-10 relative overflow-hidden">
+    <div class="ui-card p-6 md:p-8 relative overflow-hidden">
         
         <div class="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-sky-600 to-sky-900"></div>
 
@@ -93,7 +94,7 @@
             </div>
 
             <div class="flex items-center justify-end gap-4 pt-4 border-t border-slate-100">
-                <button type="submit" class="inline-flex items-center gap-2 bg-slate-900 hover:bg-sky-700 text-white font-black text-xs px-8 py-3.5 rounded-xl uppercase tracking-wider transition-all shadow-md active:scale-95">
+                <button type="submit" class="ui-button ui-button--primary text-xs uppercase tracking-wider">
                     <i class="fa-solid fa-cloud-arrow-up text-sm"></i> Registrar Caso
                 </button>
             </div>

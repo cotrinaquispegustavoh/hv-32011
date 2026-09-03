@@ -91,11 +91,22 @@ WSGI_APPLICATION = 'config.wsgi.application'
 ASGI_APPLICATION = 'config.asgi.application'
 
 # --- CONFIGURACIÓN DE WEBSOCKETS ---
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer" 
-    },
-}
+# En desarrollo una sola instancia puede usar memoria. En Render o en el VPS,
+# definir CHANNEL_LAYER_REDIS_URL permite compartir eventos entre procesos.
+CHANNEL_LAYER_REDIS_URL = env('CHANNEL_LAYER_REDIS_URL', default='')
+if CHANNEL_LAYER_REDIS_URL:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {'hosts': [CHANNEL_LAYER_REDIS_URL]},
+        },
+    }
+else:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        },
+    }
 
 # Database
 DATABASES = {

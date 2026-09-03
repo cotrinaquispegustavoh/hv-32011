@@ -5,11 +5,11 @@
         <input type="checkbox" value="{{ member.id }}" x-model="selectedUsers" class="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 cursor-pointer">
     </div>
     
-    <!-- CORRECCIÓN: Al hacer clic, HTMX carga los datos y Alpine cambia la vista a 'detail' -->
     <div hx-get="{% url 'users:staff_detail' member.id %}" 
-         hx-target="#staff-detail-container" 
+         hx-target="#staff-detail-content"
          hx-swap="innerHTML"
-         @click="mobileView = 'detail'; window.scrollTo({top: 0, behavior: 'smooth'});"
+         hx-sync="#staff-detail-content:replace"
+         @click="document.getElementById('staff-detail-content').innerHTML = document.getElementById('staff-detail-loading-template').innerHTML; mobileView = 'detail'; document.querySelector('main')?.scrollTo({top: 0, behavior: 'smooth'});"
          class="flex items-center justify-between flex-grow cursor-pointer">
         
         <div class="flex items-center gap-3">

@@ -1,7 +1,7 @@
 {% if selected_user %}
 <!-- CORRECCIÓN: Botón Volver (Solo visible en móvil) -->
 <div class="p-4 lg:hidden border-b border-gray-100 bg-gray-50">
-    <button @click="mobileView = 'list'" class="text-xs font-bold text-gray-500 hover:text-blue-600 flex items-center gap-2 transition-colors">
+    <button @click="mobileView = 'list'; document.querySelector('main')?.scrollTo({top: 0, behavior: 'smooth'})" class="text-xs font-bold text-gray-500 hover:text-blue-600 flex items-center gap-2 transition-colors">
         <i class="fa-solid fa-arrow-left"></i> Volver a la lista de personal
     </button>
 </div>
@@ -27,7 +27,7 @@
     </div>
     
     {% if selected_user.id != request.user.id and selected_user.role != 'SUPERUSER' %}
-    <form hx-post="{% url 'users:toggle_status' selected_user.id %}" hx-target="#staff-detail-container" hx-swap="innerHTML">
+    <form hx-post="{% url 'users:toggle_status' selected_user.id %}" hx-target="#staff-detail-content" hx-swap="innerHTML">
         {% csrf_token %}
         <button type="submit" class="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors border shadow-sm
             {% if selected_user.is_active %}bg-white text-red-600 border-red-200 hover:bg-red-50{% else %}bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700{% endif %}">
@@ -37,13 +37,9 @@
     {% endif %}
 </div>
 
-<!-- TABS (Visuales) -->
-<div class="px-6 pt-4 border-b border-gray-100 bg-gray-50/50 overflow-x-auto scrollbar-hide">
-    <div class="flex gap-6 min-w-max">
-        <button class="pb-3 text-sm font-black text-blue-600 border-b-2 border-blue-600 uppercase tracking-wider">Permisos Específicos</button>
-        <button class="pb-3 text-sm font-bold text-gray-400 hover:text-gray-600 uppercase tracking-wider transition-colors">Roles Asignados</button>
-        <button class="pb-3 text-sm font-bold text-gray-400 hover:text-gray-600 uppercase tracking-wider transition-colors">Historial</button>
-    </div>
+<!-- Encabezado de la única sección funcional del detalle. -->
+<div class="px-6 py-3 border-b border-gray-100 bg-gray-50/70">
+    <p class="ui-section-title text-blue-700">Permisos específicos</p>
 </div>
 
 <!-- CONTENIDO DE PERMISOS -->
@@ -76,7 +72,7 @@
                 <span class="text-[10px] font-black uppercase tracking-wider hidden sm:inline {% if 'almacen' in selected_user.module_permissions %}text-emerald-500{% else %}text-red-500{% endif %}">
                     {% if 'almacen' in selected_user.module_permissions %}Permitido{% else %}Denegado{% endif %}
                 </span>
-                <form hx-post="{% url 'users:toggle_permission' selected_user.id %}" hx-target="#staff-detail-container" hx-swap="innerHTML">
+                <form hx-post="{% url 'users:toggle_permission' selected_user.id %}" hx-target="#staff-detail-content" hx-swap="innerHTML">
                     {% csrf_token %}
                     <input type="hidden" name="module" value="almacen">
                     <label class="relative inline-flex items-center cursor-pointer">
@@ -103,7 +99,7 @@
                 <span class="text-[10px] font-black uppercase tracking-wider hidden sm:inline {% if 'disciplina' in selected_user.module_permissions %}text-emerald-500{% else %}text-red-500{% endif %}">
                     {% if 'disciplina' in selected_user.module_permissions %}Permitido{% else %}Denegado{% endif %}
                 </span>
-                <form hx-post="{% url 'users:toggle_permission' selected_user.id %}" hx-target="#staff-detail-container" hx-swap="innerHTML">
+                <form hx-post="{% url 'users:toggle_permission' selected_user.id %}" hx-target="#staff-detail-content" hx-swap="innerHTML">
                     {% csrf_token %}
                     <input type="hidden" name="module" value="disciplina">
                     <label class="relative inline-flex items-center cursor-pointer">
@@ -130,7 +126,7 @@
                 <span class="text-[10px] font-black uppercase tracking-wider hidden sm:inline {% if 'portafolio' in selected_user.module_permissions %}text-emerald-500{% else %}text-red-500{% endif %}">
                     {% if 'portafolio' in selected_user.module_permissions %}Permitido{% else %}Denegado{% endif %}
                 </span>
-                <form hx-post="{% url 'users:toggle_permission' selected_user.id %}" hx-target="#staff-detail-container" hx-swap="innerHTML">
+                <form hx-post="{% url 'users:toggle_permission' selected_user.id %}" hx-target="#staff-detail-content" hx-swap="innerHTML">
                     {% csrf_token %}
                     <input type="hidden" name="module" value="portafolio">
                     <label class="relative inline-flex items-center cursor-pointer">

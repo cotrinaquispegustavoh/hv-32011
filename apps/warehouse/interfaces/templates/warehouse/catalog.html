@@ -5,15 +5,28 @@
 {% block content %}
 <div class="max-w-7xl mx-auto w-full animate-in fade-in duration-500">
     
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+    <div class="ui-page-header">
         <div>
-            <h1 class="text-2xl font-black text-blue-900 uppercase tracking-wide">Catálogo de Materiales</h1>
-            <p class="text-sm font-medium text-gray-500 mt-1">Consulta y reserva de recursos didácticos en tiempo real.</p>
+            <h1 class="ui-page-title md:hidden">Catálogo de materiales</h1>
+            <p class="ui-page-subtitle">
+                {% if user.role == 'DOCENTE' %}Consulta y reserva de recursos didácticos en tiempo real.{% else %}Vista visual de fotografías, disponibilidad y uso pedagógico.{% endif %}
+            </p>
+        </div>
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+            {% if user.role == 'DOCENTE' %}
+            <a href="{% url 'warehouse:loan_list' %}" class="ui-button ui-button--secondary w-full sm:w-auto">
+                <i class="fa-solid fa-clock-rotate-left text-blue-600"></i> Historial
+            </a>
+            {% else %}
+            <a href="{% url 'warehouse:inventory_panel' %}" class="ui-button ui-button--primary w-full sm:w-auto">
+                <i class="fa-solid fa-table-list"></i> Gestionar inventario
+            </a>
+            {% endif %}
         </div>
     </div>
 
-    <!-- BUSCADOR Y FILTROS (Solución Punto 7) -->
-    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 mb-8 flex flex-col sm:flex-row gap-4">
+    <!-- BUSCADOR Y FILTROS -->
+    <div class="ui-card p-4 mb-6 flex flex-col sm:flex-row gap-4">
         <div class="relative flex-grow">
             <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-gray-400"></i>
             <input type="text" name="q" 
@@ -51,7 +64,7 @@
     </div>
 
     <!-- GRID DE MATERIALES -->
-    <div id="grid-materiales" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+    <div id="grid-materiales" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
          hx-get="{% url 'warehouse:catalog' %}"
          hx-trigger="actualizarCatalogo from:body">
         {% include 'warehouse/partials/catalog_cards.html' %}
@@ -108,16 +121,12 @@
     });
 
     document.addEventListener('DOMContentLoaded', function() {
-        const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-        const wsUrl = protocol + window.location.host + '/ws/notificaciones/';
-        const socket = new WebSocket(wsUrl);
-
-        socket.onmessage = function(e) {
-            const data = JSON.parse(e.data);
+        window.addEventListener('hv:realtime', function(e) {
+            const data = e.detail;
             if (data.type === 'stock_update') {
                 htmx.trigger('#grid-materiales', 'actualizarCatalogo');
             }
-        };
+        });
     });
 </script>
 {% endblock %}

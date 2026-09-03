@@ -11,6 +11,7 @@ from apps.assignments.core.use_cases.import_assignments import ImportAssignments
 from apps.users.infrastructure.models import User
 from apps.academics.infrastructure.models import Section
 from apps.assignments.infrastructure.models import TeacherAssignment
+from apps.core.file_validation import UploadValidationError, validate_csv_upload
 
 @login_required(login_url='/auth/login/')
 def assignment_panel_view(request):
@@ -19,8 +20,8 @@ def assignment_panel_view(request):
 
     current_year = timezone.now().year
     teachers = User.objects.filter(role='DOCENTE', is_active=True).order_by('last_name')
-    sections = Section.objects.filter(year=current_year).order_by('grade', 'letter')
-    assignments = TeacherAssignment.objects.filter(academic_year=current_year).select_related('teacher', 'section').order_by('section__grade', 'section__letter')
+    sections = Section.objects.filter(year=current_year).order_by('grade', 'name')
+    assignments = TeacherAssignment.objects.filter(academic_year=current_year).select_related('teacher', 'section').order_by('section__grade', 'section__name')
 
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -68,6 +69,12 @@ def assignment_panel_view(request):
                 return redirect('assignments:panel')
                 
             csv_file = request.FILES['csv_file']
+            try:
+                validate_csv_upload(csv_file)
+            except UploadValidationError as e:
+                messages.error(request, str(e))
+                return redirect('assignments:panel')
+
             use_case = ImportAssignmentsUseCase(repo)
             creados = 0
             errores = []
@@ -105,7 +112,9 @@ def remove_assignment_view(request, assignment_id):
     if request.method == 'POST' and request.user.role in ['DIRECTOR', 'SUPERUSER']:
         repo = DjangoTeacherAssignmentRepository()
         RemoveAssignmentUseCase(repo).execute(assignment_id)
-        return HttpResponse("") 
+        response = HttpResponse("")
+        response['HX-Refresh'] = 'true'
+        return response
     return HttpResponse("No autorizado", status=403)
 
 @login_required(login_url='/auth/login/')

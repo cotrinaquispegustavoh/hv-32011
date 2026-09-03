@@ -2,7 +2,8 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.core.files.storage import FileSystemStorage
+from django.core.files.storage import default_storage
+from apps.core.file_validation import UploadValidationError, validate_document_upload
 from apps.documents.infrastructure.repositories.document_repository import DjangoDocumentRepository
 from apps.documents.core.use_cases.manage_documents import GetAccessibleDocumentsUseCase, UploadDocumentUseCase, UpdateDocumentUseCase, DeleteDocumentUseCase
 
@@ -71,19 +72,20 @@ def upload_document_view(request):
         
         if 'file' in request.FILES:
             file = request.FILES['file']
-            if file.size > 15728640:
-                messages.error(request, 'El archivo excede los 15MB permitidos.')
+            try:
+                validate_document_upload(file)
+            except UploadValidationError as e:
+                messages.error(request, str(e))
                 return redirect('documents:upload')
 
-            fs = FileSystemStorage(location='media/institutional_docs/')
-            filename = fs.save(file.name, file)
-            file_path = f'institutional_docs/{filename}'
+            file_path = default_storage.save(f'institutional_docs/{file.name}', file)
 
             try:
                 UploadDocumentUseCase(repo).execute(title, int(category_id), access_level, tags, file_path, request.user.id)
                 messages.success(request, 'Documento publicado exitosamente.')
                 return redirect('documents:list')
             except Exception as e:
+                default_storage.delete(file_path)
                 messages.error(request, f'Error al subir: {str(e)}')
         else:
             messages.error(request, 'Debes adjuntar un archivo.')
@@ -111,18 +113,20 @@ def edit_document_view(request, document_id):
         file_path = None
         if 'file' in request.FILES:
             file = request.FILES['file']
-            if file.size > 15728640:
-                messages.error(request, 'El archivo excede los 15MB permitidos.')
+            try:
+                validate_document_upload(file)
+            except UploadValidationError as e:
+                messages.error(request, str(e))
                 return redirect('documents:edit', document_id=document_id)
-            fs = FileSystemStorage(location='media/institutional_docs/')
-            filename = fs.save(file.name, file)
-            file_path = f'institutional_docs/{filename}'
+            file_path = default_storage.save(f'institutional_docs/{file.name}', file)
 
         try:
             UpdateDocumentUseCase(repo).execute(document_id, title, int(category_id), access_level, tags, file_path)
             messages.success(request, 'Documento actualizado exitosamente.')
             return redirect('documents:list')
         except Exception as e:
+            if file_path:
+                default_storage.delete(file_path)
             messages.error(request, f'Error al actualizar: {str(e)}')
 
     categories = repo.get_all_categories()

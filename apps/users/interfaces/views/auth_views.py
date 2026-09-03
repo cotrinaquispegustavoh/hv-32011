@@ -34,7 +34,7 @@ def logout_view(request):
         pass 
         
     logout(request)
-    return redirect('users:login')
+    return redirect('core:home')
 
 @login_required(login_url='/auth/login/')
 def password_change_view(request):

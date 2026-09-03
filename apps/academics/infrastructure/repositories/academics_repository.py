@@ -15,6 +15,13 @@ class DjangoSectionRepository(ISectionRepository):
         except Section.DoesNotExist:
             return None
 
+    def get_by_grade_name(self, grade: str, name: str, year: int) -> Optional[SectionEntity]:
+        try:
+            m = Section.objects.get(grade__iexact=grade, name__iexact=name, year=year)
+            return SectionEntity(id=m.id, grade=m.grade, letter=m.letter, name=m.name, year=m.year)
+        except Section.DoesNotExist:
+            return None
+
 class DjangoParentRepository(IParentRepository):
     def get_by_user_id(self, user_id: int) -> Optional[ParentEntity]:
         try:
@@ -44,7 +51,7 @@ class DjangoStudentRepository(IStudentRepository):
             last_name=model.last_name,
             parent_id=model.parent_id,
             section_id=model.section_id,
-            section_name=f"{model.section.grade} '{model.section.letter}'" if model.section else "Sin sección",
+            section_name=model.section.display_name if model.section else "Sin sección",
             parent_name=f"{model.parent.user.first_name} {model.parent.user.last_name}" if model.parent else "Sin apoderado",
             parent_phone=model.parent.user.phone if model.parent and hasattr(model.parent.user, 'phone') and model.parent.user.phone else "No registrado",
             tutor_name=tutor_name
@@ -59,7 +66,7 @@ class DjangoStudentRepository(IStudentRepository):
         return [self._to_entity(m) for m in models]
 
     def get_all_students(self) -> List[StudentEntity]:
-        models = Student.objects.all().select_related('section', 'parent__user').prefetch_related('section__assignments__teacher').order_by('section__grade', 'section__letter', 'last_name')
+        models = Student.objects.all().select_related('section', 'parent__user').prefetch_related('section__assignments__teacher').order_by('section__grade', 'section__name', 'last_name')
         return [self._to_entity(m) for m in models]
 
     def save(self, student: StudentEntity) -> StudentEntity:

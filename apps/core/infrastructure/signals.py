@@ -1,17 +1,47 @@
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_save, post_delete, pre_delete
 from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.dispatch import receiver
 from django.db.utils import ProgrammingError, OperationalError
-from apps.core.infrastructure.models import AuditLog
+from apps.core.infrastructure.models import (
+    AuditLog,
+    InstitutionalAnnouncement,
+    InternalNotification,
+)
+from apps.core.realtime import broadcast_notification
 from apps.core.interfaces.middlewares import get_current_user
 
 # Añadimos 'Migration' y 'Group' a la lista de ignorados
 IGNORE_MODELS = ['AuditLog', 'InternalNotification', 'Session', 'LogEntry', 'ContentType', 'Permission', 'Migration', 'Group']
 
+
+@receiver(post_save, sender=InternalNotification)
+def emit_internal_notification(sender, instance, created, **kwargs):
+    if created:
+        broadcast_notification(instance)
+
+
+@receiver(pre_delete, sender=InstitutionalAnnouncement)
+def delete_announcement_notifications(sender, instance, **kwargs):
+    """Evita notificaciones con enlaces rotos al eliminar un comunicado."""
+    InternalNotification.objects.filter(
+        link=f'/comunicados/{instance.pk}/',
+    ).delete()
+
 # --- 1. AUDITORÍA DE CRUD ---
 @receiver(post_save)
-def audit_post_save(sender, instance, created, **kwargs):
+def audit_post_save(sender, instance, created, update_fields=None, **kwargs):
     if sender.__name__ in IGNORE_MODELS:
+        return
+
+    # Django actualiza ``last_login`` durante el acceso y la señal específica
+    # ``user_logged_in`` ya registra ese evento. Omitir este guardado técnico
+    # evita duplicar cada inicio de sesión como una actualización de usuario.
+    if (
+        sender.__name__ == 'User'
+        and not created
+        and update_fields
+        and set(update_fields) == {'last_login'}
+    ):
         return
     
     user = get_current_user()

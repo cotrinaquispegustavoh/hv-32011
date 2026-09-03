@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
 from django.utils.html import escape
 from channels.layers import get_channel_layer
@@ -13,6 +13,9 @@ from apps.core.core.use_cases.manage_notifications import NotifyAdminsUseCase
 @login_required(login_url='/auth/login/')
 @require_module_permission('almacen')
 def request_material_view(request, material_id):
+    if request.user.role != 'DOCENTE':
+        return HttpResponseForbidden("Solo los docentes pueden solicitar materiales.")
+
     if request.method == 'POST':
         try:
             quantity = int(request.POST.get('quantity', 1))

@@ -1,19 +1,20 @@
 {% extends 'base.html' %}
 
 {% block title %}Mi Portafolio — I.E. 32011{% endblock %}
+{% block header_title %}Mi portafolio{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto py-6 px-4 animate-in fade-in duration-500">
+<div class="max-w-7xl mx-auto animate-in fade-in duration-500">
     
-    <header class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+    <div class="ui-page-header">
         <div>
-            <h1 class="text-3xl font-black text-slate-900 tracking-tight">Mi Portafolio Digital</h1>
-            <p class="text-slate-500 font-medium mt-1">Repositorio de evidencias y material de clase.</p>
+            <h1 class="ui-page-title md:hidden">Mi portafolio</h1>
+            <p class="ui-page-subtitle">Repositorio de evidencias y material de clase.</p>
         </div>
-        <a href="{% url 'portfolio:upload' %}" class="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white font-black text-xs px-6 py-3.5 rounded-xl uppercase tracking-wider transition-all shadow-md active:scale-95">
+        <a href="{% url 'portfolio:upload' %}" class="ui-button ui-button--primary w-full sm:w-auto">
             <i class="fa-solid fa-plus"></i> Subir Nueva Ficha
         </a>
-    </header>
+    </div>
 
     {% if messages %}
         <div class="mb-6 space-y-3">
@@ -28,7 +29,7 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {% for item in items %}
-        <div class="bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-all group overflow-hidden flex flex-col">
+        <div class="ui-card hover:shadow-md transition-all group overflow-hidden flex flex-col">
             <div class="p-5 flex-grow">
                 <div class="flex justify-between items-start mb-4">
                     <div class="w-12 h-12 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-500 text-xl shadow-inner">
@@ -50,7 +51,7 @@
             </div>
         </div>
         {% empty %}
-        <div class="col-span-full bg-white border border-dashed border-slate-200 rounded-[2.5rem] p-12 text-center">
+        <div class="ui-card col-span-full border-dashed p-12 text-center">
             <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i class="fa-solid fa-folder-open text-3xl text-slate-300"></i>
             </div>

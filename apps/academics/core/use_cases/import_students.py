@@ -20,10 +20,11 @@ class ImportStudentsUseCase:
         nombres_alumno = str(row_data.get('nombres_alumno', '')).strip()
         apellidos_alumno = str(row_data.get('apellidos_alumno', '')).strip()
         grado = str(row_data.get('grado', '')).strip()
+        seccion_nombre = str(row_data.get('seccion', '')).strip()
         letra = str(row_data.get('letra', '')).strip().upper()
 
-        if not dni_apoderado or not dni_alumno or not grado or not letra:
-            raise ValueError("Faltan datos obligatorios (DNI Apoderado, DNI Alumno, Grado o Letra).")
+        if not dni_apoderado or not dni_alumno or not grado or not (seccion_nombre or letra):
+            raise ValueError("Faltan datos obligatorios (DNI Apoderado, DNI Alumno, Grado o Sección).")
 
         # 1. Gestionar Usuario Apoderado
         user_parent = self.user_repo.get_by_dni(dni_apoderado)
@@ -42,9 +43,14 @@ class ImportStudentsUseCase:
             parent = self.parent_repo.save(user_parent.id)
 
         # 3. Buscar Sección
-        section = self.section_repo.get_by_grade_letter(grado, letra, year)
+        if seccion_nombre:
+            section = self.section_repo.get_by_grade_name(grado, seccion_nombre, year)
+        else:
+            # Compatibilidad temporal con los CSV antiguos que todavía usan "letra".
+            section = self.section_repo.get_by_grade_letter(grado, letra, year)
         if not section:
-            raise ValueError(f"Sección {grado} '{letra}' no encontrada en el año {year}.")
+            section_label = seccion_nombre or letra
+            raise ValueError(f"Sección {grado} - {section_label} no encontrada en el año {year}.")
 
         # 4. Crear Alumno
         student = StudentEntity(
