@@ -162,9 +162,13 @@
                     </div>
 
                     <div>
-                        <label for="new-material-image" class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Fotografía del material (opcional)</label>
-                        <input id="new-material-image" type="file" name="image" accept="image/jpeg,image/png,image/webp" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border border-gray-200 rounded-xl">
-                        <p class="text-xs text-gray-500 mt-2">Formatos permitidos: JPEG, PNG o WebP. Máximo 5 MB.</p>
+                        <label for="new-material-images" class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Fotografías del material (opcional)</label>
+                        <input id="new-material-images" type="file" name="images" multiple accept="image/jpeg,image/png,image/webp" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border border-gray-200 rounded-xl">
+                        <label for="new-material-camera-image" class="ui-button ui-button--secondary w-full mt-3 cursor-pointer sm:hidden">
+                            <i class="fa-solid fa-camera" aria-hidden="true"></i> Tomar una foto
+                        </label>
+                        <input id="new-material-camera-image" type="file" name="camera_image" accept="image/jpeg,image/png,image/webp" capture="environment" class="sr-only sm:hidden">
+                        <p class="text-xs text-gray-500 mt-2">JPEG, PNG o WebP. Máximo 5 MB por imagen y 6 imágenes por material.</p>
                     </div>
 
                     <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl transition-all shadow-md active:scale-95 text-xs uppercase tracking-wider mt-4">

@@ -7,7 +7,8 @@ from apps.warehouse.infrastructure.models import Material, MaterialImage, LoanRe
 
 class DjangoMaterialRepository(IMaterialRepository):
     def get_all(self) -> List[MaterialEntity]:
-        return [self._to_entity(m) for m in Material.objects.all().order_by('name')]
+        models = Material.objects.prefetch_related('images').order_by('name')
+        return [self._to_entity(m) for m in models]
 
     def get_by_id(self, material_id: int) -> Optional[MaterialEntity]:
         try:
@@ -55,9 +56,14 @@ class DjangoMaterialRepository(IMaterialRepository):
             }
         )
         
-        if material.new_image_path:
-            MaterialImage.objects.filter(material=model, is_main=True).delete()
-            MaterialImage.objects.create(material=model, image=material.new_image_path, is_main=True)
+        if material.new_image_paths:
+            has_main_image = model.images.filter(is_main=True).exists()
+            for index, image_path in enumerate(material.new_image_paths):
+                MaterialImage.objects.create(
+                    material=model,
+                    image=image_path,
+                    is_main=not has_main_image and index == 0,
+                )
             
         return self._to_entity(model)
 
@@ -70,14 +76,18 @@ class DjangoMaterialRepository(IMaterialRepository):
             return False
 
     def _to_entity(self, model: Material) -> MaterialEntity:
-        main_img = model.images.filter(is_main=True).first()
-        # CORRECCIÓN: Usamos .url para que Django genere la ruta web perfecta
-        img_url = main_img.image.url if main_img and main_img.image else None
+        images = list(model.images.all())
+        images.sort(key=lambda item: (not item.is_main, item.pk))
+        image_urls = [item.image.url for item in images if item.image]
+        main_img = next((item for item in images if item.is_main and item.image), None)
+        img_url = main_img.image.url if main_img else (image_urls[0] if image_urls else None)
         
         return MaterialEntity(
             id=model.id, name=model.name, category=model.category, stock=model.stock, unit=model.unit,
             state=model.state, location=model.location, cycle=model.cycle,
-            pedagogical_use=model.pedagogical_use, main_image_url=img_url
+            pedagogical_use=model.pedagogical_use,
+            main_image_url=img_url,
+            image_urls=image_urls,
         )
 
 class DjangoLoanRequestRepository(ILoanRequestRepository):

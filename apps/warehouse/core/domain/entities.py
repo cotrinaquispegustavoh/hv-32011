@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional, List
 from datetime import datetime
 
@@ -14,7 +14,8 @@ class MaterialEntity:
     cycle: str
     pedagogical_use: Optional[str]
     main_image_url: Optional[str] = None
-    new_image_path: Optional[str] = None
+    image_urls: List[str] = field(default_factory=list)
+    new_image_paths: List[str] = field(default_factory=list)
 
 @dataclass
 class LoanDetailEntity:

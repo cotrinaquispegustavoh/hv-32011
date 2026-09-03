@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 from apps.warehouse.core.domain.entities import MaterialEntity
 from apps.warehouse.core.domain.repositories import IMaterialRepository
 
@@ -6,7 +6,7 @@ class SaveMaterialUseCase:
     def __init__(self, material_repo: IMaterialRepository):
         self.material_repo = material_repo
 
-    def execute(self, material_id: Optional[int], name: str, category: str, stock: int, unit: str, state: str, location: str, cycle: str, pedagogical_use: str, image_path: Optional[str] = None) -> MaterialEntity:
+    def execute(self, material_id: Optional[int], name: str, category: str, stock: int, unit: str, state: str, location: str, cycle: str, pedagogical_use: str, image_paths: Optional[List[str]] = None) -> MaterialEntity:
         material = MaterialEntity(
             id=material_id,
             name=name,
@@ -17,7 +17,7 @@ class SaveMaterialUseCase:
             location=location,
             cycle=cycle,
             pedagogical_use=pedagogical_use,
-            new_image_path=image_path # Pasamos la nueva imagen si existe
+            new_image_paths=image_paths or [],
         )
         return self.material_repo.save(material)
 

@@ -208,6 +208,9 @@ class WarehouseLogicTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Vista catálogo')
+        self.assertContains(response, 'name="images"')
+        self.assertContains(response, 'multiple')
+        self.assertContains(response, 'capture="environment"')
 
     def test_edit_material_displays_invalid_image_error_on_same_view(self):
         director = User.objects.create_user(
@@ -271,3 +274,45 @@ class WarehouseLogicTests(TestCase):
             self.assertRedirects(response, reverse('warehouse:inventory_panel'))
             saved_image = MaterialImage.objects.get(material=self.material, is_main=True)
             self.assertTrue(saved_image.image.name.endswith('.webp'))
+
+    def test_edit_material_adds_multiple_images_and_mobile_capture(self):
+        director = User.objects.create_user(
+            dni='11111115', role='DIRECTOR', password_changed=True
+        )
+        self.client.force_login(director)
+
+        def webp_upload(name, color):
+            content = BytesIO()
+            Image.new('RGB', (8, 8), color).save(content, format='WEBP')
+            return SimpleUploadedFile(name, content.getvalue(), content_type='image/webp')
+
+        with TemporaryDirectory() as temporary_media, self.settings(MEDIA_ROOT=temporary_media):
+            response = self.client.post(
+                reverse('warehouse:edit_material', args=[self.material.pk]),
+                {
+                    'name': self.material.name,
+                    'category': self.material.category,
+                    'stock': self.material.stock,
+                    'unit': self.material.unit,
+                    'state': self.material.state,
+                    'location': self.material.location,
+                    'cycle': self.material.cycle,
+                    'pedagogical_use': '',
+                    'images': [
+                        webp_upload('frente.webp', 'white'),
+                        webp_upload('lateral.webp', 'blue'),
+                    ],
+                    'camera_image': webp_upload('camara.webp', 'red'),
+                },
+            )
+
+            self.assertRedirects(response, reverse('warehouse:inventory_panel'))
+            self.assertEqual(MaterialImage.objects.filter(material=self.material).count(), 3)
+            self.assertEqual(
+                MaterialImage.objects.filter(material=self.material, is_main=True).count(),
+                1,
+            )
+
+            catalog = self.client.get(reverse('warehouse:catalog'))
+            self.assertContains(catalog, 'Ver imagen siguiente')
+            self.assertContains(catalog, 'object-fill')

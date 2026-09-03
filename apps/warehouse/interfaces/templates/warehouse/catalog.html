@@ -73,11 +73,13 @@
 
 <script>
     document.addEventListener('alpine:init', () => {
-        Alpine.data('loanModal', (maxStock) => ({
+        Alpine.data('loanModal', (maxStock, imageCount = 0) => ({
             open: false,
             step: 1,
             quantity: 1,
             maxStock: maxStock,
+            imageCount: imageCount,
+            imageIndex: 0,
             date: new Date().toISOString().split('T')[0],
             today: new Date().toISOString().split('T')[0],
             interval: null,
@@ -98,6 +100,13 @@
                 this.interval = setInterval(() => { if(this.quantity > 1) this.quantity--; }, 150);
             },
             stopAction() { clearInterval(this.interval); },
+
+            nextImage() {
+                if (this.imageCount > 1) this.imageIndex = (this.imageIndex + 1) % this.imageCount;
+            },
+            previousImage() {
+                if (this.imageCount > 1) this.imageIndex = (this.imageIndex - 1 + this.imageCount) % this.imageCount;
+            },
 
             formatToISO(hour12, min, ampm) {
                 if(!this.date || !hour12 || !min) return '';

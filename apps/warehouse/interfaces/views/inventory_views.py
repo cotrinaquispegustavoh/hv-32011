@@ -10,6 +10,35 @@ from apps.warehouse.core.use_cases.manage_materials import SaveMaterialUseCase, 
 from apps.warehouse.core.use_cases.import_materials import ImportMaterialUseCase
 from apps.core.file_validation import UploadValidationError, validate_csv_upload, validate_image_upload
 
+
+MAX_MATERIAL_IMAGES = 6
+
+
+def _uploaded_material_images(request):
+    """Reúne selección múltiple, captura móvil y el campo legado."""
+    return [
+        *request.FILES.getlist('images'),
+        *request.FILES.getlist('camera_image'),
+        *request.FILES.getlist('image'),
+    ]
+
+
+def _validate_material_images(files, existing_count=0):
+    if existing_count + len(files) > MAX_MATERIAL_IMAGES:
+        raise UploadValidationError(
+            f'Cada material admite un máximo de {MAX_MATERIAL_IMAGES} imágenes.'
+        )
+    for uploaded_file in files:
+        validate_image_upload(uploaded_file)
+
+
+def _store_material_images(files):
+    return [
+        default_storage.save(f'materials/{uploaded_file.name}', uploaded_file)
+        for uploaded_file in files
+    ]
+
+
 @login_required(login_url='/auth/login/')
 def inventory_panel_view(request):
     if request.user.role not in ['DIRECTOR', 'SUBDIRECTOR', 'APOYO', 'SUPERUSER']:
@@ -30,22 +59,24 @@ def inventory_panel_view(request):
             cycle = request.POST.get('cycle')
             pedagogical_use = request.POST.get('pedagogical_use', '')
             
-            image_path = None
-            if 'image' in request.FILES:
-                file = request.FILES['image']
-                try:
-                    validate_image_upload(file)
-                except UploadValidationError as e:
-                    messages.error(request, str(e))
-                    return redirect('warehouse:inventory_panel')
-                filename = default_storage.save(f'materials/{file.name}', file)
-                image_path = filename
+            uploaded_images = _uploaded_material_images(request)
+            try:
+                _validate_material_images(uploaded_images)
+            except UploadValidationError as e:
+                messages.error(request, str(e))
+                return redirect('warehouse:inventory_panel')
+
+            image_paths = []
             
             try:
-                SaveMaterialUseCase(repo).execute(None, name, category, stock, unit, state, location, cycle, pedagogical_use, image_path)
+                image_paths = _store_material_images(uploaded_images)
+                SaveMaterialUseCase(repo).execute(
+                    None, name, category, stock, unit, state, location, cycle,
+                    pedagogical_use, image_paths,
+                )
                 messages.success(request, 'Material registrado correctamente.')
             except Exception as e:
-                if image_path:
+                for image_path in image_paths:
                     default_storage.delete(image_path)
                 messages.error(request, f'Error al registrar: {str(e)}')
             return redirect('warehouse:inventory_panel')
@@ -114,23 +145,25 @@ def edit_material_view(request, material_id):
         cycle = request.POST.get('cycle')
         pedagogical_use = request.POST.get('pedagogical_use', '')
         
-        image_path = None
-        if 'image' in request.FILES:
-            file = request.FILES['image']
-            try:
-                validate_image_upload(file)
-            except UploadValidationError as e:
-                messages.error(request, str(e))
-                return redirect('warehouse:edit_material', material_id=material_id)
-            filename = default_storage.save(f'materials/{file.name}', file)
-            image_path = filename
+        uploaded_images = _uploaded_material_images(request)
+        try:
+            _validate_material_images(uploaded_images, len(material.image_urls))
+        except UploadValidationError as e:
+            messages.error(request, str(e))
+            return redirect('warehouse:edit_material', material_id=material_id)
+
+        image_paths = []
         
         try:
-            SaveMaterialUseCase(repo).execute(material_id, name, category, stock, unit, state, location, cycle, pedagogical_use, image_path)
+            image_paths = _store_material_images(uploaded_images)
+            SaveMaterialUseCase(repo).execute(
+                material_id, name, category, stock, unit, state, location, cycle,
+                pedagogical_use, image_paths,
+            )
             messages.success(request, 'Material actualizado correctamente.')
             return redirect('warehouse:inventory_panel')
         except Exception as e:
-            if image_path:
+            for image_path in image_paths:
                 default_storage.delete(image_path)
             messages.error(request, f'Error al actualizar: {str(e)}')
 
