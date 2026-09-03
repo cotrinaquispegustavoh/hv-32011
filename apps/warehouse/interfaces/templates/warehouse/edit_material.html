@@ -16,6 +16,16 @@
         </a>
     </div>
 
+    {% if messages %}
+        <div class="mb-6 space-y-3" aria-live="polite">
+            {% for message in messages %}
+                <div class="p-4 rounded-lg text-sm font-bold border {% if message.tags == 'error' %}bg-red-50 text-red-700 border-red-200{% else %}bg-green-50 text-green-700 border-green-200{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
     <div class="ui-card overflow-hidden">
         <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center gap-3">
             <div class="w-8 h-8 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center">

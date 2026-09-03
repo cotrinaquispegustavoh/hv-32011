@@ -1,6 +1,12 @@
+from io import BytesIO
+from tempfile import TemporaryDirectory
+
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
-from apps.warehouse.infrastructure.models import Material, LoanRequest
+from PIL import Image
+
+from apps.warehouse.infrastructure.models import Material, MaterialImage, LoanRequest
 from apps.warehouse.infrastructure.repositories.warehouse_repository import DjangoMaterialRepository, DjangoLoanRequestRepository
 from apps.warehouse.core.use_cases.manage_loans import CreateLoanRequestUseCase, UpdateLoanStatusUseCase
 from apps.users.infrastructure.models import User
@@ -202,3 +208,66 @@ class WarehouseLogicTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Vista catálogo')
+
+    def test_edit_material_displays_invalid_image_error_on_same_view(self):
+        director = User.objects.create_user(
+            dni='11111113', role='DIRECTOR', password_changed=True
+        )
+        self.client.force_login(director)
+        invalid_image = SimpleUploadedFile(
+            'material.gif', b'GIF89a', content_type='image/gif'
+        )
+
+        response = self.client.post(
+            reverse('warehouse:edit_material', args=[self.material.pk]),
+            {
+                'name': self.material.name,
+                'category': self.material.category,
+                'stock': self.material.stock,
+                'unit': self.material.unit,
+                'state': self.material.state,
+                'location': self.material.location,
+                'cycle': self.material.cycle,
+                'pedagogical_use': '',
+                'image': invalid_image,
+            },
+            follow=True,
+        )
+
+        self.assertRedirects(
+            response,
+            reverse('warehouse:edit_material', args=[self.material.pk]),
+        )
+        self.assertContains(response, 'Formato no permitido')
+        self.assertContains(response, 'WEBP')
+
+    def test_edit_material_accepts_a_real_webp_image(self):
+        director = User.objects.create_user(
+            dni='11111114', role='DIRECTOR', password_changed=True
+        )
+        self.client.force_login(director)
+        content = BytesIO()
+        Image.new('RGB', (8, 8), 'white').save(content, format='WEBP')
+        webp_image = SimpleUploadedFile(
+            'material.webp', content.getvalue(), content_type='image/webp'
+        )
+
+        with TemporaryDirectory() as temporary_media, self.settings(MEDIA_ROOT=temporary_media):
+            response = self.client.post(
+                reverse('warehouse:edit_material', args=[self.material.pk]),
+                {
+                    'name': self.material.name,
+                    'category': self.material.category,
+                    'stock': self.material.stock,
+                    'unit': self.material.unit,
+                    'state': self.material.state,
+                    'location': self.material.location,
+                    'cycle': self.material.cycle,
+                    'pedagogical_use': '',
+                    'image': webp_image,
+                },
+            )
+
+            self.assertRedirects(response, reverse('warehouse:inventory_panel'))
+            saved_image = MaterialImage.objects.get(material=self.material, is_main=True)
+            self.assertTrue(saved_image.image.name.endswith('.webp'))
