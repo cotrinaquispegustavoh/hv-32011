@@ -41,6 +41,12 @@ class UploadValidationTests(SimpleTestCase):
         return SimpleUploadedFile(name, content.getvalue(), content_type="image/png")
 
     @staticmethod
+    def _webp_file(name="material.webp"):
+        content = BytesIO()
+        Image.new("RGB", (2, 2), "white").save(content, format="WEBP")
+        return SimpleUploadedFile(name, content.getvalue(), content_type="image/webp")
+
+    @staticmethod
     def _docx_file(name="informe.docx"):
         content = BytesIO()
         with ZipFile(content, "w") as archive:
@@ -91,6 +97,9 @@ class UploadValidationTests(SimpleTestCase):
         validate_image_upload(self._png_file("material.png"))
         validate_evidence_upload(self._png_file("evidencia.png"))
         validate_portfolio_upload(self._png_file("ficha.png"))
+
+    def test_accepts_valid_webp_for_material_images(self):
+        validate_image_upload(self._webp_file())
 
     def test_rejects_fake_image(self):
         uploaded = SimpleUploadedFile(

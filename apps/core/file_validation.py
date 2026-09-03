@@ -33,6 +33,7 @@ _MIME_TYPES = {
     ".jpg": {"application/octet-stream", "image/jpeg", "image/pjpeg"},
     ".pdf": {"application/octet-stream", "application/pdf"},
     ".png": {"application/octet-stream", "image/png"},
+    ".webp": {"application/octet-stream", "image/webp"},
 }
 
 
@@ -103,8 +104,13 @@ def _validate_content(data, extension):
             raise UploadValidationError("El archivo no contiene un documento Word válido.")
         return
 
-    if extension in {".jpg", ".jpeg", ".png"}:
-        expected_format = "PNG" if extension == ".png" else "JPEG"
+    if extension in {".jpg", ".jpeg", ".png", ".webp"}:
+        expected_format = {
+            ".jpg": "JPEG",
+            ".jpeg": "JPEG",
+            ".png": "PNG",
+            ".webp": "WEBP",
+        }[extension]
         try:
             with Image.open(BytesIO(data)) as image:
                 if image.format != expected_format:
@@ -150,9 +156,13 @@ def validate_portfolio_upload(uploaded_file):
 
 
 def validate_image_upload(uploaded_file):
-    """Admite imágenes JPEG o PNG de materiales, hasta 5 MB."""
+    """Admite imágenes JPEG, PNG o WebP de materiales, hasta 5 MB."""
 
-    return _validate_binary_upload(uploaded_file, {".jpg", ".jpeg", ".png"}, 5 * MEBIBYTE)
+    return _validate_binary_upload(
+        uploaded_file,
+        {".jpg", ".jpeg", ".png", ".webp"},
+        5 * MEBIBYTE,
+    )
 
 
 def validate_csv_upload(uploaded_file):

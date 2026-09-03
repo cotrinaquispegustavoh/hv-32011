@@ -96,8 +96,9 @@
                     <i class="fa-solid fa-image text-3xl text-gray-400 mb-3" aria-hidden="true"></i>
                     <p class="text-xs font-medium text-gray-500 mb-4">Puedes añadir una imagen para facilitar su identificación.</p>
                 {% endif %}
-                <input id="material-image" type="file" name="image" accept="image/*"
+                <input id="material-image" type="file" name="image" accept="image/jpeg,image/png,image/webp"
                        class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer mx-auto transition-colors">
+                <p class="text-xs text-gray-500 mt-2">Formatos permitidos: JPEG, PNG o WebP. Máximo 5 MB.</p>
             </div>
 
             <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t border-gray-100">
