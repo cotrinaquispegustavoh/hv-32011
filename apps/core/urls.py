@@ -13,9 +13,13 @@ urlpatterns = [
     path('actividad/', dashboard_views.activity_view, name='activity'),
     path('calendario/', calendar_views.calendar_view, name='calendar'),
     path('calendario/nueva-fecha/', calendar_views.create_event_view, name='create_event'),
+    path('calendario/fechas/<int:event_id>/editar/', calendar_views.edit_event_view, name='edit_event'),
+    path('calendario/fechas/<int:event_id>/eliminar/', calendar_views.delete_event_view, name='delete_event'),
     path('calendario/nuevo-comunicado/', calendar_views.create_announcement_view, name='create_announcement'),
     path('api/calendario/', calendar_views.api_calendar_events, name='api_calendar'),
     path('comunicados/<int:announcement_id>/', calendar_views.announcement_detail_view, name='announcement_detail'),
+    path('comunicados/<int:announcement_id>/editar/', calendar_views.edit_announcement_view, name='edit_announcement'),
+    path('comunicados/<int:announcement_id>/eliminar/', calendar_views.delete_announcement_view, name='delete_announcement'),
     path('comunicados/<int:announcement_id>/confirmar/', calendar_views.acknowledge_announcement_view, name='acknowledge_announcement'),
     path('comunicados/<int:announcement_id>/publicacion/', calendar_views.toggle_announcement_view, name='toggle_announcement'),
 ]

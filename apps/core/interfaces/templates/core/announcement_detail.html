@@ -10,7 +10,10 @@
             <h1 class="ui-page-title md:hidden">Comunicado institucional</h1>
             <p class="ui-page-subtitle">Información privada para {{ announcement.get_audience_display|lower }}.</p>
         </div>
-        <a href="{% url 'core:calendar' %}" class="ui-button ui-button--secondary w-full sm:w-auto"><i class="fa-solid fa-calendar" aria-hidden="true"></i> Ir al calendario</a>
+        <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <a href="{% url 'core:calendar' %}" class="ui-button ui-button--secondary"><i class="fa-solid fa-calendar" aria-hidden="true"></i> Ir al calendario</a>
+            {% if user.role in 'DIRECTOR,SUPERUSER' or user.is_superuser %}<a href="{% url 'core:edit_announcement' announcement.id %}" class="ui-button ui-button--secondary"><i class="fa-solid fa-pen" aria-hidden="true"></i> Editar</a><a href="{% url 'core:delete_announcement' announcement.id %}" class="ui-button ui-button--danger"><i class="fa-solid fa-trash-can" aria-hidden="true"></i> Eliminar</a>{% endif %}
+        </div>
     </div>
 
     {% if messages %}{% for message in messages %}<div class="mb-5 p-3 rounded-lg text-sm font-semibold border bg-emerald-50 text-emerald-700 border-emerald-200">{{ message }}</div>{% endfor %}{% endif %}

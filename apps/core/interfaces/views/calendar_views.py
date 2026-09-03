@@ -17,6 +17,7 @@ from apps.core.core.use_cases.manage_notifications import NotifyUserUseCase
 from apps.core.infrastructure.models import (
     AnnouncementAcknowledgement,
     InstitutionalAnnouncement,
+    InstitutionalEvent,
     InternalNotification,
 )
 from apps.core.infrastructure.repositories.core_repository import (
@@ -69,6 +70,38 @@ def _notify_users(users, title, message, link):
         )
 
 
+def _announcement_notification_content(announcement):
+    summary = announcement.message.strip()
+    if len(summary) > 160:
+        summary = f'{summary[:157]}...'
+    return f'Nuevo comunicado: {announcement.title}'[:200], summary
+
+
+def _event_notification_link(event):
+    return f'/calendario/?event={event.pk}'
+
+
+def _sync_announcement_notifications(announcement):
+    detail_url = reverse('core:announcement_detail', args=[announcement.pk])
+    title, summary = _announcement_notification_content(announcement)
+    target_ids = list(_target_users(announcement.audience).values_list('pk', flat=True))
+    linked = InternalNotification.objects.filter(link=detail_url)
+    linked.exclude(user_id__in=target_ids).delete()
+    linked.filter(user_id__in=target_ids).update(title=title, message=summary)
+    existing_ids = set(linked.values_list('user_id', flat=True))
+    missing_ids = [user_id for user_id in target_ids if user_id not in existing_ids]
+    if missing_ids:
+        _notify_users(
+            User.objects.filter(pk__in=missing_ids),
+            title=title,
+            message=summary,
+            link=detail_url,
+        )
+    AnnouncementAcknowledgement.objects.filter(
+        announcement=announcement,
+    ).exclude(user_id__in=target_ids).delete()
+
+
 @login_required(login_url='/auth/login/')
 def calendar_view(request):
     recent_announcements = []
@@ -114,6 +147,8 @@ def api_calendar_events(request):
                 'description': event.description,
                 'display_date': event.event_date.strftime('%d/%m/%Y'),
                 'is_holiday': event.is_holiday,
+                'edit_url': reverse('core:edit_event', args=[event.id]) if _is_director(request.user) else '',
+                'delete_url': reverse('core:delete_event', args=[event.id]) if _is_director(request.user) else '',
             },
         })
 
@@ -138,6 +173,8 @@ def api_calendar_events(request):
                     'core:announcement_detail',
                     args=[announcement.pk],
                 ),
+                'edit_url': reverse('core:edit_announcement', args=[announcement.pk]) if _is_director(request.user) else '',
+                'delete_url': reverse('core:delete_announcement', args=[announcement.pk]) if _is_director(request.user) else '',
             },
         })
 
@@ -159,7 +196,7 @@ def create_event_view(request):
                     _target_users(),
                     title='Nueva fecha institucional',
                     message=f'{event.title} — {display_date}.',
-                    link='/calendario/',
+                    link=_event_notification_link(event),
                 )
             messages.success(request, 'La fecha fue añadida y notificada correctamente.')
             return redirect('core:calendar')
@@ -181,13 +218,11 @@ def create_announcement_view(request):
                 announcement = form.save(commit=False)
                 announcement.created_by = request.user
                 announcement.save()
-                detail_url = f'/comunicados/{announcement.pk}/'
-                summary = announcement.message.strip()
-                if len(summary) > 160:
-                    summary = f'{summary[:157]}...'
+                detail_url = reverse('core:announcement_detail', args=[announcement.pk])
+                title, summary = _announcement_notification_content(announcement)
                 _notify_users(
                     _target_users(announcement.audience),
-                    title=f'Nuevo comunicado: {announcement.title}'[:200],
+                    title=title,
                     message=summary,
                     link=detail_url,
                 )
@@ -197,6 +232,98 @@ def create_announcement_view(request):
         form = InstitutionalAnnouncementForm()
 
     return render(request, 'core/announcement_form.html', {'form': form})
+
+
+@login_required(login_url='/auth/login/')
+def edit_event_view(request, event_id):
+    if not _is_director(request.user):
+        return HttpResponseForbidden('Solo Dirección puede editar fechas institucionales.')
+    event = get_object_or_404(InstitutionalEvent, pk=event_id)
+    old_link = _event_notification_link(event)
+    if request.method == 'POST':
+        form = InstitutionalEventForm(request.POST, instance=event)
+        if form.is_valid():
+            event = form.save()
+            display_date = event.event_date.strftime('%d/%m/%Y')
+            InternalNotification.objects.filter(link=old_link).update(
+                title='Fecha institucional actualizada',
+                message=f'{event.title} — {display_date}.',
+                link=_event_notification_link(event),
+            )
+            messages.success(request, 'La fecha institucional fue actualizada.')
+            return redirect('core:calendar')
+    else:
+        form = InstitutionalEventForm(instance=event, initial={
+            'event_kind': 'HOLIDAY' if event.is_holiday else 'ACTIVITY',
+        })
+    return render(request, 'core/event_form.html', {
+        'form': form,
+        'is_editing': True,
+        'event': event,
+    })
+
+
+@login_required(login_url='/auth/login/')
+def delete_event_view(request, event_id):
+    if not _is_director(request.user):
+        return HttpResponseForbidden('Solo Dirección puede eliminar fechas institucionales.')
+    event = get_object_or_404(InstitutionalEvent, pk=event_id)
+    if request.method == 'POST':
+        InternalNotification.objects.filter(link=_event_notification_link(event)).delete()
+        event.delete()
+        messages.success(request, 'La fecha institucional fue eliminada.')
+        return redirect('core:calendar')
+    return render(request, 'core/confirm_delete.html', {
+        'item_type': 'fecha institucional',
+        'item_title': event.title,
+        'form_action': reverse('core:delete_event', args=[event.pk]),
+        'cancel_url': reverse('core:calendar'),
+        'impact': 'También desaparecerá del calendario y de las agendas internas.',
+    })
+
+
+@login_required(login_url='/auth/login/')
+def edit_announcement_view(request, announcement_id):
+    if not _is_director(request.user):
+        return HttpResponseForbidden('Solo Dirección puede editar comunicados.')
+    announcement = get_object_or_404(InstitutionalAnnouncement, pk=announcement_id)
+    if request.method == 'POST':
+        form = InstitutionalAnnouncementForm(
+            request.POST,
+            request.FILES,
+            instance=announcement,
+        )
+        if form.is_valid():
+            with transaction.atomic():
+                announcement = form.save()
+                _sync_announcement_notifications(announcement)
+            messages.success(request, 'El comunicado y sus notificaciones fueron actualizados.')
+            return redirect('core:announcement_detail', announcement_id=announcement.pk)
+    else:
+        form = InstitutionalAnnouncementForm(instance=announcement)
+    return render(request, 'core/announcement_form.html', {
+        'form': form,
+        'is_editing': True,
+        'announcement': announcement,
+    })
+
+
+@login_required(login_url='/auth/login/')
+def delete_announcement_view(request, announcement_id):
+    if not _is_director(request.user):
+        return HttpResponseForbidden('Solo Dirección puede eliminar comunicados.')
+    announcement = get_object_or_404(InstitutionalAnnouncement, pk=announcement_id)
+    if request.method == 'POST':
+        announcement.delete()
+        messages.success(request, 'El comunicado y sus notificaciones fueron eliminados.')
+        return redirect('core:calendar')
+    return render(request, 'core/confirm_delete.html', {
+        'item_type': 'comunicado',
+        'item_title': announcement.title,
+        'form_action': reverse('core:delete_announcement', args=[announcement.pk]),
+        'cancel_url': reverse('core:announcement_detail', args=[announcement.pk]),
+        'impact': 'También se eliminarán sus constancias de lectura y notificaciones asociadas.',
+    })
 
 
 def _announcement_for_user(request, announcement_id):

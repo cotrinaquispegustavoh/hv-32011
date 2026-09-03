@@ -1,14 +1,14 @@
 {% extends 'base.html' %}
 
-{% block title %}Publicar comunicado - Intranet HV{% endblock %}
-{% block header_title %}Publicar comunicado{% endblock %}
+{% block title %}{% if is_editing %}Editar{% else %}Publicar{% endif %} comunicado - Intranet HV{% endblock %}
+{% block header_title %}{% if is_editing %}Editar{% else %}Publicar{% endif %} comunicado{% endblock %}
 
 {% block content %}
 <div class="max-w-4xl mx-auto w-full animate-in fade-in duration-300">
     <div class="ui-page-header items-center">
         <div>
-            <h1 class="ui-page-title md:hidden">Publicar comunicado</h1>
-            <p class="ui-page-subtitle">El aviso aparecerá en primer plano dentro de la cuenta de sus destinatarios.</p>
+            <h1 class="ui-page-title md:hidden">{% if is_editing %}Editar{% else %}Publicar{% endif %} comunicado</h1>
+            <p class="ui-page-subtitle">{% if is_editing %}Los cambios se reflejarán en la agenda y las notificaciones asociadas.{% else %}El aviso aparecerá en primer plano dentro de la cuenta de sus destinatarios.{% endif %}</p>
         </div>
         <a href="{% url 'core:calendar' %}" class="ui-button ui-button--secondary w-full sm:w-auto"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Volver al calendario</a>
     </div>
@@ -36,7 +36,7 @@
             </div>
             <div class="px-5 sm:px-6 py-4 bg-gray-50 border-t border-gray-100 flex flex-col-reverse sm:flex-row justify-end gap-3">
                 <a href="{% url 'core:calendar' %}" class="ui-button ui-button--secondary">Cancelar</a>
-                <button type="submit" class="ui-button ui-button--primary"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i> Publicar y notificar</button>
+                <button type="submit" class="ui-button ui-button--primary"><i class="fa-solid {% if is_editing %}fa-floppy-disk{% else %}fa-paper-plane{% endif %}" aria-hidden="true"></i> {% if is_editing %}Guardar cambios{% else %}Publicar y notificar{% endif %}</button>
             </div>
         </form>
     </div>

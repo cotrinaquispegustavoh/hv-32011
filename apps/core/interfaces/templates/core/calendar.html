@@ -7,7 +7,7 @@
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
 <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.11/locales/es.global.min.js'></script>
 
-<div class="max-w-6xl mx-auto animate-in fade-in duration-300" x-data="{ modalOpen: false, eventTitle: '', eventDesc: '', eventDate: '', eventLink: '', isHoliday: false, isAnnouncement: false }">
+<div id="calendar-page" class="max-w-6xl mx-auto animate-in fade-in duration-300">
     
     <div class="ui-page-header">
         <div>
@@ -59,25 +59,29 @@
     {% endif %}
 
     <!-- Modal para ver detalles del evento -->
-    <div x-show="modalOpen" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-        <div @click.away="modalOpen = false" class="ui-dialog w-full max-w-sm overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
-            <div :class="isAnnouncement ? 'bg-violet-600' : (isHoliday ? 'bg-red-600' : 'bg-blue-600')" class="text-white px-6 py-4 flex justify-between items-center">
+    <div id="event-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" role="dialog" aria-modal="true" aria-labelledby="event-modal-title">
+        <div class="ui-dialog w-full max-w-sm overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+            <div id="event-modal-header" class="bg-blue-600 text-white px-6 py-4 flex justify-between items-center">
                 <h3 class="font-black tracking-wide uppercase text-sm flex items-center gap-2">
-                    <i class="fa-solid" :class="isAnnouncement ? 'fa-bullhorn' : (isHoliday ? 'fa-calendar-xmark' : 'fa-calendar-check')"></i>
-                    <span x-text="isAnnouncement ? 'Comunicado con fecha' : (isHoliday ? 'Feriado Oficial' : 'Evento Institucional')"></span>
+                    <i id="event-modal-icon" class="fa-solid fa-calendar-check"></i>
+                    <span id="event-modal-kind">Evento Institucional</span>
                 </h3>
-                <button @click="modalOpen = false" class="text-white/70 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+                <button type="button" data-close-event-modal class="text-white/70 hover:text-white transition-colors" aria-label="Cerrar detalle"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <div class="p-6 space-y-4">
                 <div>
-                    <h4 class="text-xl font-black text-gray-900 leading-tight" x-text="eventTitle"></h4>
-                    <p class="text-xs font-bold text-blue-700 mt-2" x-text="eventDate"></p>
+                    <h4 id="event-modal-title" class="text-xl font-black text-gray-900 leading-tight"></h4>
+                    <p id="event-modal-date" class="text-xs font-bold text-blue-700 mt-2"></p>
                 </div>
                 <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                    <p class="text-sm text-gray-600 font-medium leading-relaxed" x-text="eventDesc || 'Sin descripción adicional.'"></p>
+                    <p id="event-modal-description" class="text-sm text-gray-600 font-medium leading-relaxed"></p>
                 </div>
-                <a x-show="isAnnouncement" :href="eventLink" class="ui-button ui-button--primary w-full text-xs uppercase tracking-wider">Ver comunicado completo</a>
-                <button @click="modalOpen = false" class="ui-button ui-button--secondary w-full text-xs uppercase tracking-wider">
+                <a id="event-modal-detail" href="#" class="hidden ui-button ui-button--primary w-full text-xs uppercase tracking-wider">Ver comunicado completo</a>
+                <div id="event-modal-management" class="hidden grid-cols-2 gap-2">
+                    <a id="event-modal-edit" href="#" class="ui-button ui-button--secondary text-xs"><i class="fa-solid fa-pen" aria-hidden="true"></i> Editar</a>
+                    <a id="event-modal-delete" href="#" class="ui-button ui-button--danger text-xs"><i class="fa-solid fa-trash-can" aria-hidden="true"></i> Eliminar</a>
+                </div>
+                <button type="button" data-close-event-modal class="ui-button ui-button--secondary w-full text-xs uppercase tracking-wider">
                     Cerrar
                 </button>
             </div>
@@ -111,6 +115,17 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         var calendarEl = document.getElementById('calendar');
+        var modal = document.getElementById('event-modal');
+        function closeEventModal() {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+        document.querySelectorAll('[data-close-event-modal]').forEach(function(button) {
+            button.addEventListener('click', closeEventModal);
+        });
+        modal.addEventListener('click', function(event) {
+            if (event.target === modal) closeEventModal();
+        });
         var calendar = new FullCalendar.Calendar(calendarEl, {
             locale: 'es',
             initialView: 'dayGridMonth',
@@ -131,14 +146,29 @@
             listDaySideFormat: false,
             events: '{% url "core:api_calendar" %}',
             eventClick: function(info) {
-                const alpineData = document.querySelector('[x-data]')._x_dataStack[0];
-                alpineData.eventTitle = info.event.title;
-                alpineData.eventDesc = info.event.extendedProps.description;
-                alpineData.eventDate = info.event.extendedProps.display_date;
-                alpineData.isHoliday = info.event.extendedProps.is_holiday;
-                alpineData.isAnnouncement = Boolean(info.event.extendedProps.is_announcement);
-                alpineData.eventLink = info.event.extendedProps.detail_url || '';
-                alpineData.modalOpen = true;
+                const props = info.event.extendedProps;
+                const isAnnouncement = Boolean(props.is_announcement);
+                const isHoliday = Boolean(props.is_holiday);
+                const header = document.getElementById('event-modal-header');
+                header.className = `${isAnnouncement ? 'bg-violet-600' : (isHoliday ? 'bg-red-600' : 'bg-blue-600')} text-white px-6 py-4 flex justify-between items-center`;
+                document.getElementById('event-modal-title').textContent = info.event.title;
+                document.getElementById('event-modal-date').textContent = props.display_date || '';
+                document.getElementById('event-modal-description').textContent = props.description || 'Sin descripción adicional.';
+                document.getElementById('event-modal-kind').textContent = isAnnouncement ? 'Comunicado con fecha' : (isHoliday ? 'Feriado Oficial' : 'Evento Institucional');
+                document.getElementById('event-modal-icon').className = `fa-solid ${isAnnouncement ? 'fa-bullhorn' : (isHoliday ? 'fa-calendar-xmark' : 'fa-calendar-check')}`;
+
+                const detailLink = document.getElementById('event-modal-detail');
+                detailLink.href = props.detail_url || '#';
+                detailLink.classList.toggle('hidden', !isAnnouncement);
+                const editLink = document.getElementById('event-modal-edit');
+                const deleteLink = document.getElementById('event-modal-delete');
+                editLink.href = props.edit_url || '#';
+                deleteLink.href = props.delete_url || '#';
+                const management = document.getElementById('event-modal-management');
+                management.classList.toggle('hidden', !(props.edit_url || props.delete_url));
+                management.classList.toggle('grid', Boolean(props.edit_url || props.delete_url));
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
             }
         });
         calendar.render();

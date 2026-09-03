@@ -20,7 +20,7 @@ class InstitutionalEventForm(forms.ModelForm):
     event_date = forms.DateField(
         label='Fecha',
         input_formats=['%d/%m/%Y'],
-        widget=forms.TextInput(attrs={
+        widget=forms.DateInput(format='%d/%m/%Y', attrs={
             'placeholder': 'DD/MM/AAAA',
             'inputmode': 'numeric',
             'autocomplete': 'off',
@@ -62,7 +62,7 @@ class InstitutionalAnnouncementForm(forms.ModelForm):
         label='Fecha del evento',
         required=False,
         input_formats=['%d/%m/%Y'],
-        widget=forms.TextInput(attrs={
+        widget=forms.DateInput(format='%d/%m/%Y', attrs={
             'placeholder': 'DD/MM/AAAA (opcional)',
             'inputmode': 'numeric',
             'autocomplete': 'off',
@@ -73,7 +73,7 @@ class InstitutionalAnnouncementForm(forms.ModelForm):
         label='Visible hasta',
         required=False,
         input_formats=['%d/%m/%Y'],
-        widget=forms.TextInput(attrs={
+        widget=forms.DateInput(format='%d/%m/%Y', attrs={
             'placeholder': 'DD/MM/AAAA (opcional)',
             'inputmode': 'numeric',
             'autocomplete': 'off',

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Eliminar {{ item_type }} - Intranet HV{% endblock %}
+{% block header_title %}Confirmar eliminación{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto w-full animate-in fade-in duration-300">
+    <section class="ui-card overflow-hidden">
+        <div class="p-6 sm:p-8 text-center">
+            <span class="w-14 h-14 mx-auto rounded-full bg-red-50 text-red-600 flex items-center justify-center text-xl"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></span>
+            <h1 class="text-xl font-bold text-gray-900 mt-5">Eliminar {{ item_type }}</h1>
+            <p class="text-sm text-gray-600 mt-2">Se eliminará “{{ item_title }}”.</p>
+            <p class="text-xs text-red-700 bg-red-50 border border-red-100 rounded-lg p-3 mt-4">{{ impact }}</p>
+        </div>
+        <form method="post" action="{{ form_action }}" class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex flex-col-reverse sm:flex-row justify-end gap-3">
+            {% csrf_token %}
+            <a href="{{ cancel_url }}" class="ui-button ui-button--secondary">Cancelar</a>
+            <button type="submit" class="ui-button ui-button--danger"><i class="fa-solid fa-trash-can" aria-hidden="true"></i> Eliminar definitivamente</button>
+        </form>
+    </section>
+</div>
+{% endblock %}

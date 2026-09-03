@@ -73,44 +73,25 @@
     </div>
 </section>
 
-<!-- NOTICIAS Y ANUNCIOS (Agenda Institucional) -->
-<section id="novedades" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-24">
-    <div class="bg-white rounded-3xl shadow-sm border border-gray-200 p-8 lg:p-10">
-        
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 border-b border-gray-100 pb-6">
-            <h2 class="text-2xl font-black text-gray-900 tracking-tight">Noticias y Anuncios</h2>
-            <button class="bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold px-5 py-2.5 rounded-lg transition-colors uppercase tracking-wider">
-                Ver todos
-            </button>
+<!-- ORIENTACIÓN DE ACCESO (sin exponer información interna) -->
+<section id="orientacion" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-24">
+    <div class="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-5">
+            <div class="lg:col-span-2 bg-blue-900 p-8 lg:p-10 text-white">
+                <span class="inline-flex w-12 h-12 rounded-xl bg-white/10 items-center justify-center text-xl"><i class="fa-solid fa-lock" aria-hidden="true"></i></span>
+                <h2 class="text-2xl font-black tracking-tight mt-6">Información institucional protegida</h2>
+                <p class="text-sm text-blue-100 leading-relaxed mt-3">Las fechas internas, comunicados y datos académicos se consultan únicamente después de iniciar sesión.</p>
+                <a href="{% url 'users:login' %}" class="mt-7 inline-flex items-center gap-2 bg-white text-blue-900 hover:bg-blue-50 font-black text-xs px-6 py-3 rounded-lg uppercase tracking-wider transition-colors">Ingresar a la intranet <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+            </div>
+            <div class="lg:col-span-3 p-8 lg:p-10">
+                <p class="text-xs font-black uppercase tracking-widest text-blue-700">Cómo mantenerte informado</p>
+                <div class="mt-6 space-y-5">
+                    <div class="flex gap-4"><span class="w-10 h-10 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center font-black flex-shrink-0">1</span><div><h3 class="font-bold text-gray-900">Accede con tu cuenta</h3><p class="text-sm text-gray-500 mt-1">Utiliza el DNI y la contraseña asignada por la institución.</p></div></div>
+                    <div class="flex gap-4"><span class="w-10 h-10 rounded-full bg-violet-50 text-violet-700 flex items-center justify-center font-black flex-shrink-0">2</span><div><h3 class="font-bold text-gray-900">Revisa comunicados y calendario</h3><p class="text-sm text-gray-500 mt-1">Docentes y apoderados reciben solamente la información dirigida a su perfil.</p></div></div>
+                    <div class="flex gap-4"><span class="w-10 h-10 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center font-black flex-shrink-0">3</span><div><h3 class="font-bold text-gray-900">Confirma la lectura</h3><p class="text-sm text-gray-500 mt-1">La confirmación permite a Dirección verificar que el aviso fue recibido.</p></div></div>
+                </div>
+            </div>
         </div>
-
-        {% if eventos %}
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {% for evento in eventos %}
-                <div class="flex items-start gap-4 p-4 rounded-2xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100">
-                    <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 border border-blue-100">
-                        <i class="fa-regular fa-calendar-check text-xl"></i>
-                    </div>
-                    <div>
-                        <h4 class="text-sm font-bold text-gray-900 leading-tight mb-1">{{ evento.title }}</h4>
-                        <p class="text-xs font-semibold text-gray-500">{{ evento.event_date|date:"d \d\e F, Y" }}</p>
-                        {% if evento.is_holiday %}
-                            <span class="inline-block mt-2 px-2 py-0.5 bg-red-50 text-red-600 text-[10px] font-black uppercase tracking-wider rounded border border-red-100">Feriado</span>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <div class="text-center py-12">
-                <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fa-regular fa-newspaper text-2xl text-gray-400"></i>
-                </div>
-                <h3 class="text-lg font-bold text-gray-700">Sin novedades recientes</h3>
-                <p class="text-sm text-gray-500 mt-1">Mantente atento a nuestras próximas publicaciones.</p>
-            </div>
-        {% endif %}
-        
     </div>
 </section>
 

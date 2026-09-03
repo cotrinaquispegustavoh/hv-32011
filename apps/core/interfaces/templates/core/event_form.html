@@ -1,14 +1,14 @@
 {% extends 'base.html' %}
 
-{% block title %}Añadir fecha - Intranet HV{% endblock %}
-{% block header_title %}Añadir fecha institucional{% endblock %}
+{% block title %}{% if is_editing %}Editar{% else %}Añadir{% endif %} fecha - Intranet HV{% endblock %}
+{% block header_title %}{% if is_editing %}Editar{% else %}Añadir{% endif %} fecha institucional{% endblock %}
 
 {% block content %}
 <div class="max-w-3xl mx-auto w-full animate-in fade-in duration-300">
     <div class="ui-page-header items-center">
         <div>
-            <h1 class="ui-page-title md:hidden">Añadir fecha institucional</h1>
-            <p class="ui-page-subtitle">Registra actividades, feriados locales o asuetos internos.</p>
+            <h1 class="ui-page-title md:hidden">{% if is_editing %}Editar{% else %}Añadir{% endif %} fecha institucional</h1>
+            <p class="ui-page-subtitle">{% if is_editing %}Actualiza la fecha seleccionada.{% else %}Registra actividades, feriados locales o asuetos internos.{% endif %}</p>
         </div>
         <a href="{% url 'core:calendar' %}" class="ui-button ui-button--secondary w-full sm:w-auto"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Volver al calendario</a>
     </div>
@@ -27,7 +27,7 @@
         </div>
         <div class="px-5 sm:px-6 py-4 bg-gray-50 border-t border-gray-100 flex flex-col-reverse sm:flex-row justify-end gap-3">
             <a href="{% url 'core:calendar' %}" class="ui-button ui-button--secondary">Cancelar</a>
-            <button type="submit" class="ui-button ui-button--primary"><i class="fa-solid fa-calendar-check" aria-hidden="true"></i> Guardar y notificar</button>
+            <button type="submit" class="ui-button ui-button--primary"><i class="fa-solid fa-calendar-check" aria-hidden="true"></i> {% if is_editing %}Guardar cambios{% else %}Guardar y notificar{% endif %}</button>
         </div>
     </form>
 </div>

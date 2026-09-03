@@ -26,13 +26,7 @@ class IAuditRepository(ABC):
     def get_by_model(self, model_name: str) -> List[AuditLogEntity]:
         pass
 
-# --- NUEVO CONTRATO ---
 class IEventRepository(ABC):
-    @abstractmethod
-    def get_upcoming_events(self, limit: int = 5) -> List[EventEntity]:
-        pass
-        
-    # --- NUEVA FUNCIÓN ---
     @abstractmethod
     def get_events_in_range(self, start_date: date, end_date: date) -> List[EventEntity]:
         """Obtiene todos los eventos en un rango de fechas (Para el Calendario)."""

@@ -13,3 +13,6 @@ python manage.py migrate
 
 echo "🌱 Poblando la base de datos con usuarios y secciones base..."
 python manage.py seed_db
+
+echo "📅 Sincronizando feriados nacionales de Perú..."
+python manage.py load_holidays --years-ahead 1 --strict

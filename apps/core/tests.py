@@ -1,11 +1,14 @@
 import asyncio
+import json
 from datetime import date
 from io import BytesIO
+from unittest.mock import patch
 from zipfile import ZipFile
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management import call_command
 from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 from PIL import Image
@@ -379,6 +382,47 @@ class ComplementaryFeaturesTests(TestCase):
             title='Nueva fecha institucional',
         ).exists())
 
+    def test_director_can_edit_and_delete_calendar_date(self):
+        event = InstitutionalEvent.objects.create(
+            title='Reunión original',
+            description='Descripción original.',
+            event_date=date(2027, 8, 10),
+        )
+        event_link = f'/calendario/?event={event.pk}'
+        notification = InternalNotification.objects.create(
+            user=self.teacher,
+            title='Nueva fecha institucional',
+            message='Reunión original — 10/08/2027.',
+            link=event_link,
+        )
+        self.client.force_login(self.teacher)
+        self.assertEqual(
+            self.client.post(reverse('core:edit_event', args=[event.pk]), {}).status_code,
+            403,
+        )
+
+        self.client.force_login(self.director)
+        edit_form = self.client.get(reverse('core:edit_event', args=[event.pk]))
+        self.assertContains(edit_form, 'value="10/08/2027"')
+        edited = self.client.post(reverse('core:edit_event', args=[event.pk]), {
+            'title': 'Reunión actualizada',
+            'description': 'Descripción actualizada.',
+            'event_kind': 'ACTIVITY',
+            'event_date': '12/08/2027',
+        })
+        self.assertRedirects(edited, reverse('core:calendar'))
+        event.refresh_from_db()
+        notification.refresh_from_db()
+        self.assertEqual(event.title, 'Reunión actualizada')
+        self.assertIn('12/08/2027', notification.message)
+
+        confirmation = self.client.get(reverse('core:delete_event', args=[event.pk]))
+        self.assertContains(confirmation, 'Eliminar fecha institucional')
+        deleted = self.client.post(reverse('core:delete_event', args=[event.pk]))
+        self.assertRedirects(deleted, reverse('core:calendar'))
+        self.assertFalse(InstitutionalEvent.objects.filter(pk=event.pk).exists())
+        self.assertFalse(InternalNotification.objects.filter(pk=notification.pk).exists())
+
     def test_calendar_api_exposes_human_date_as_day_month_year(self):
         InstitutionalEvent.objects.create(
             title='Actividad de prueba',
@@ -523,6 +567,67 @@ class ComplementaryFeaturesTests(TestCase):
         self.assertEqual(event['confirmed_count'], 1)
         self.assertEqual(event['pending_count'], 0)
 
+    def test_editing_announcement_resynchronizes_its_audience(self):
+        announcement = InstitutionalAnnouncement.objects.create(
+            title='Aviso docente',
+            message='Contenido inicial.',
+            audience='TEACHERS',
+            event_date=date(2027, 10, 19),
+            created_by=self.director,
+        )
+        detail_url = reverse('core:announcement_detail', args=[announcement.pk])
+        teacher_notification = InternalNotification.objects.create(
+            user=self.teacher,
+            title='Nuevo comunicado: Aviso docente',
+            message='Contenido inicial.',
+            link=detail_url,
+        )
+        self.client.force_login(self.teacher)
+        self.assertEqual(
+            self.client.get(reverse('core:edit_announcement', args=[announcement.pk])).status_code,
+            403,
+        )
+        self.assertEqual(
+            self.client.post(reverse('core:delete_announcement', args=[announcement.pk])).status_code,
+            403,
+        )
+
+        self.client.force_login(self.director)
+
+        edit_form = self.client.get(
+            reverse('core:edit_announcement', args=[announcement.pk])
+        )
+        self.assertContains(edit_form, 'value="19/10/2027"')
+
+        response = self.client.post(
+            reverse('core:edit_announcement', args=[announcement.pk]),
+            {
+                'title': 'Aviso para familias',
+                'message': 'Contenido actualizado.',
+                'audience': 'PARENTS',
+                'event_date': '20/10/2027',
+                'valid_until': '20/10/2027',
+            },
+        )
+
+        self.assertRedirects(response, detail_url)
+        announcement.refresh_from_db()
+        self.assertEqual(announcement.title, 'Aviso para familias')
+        self.assertFalse(InternalNotification.objects.filter(pk=teacher_notification.pk).exists())
+        self.assertTrue(InternalNotification.objects.filter(
+            user=self.parent,
+            link=detail_url,
+            title='Nuevo comunicado: Aviso para familias',
+        ).exists())
+
+        confirmation = self.client.get(
+            reverse('core:delete_announcement', args=[announcement.pk])
+        )
+        self.assertContains(confirmation, 'Eliminar comunicado')
+        self.client.post(reverse('core:delete_announcement', args=[announcement.pk]))
+        self.assertFalse(InstitutionalAnnouncement.objects.filter(pk=announcement.pk).exists())
+        self.assertFalse(InternalNotification.objects.filter(link=detail_url).exists())
+
     def test_public_landing_never_exposes_internal_announcements(self):
         announcement = InstitutionalAnnouncement.objects.create(
             title='INTERNAL-ANNOUNCEMENT-NOT-PUBLIC',
@@ -533,11 +638,30 @@ class ComplementaryFeaturesTests(TestCase):
 
         public_response = self.client.get(reverse('core:home'))
         self.assertNotContains(public_response, announcement.title)
+        self.assertContains(public_response, 'Información institucional protegida')
+        self.assertNotContains(public_response, 'Noticias y Anuncios')
 
         self.client.force_login(self.parent)
         parent_response = self.client.get(reverse('academics:parent_dashboard'))
         self.assertContains(parent_response, announcement.title)
         self.assertEqual(parent_response.context['pending_announcement'], announcement)
+
+    @patch('apps.core.management.commands.load_holidays.urllib.request.urlopen')
+    def test_holiday_command_is_idempotent(self, mocked_urlopen):
+        payload = json.dumps([{
+            'date': '2027-07-28',
+            'localName': 'Fiestas Patrias',
+            'global': True,
+        }]).encode('utf-8')
+        mocked_urlopen.return_value.__enter__.return_value.read.return_value = payload
+
+        call_command('load_holidays', year=2027, strict=True)
+        call_command('load_holidays', year=2027, strict=True)
+
+        self.assertEqual(InstitutionalEvent.objects.filter(
+            event_date=date(2027, 7, 28),
+            is_holiday=True,
+        ).count(), 1)
 
     def test_persisted_notification_is_emitted_to_private_websocket_group(self):
         layer = get_channel_layer()
