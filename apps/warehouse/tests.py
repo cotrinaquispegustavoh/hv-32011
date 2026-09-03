@@ -1,4 +1,5 @@
 from io import BytesIO
+from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -211,6 +212,7 @@ class WarehouseLogicTests(TestCase):
         self.assertContains(response, 'name="images"')
         self.assertContains(response, 'multiple')
         self.assertContains(response, 'capture="environment"')
+        self.assertContains(response, 'max-height: 90dvh')
 
     def test_edit_material_displays_invalid_image_error_on_same_view(self):
         director = User.objects.create_user(
@@ -316,3 +318,24 @@ class WarehouseLogicTests(TestCase):
             catalog = self.client.get(reverse('warehouse:catalog'))
             self.assertContains(catalog, 'Ver imagen siguiente')
             self.assertContains(catalog, 'object-fill')
+
+            primary_image = MaterialImage.objects.get(material=self.material, is_main=True)
+            primary_path = Path(primary_image.image.path)
+            self.assertTrue(primary_path.exists())
+            with self.captureOnCommitCallbacks(execute=True):
+                deletion = self.client.post(
+                    reverse('warehouse:edit_material', args=[self.material.pk]),
+                    {'delete_image_id': primary_image.pk},
+                )
+
+            self.assertRedirects(
+                deletion,
+                reverse('warehouse:edit_material', args=[self.material.pk]),
+            )
+            self.assertFalse(MaterialImage.objects.filter(pk=primary_image.pk).exists())
+            self.assertFalse(primary_path.exists())
+            self.assertEqual(MaterialImage.objects.filter(material=self.material).count(), 2)
+            self.assertEqual(
+                MaterialImage.objects.filter(material=self.material, is_main=True).count(),
+                1,
+            )

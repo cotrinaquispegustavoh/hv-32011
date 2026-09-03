@@ -136,6 +136,18 @@ def edit_material_view(request, material_id):
         return redirect('warehouse:inventory_panel')
 
     if request.method == 'POST':
+        delete_image_id = request.POST.get('delete_image_id')
+        if delete_image_id:
+            try:
+                deleted = repo.delete_image(material_id, int(delete_image_id))
+            except (TypeError, ValueError):
+                deleted = False
+            if deleted:
+                messages.success(request, 'La fotografía fue eliminada correctamente.')
+            else:
+                messages.error(request, 'No se encontró la fotografía solicitada.')
+            return redirect('warehouse:edit_material', material_id=material_id)
+
         name = request.POST.get('name')
         category = request.POST.get('category', 'General')
         stock = int(request.POST.get('stock', 0))

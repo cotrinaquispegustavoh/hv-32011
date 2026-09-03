@@ -38,7 +38,7 @@
 <!-- ESTRUCTURA PRINCIPAL DEL BODY                                                                      -->
 <!-- x-data inicializa las variables de Alpine.js para controlar los menús desplegables y la barra      -->
 <!-- ================================================================================================== -->
-<body class="app-shell text-gray-800 antialiased min-h-screen flex overflow-hidden"
+<body class="app-shell text-gray-800 antialiased min-h-screen flex overflow-x-hidden lg:overflow-hidden"
       x-data="{ mobileMenuOpen: false, sidebarCollapsed: false, profileMenuOpen: false, notifMenuOpen: false, announcementOpen: {% if pending_announcement %}true{% else %}false{% endif %} }"
       @keydown.escape.window="mobileMenuOpen = false; profileMenuOpen = false; notifMenuOpen = false; announcementOpen = false"
       hx-indicator="#global-request-indicator">
@@ -203,10 +203,10 @@
     <!-- ========================================== -->
     <!-- INICIO: CONTENEDOR PRINCIPAL DERECHO       -->
     <!-- ========================================== -->
-    <div class="flex-1 flex flex-col h-screen overflow-hidden bg-[#F8FAFC]">
+    <div class="flex-1 min-w-0 flex flex-col min-h-screen lg:h-screen lg:overflow-hidden bg-[#F8FAFC]">
         
         <!-- 2.1 TOP HEADER (Barra superior blanca) -->
-        <header class="app-topbar bg-white h-16 border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 flex-shrink-0 z-40">
+        <header class="app-topbar sticky top-0 lg:static bg-white h-16 border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 flex-shrink-0 z-40">
             
             <!-- Título y Botón Hamburguesa (Móvil) -->
             <div class="flex items-center gap-4">
@@ -293,7 +293,7 @@
         <!-- FIN: Top Header -->
 
         <!-- 2.2 ÁREA DE CONTENIDO DINÁMICO (Aquí se inyectan las demás pantallas) -->
-        <main id="main-content" tabindex="-1" class="app-main flex-grow p-4 sm:p-5 lg:p-6 overflow-y-auto">
+        <main id="main-content" tabindex="-1" class="app-main flex-grow min-h-0 p-4 pb-10 sm:p-5 sm:pb-10 lg:p-6 overflow-visible lg:overflow-y-auto">
             {% block content %}{% endblock %}
         </main>
 

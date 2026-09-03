@@ -80,6 +80,7 @@
             maxStock: maxStock,
             imageCount: imageCount,
             imageIndex: 0,
+            imageSwipeStartX: null,
             date: new Date().toISOString().split('T')[0],
             today: new Date().toISOString().split('T')[0],
             interval: null,
@@ -106,6 +107,24 @@
             },
             previousImage() {
                 if (this.imageCount > 1) this.imageIndex = (this.imageIndex - 1 + this.imageCount) % this.imageCount;
+            },
+            startImageSwipe(event) {
+                if (this.imageCount < 2 || event.button > 0) return;
+                this.imageSwipeStartX = event.clientX;
+                if (event.currentTarget.setPointerCapture) {
+                    event.currentTarget.setPointerCapture(event.pointerId);
+                }
+            },
+            finishImageSwipe(event) {
+                if (this.imageSwipeStartX === null) return;
+                const distance = event.clientX - this.imageSwipeStartX;
+                this.imageSwipeStartX = null;
+                if (Math.abs(distance) < 40) return;
+                if (distance < 0) this.nextImage();
+                else this.previousImage();
+            },
+            cancelImageSwipe() {
+                this.imageSwipeStartX = null;
             },
 
             formatToISO(hour12, min, ampm) {

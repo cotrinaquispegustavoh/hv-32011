@@ -75,10 +75,35 @@ class DjangoMaterialRepository(IMaterialRepository):
         except Material.DoesNotExist:
             return False
 
+    @transaction.atomic
+    def delete_image(self, material_id: int, image_id: int) -> bool:
+        image = MaterialImage.objects.filter(
+            pk=image_id,
+            material_id=material_id,
+        ).first()
+        if not image:
+            return False
+
+        was_main = image.is_main
+        image_name = image.image.name
+        image_storage = image.image.storage
+        image.delete()
+        if was_main:
+            replacement = MaterialImage.objects.filter(material_id=material_id).order_by('pk').first()
+            if replacement:
+                replacement.is_main = True
+                replacement.save(update_fields=['is_main'])
+        transaction.on_commit(lambda: image_storage.delete(image_name))
+        return True
+
     def _to_entity(self, model: Material) -> MaterialEntity:
         images = list(model.images.all())
         images.sort(key=lambda item: (not item.is_main, item.pk))
         image_urls = [item.image.url for item in images if item.image]
+        image_items = [
+            {'id': item.pk, 'url': item.image.url, 'is_main': item.is_main}
+            for item in images if item.image
+        ]
         main_img = next((item for item in images if item.is_main and item.image), None)
         img_url = main_img.image.url if main_img else (image_urls[0] if image_urls else None)
         
@@ -88,6 +113,7 @@ class DjangoMaterialRepository(IMaterialRepository):
             pedagogical_use=model.pedagogical_use,
             main_image_url=img_url,
             image_urls=image_urls,
+            image_items=image_items,
         )
 
 class DjangoLoanRequestRepository(ILoanRequestRepository):

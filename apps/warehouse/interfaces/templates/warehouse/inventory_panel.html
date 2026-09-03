@@ -98,7 +98,7 @@
 
     <!-- CORRECCIÓN: MODAL CREACIÓN MANUAL (Oculto por defecto y con scroll en móviles) -->
     <div x-show="modalManual" x-cloak @keydown.escape.window="modalManual = false" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-        <div @click.away="modalManual = false" class="ui-dialog w-full max-w-lg overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 max-h-[90vh]" role="dialog" aria-modal="true" aria-labelledby="new-material-title">
+        <div @click.away="modalManual = false" class="ui-dialog w-full max-w-lg overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 max-h-[90vh]" style="max-height: 90vh; max-height: 90dvh;" role="dialog" aria-modal="true" aria-labelledby="new-material-title">
             <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center flex-shrink-0">
                 <h3 id="new-material-title" class="font-black tracking-wide uppercase text-sm"><i class="fa-solid fa-box text-blue-400 mr-2" aria-hidden="true"></i> Nuevo material</h3>
                 <button @click="modalManual = false" class="text-slate-400 hover:text-white transition-colors" aria-label="Cerrar formulario"><i class="fa-solid fa-xmark text-xl" aria-hidden="true"></i></button>

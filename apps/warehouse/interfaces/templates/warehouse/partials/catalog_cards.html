@@ -2,26 +2,32 @@
 <div x-data="loanModal({{ item.stock }}, {{ item.image_urls|length }})" class="ui-card hover:shadow-md transition-all flex flex-col overflow-hidden group">
     
     <!-- Contenedor de Imagen -->
-    <div class="h-40 bg-gray-50 relative overflow-hidden border-b border-gray-100 flex items-center justify-center">
+    <div class="h-40 bg-gray-50 relative overflow-hidden border-b border-gray-100 flex items-center justify-center select-none cursor-grab active:cursor-grabbing"
+         style="touch-action: pan-y;"
+         @pointerdown="startImageSwipe($event)"
+         @pointerup="finishImageSwipe($event)"
+         @pointercancel="cancelImageSwipe()"
+         @dragstart.prevent>
         {% if item.image_urls %}
             {% for image_url in item.image_urls %}
                 <img x-show="imageIndex === {{ forloop.counter0 }}" {% if not forloop.first %}x-cloak{% endif %}
                      src="{{ image_url }}"
                      alt="Imagen {{ forloop.counter }} de {{ item.name }}"
                      class="absolute inset-0 w-full h-full object-fill"
+                     draggable="false"
                      {% if forloop.first %}loading="eager"{% else %}loading="lazy"{% endif %}>
             {% endfor %}
 
             {% if item.image_urls|length > 1 %}
-                <button type="button" x-cloak @click.stop="previousImage()" class="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-slate-900/65 text-white hover:bg-slate-900 transition-colors" aria-label="Ver imagen anterior de {{ item.name }}">
+                <button type="button" x-cloak @pointerdown.stop @click.stop="previousImage()" class="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-slate-900/65 text-white hover:bg-slate-900 transition-colors" aria-label="Ver imagen anterior de {{ item.name }}">
                     <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
                 </button>
-                <button type="button" x-cloak @click.stop="nextImage()" class="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-slate-900/65 text-white hover:bg-slate-900 transition-colors" aria-label="Ver imagen siguiente de {{ item.name }}">
+                <button type="button" x-cloak @pointerdown.stop @click.stop="nextImage()" class="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-slate-900/65 text-white hover:bg-slate-900 transition-colors" aria-label="Ver imagen siguiente de {{ item.name }}">
                     <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
                 </button>
                 <div x-cloak class="absolute bottom-2 left-1/2 -translate-x-1/2 z-10 flex gap-1.5 rounded-full bg-slate-900/55 px-2 py-1" aria-label="Selector de imágenes">
                     {% for image_url in item.image_urls %}
-                        <button type="button" @click.stop="imageIndex = {{ forloop.counter0 }}" class="w-2 h-2 rounded-full border border-white" :class="imageIndex === {{ forloop.counter0 }} ? 'bg-white' : 'bg-white/30'" aria-label="Ver imagen {{ forloop.counter }} de {{ item.name }}"></button>
+                        <button type="button" @pointerdown.stop @click.stop="imageIndex = {{ forloop.counter0 }}" class="w-2 h-2 rounded-full border border-white" :class="imageIndex === {{ forloop.counter0 }} ? 'bg-white' : 'bg-white/30'" aria-label="Ver imagen {{ forloop.counter }} de {{ item.name }}"></button>
                     {% endfor %}
                 </div>
             {% endif %}

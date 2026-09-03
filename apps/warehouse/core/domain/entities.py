@@ -15,6 +15,7 @@ class MaterialEntity:
     pedagogical_use: Optional[str]
     main_image_url: Optional[str] = None
     image_urls: List[str] = field(default_factory=list)
+    image_items: List[dict] = field(default_factory=list)
     new_image_paths: List[str] = field(default_factory=list)
 
 @dataclass
