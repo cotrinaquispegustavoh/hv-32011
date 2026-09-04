@@ -8,14 +8,14 @@ from asgiref.sync import async_to_sync
 from apps.discipline.infrastructure.repositories.discipline_repository import DjangoIncidentRepository
 from apps.discipline.core.use_cases.manage_incidents import ReportIncidentUseCase, GetAllIncidentsUseCase
 from apps.academics.infrastructure.models import Student
-from apps.users.interfaces.middlewares import require_module_permission
+from apps.users.interfaces.middlewares import require_permission
 from apps.core.infrastructure.repositories.core_repository import DjangoNotificationRepository
 from apps.core.core.use_cases.manage_notifications import NotifyAdminsUseCase, NotifyUserUseCase
 from apps.core.utils import normalize_text
 from apps.core.file_validation import UploadValidationError, validate_evidence_upload
 
 @login_required(login_url='/auth/login/')
-@require_module_permission('disciplina')
+@require_permission('discipline.create')
 def report_incident_view(request):
     if request.method == 'POST':
         student_id = request.POST.get('student_id')
@@ -88,17 +88,15 @@ def report_incident_view(request):
     return render(request, 'discipline/report_incident.html', {'students': students})
 
 @login_required(login_url='/auth/login/')
-@require_module_permission('disciplina')
+@require_permission('discipline.review')
 def incident_list_view(request):
     repo = DjangoIncidentRepository()
     
-    if request.user.role in ['DIRECTOR', 'SUBDIRECTOR', 'SUPERUSER']:
-        incidents = GetAllIncidentsUseCase(repo).execute()
-    elif request.user.role == 'DOCENTE':
+    if request.user.role == 'DOCENTE':
         from apps.discipline.core.use_cases.manage_incidents import GetTeacherIncidentsUseCase
         incidents = GetTeacherIncidentsUseCase(repo).execute(request.user.id)
     else:
-        return redirect('core:dashboard')
+        incidents = GetAllIncidentsUseCase(repo).execute()
 
     query = normalize_text(request.GET.get('q', ''))
     if query:
@@ -107,16 +105,14 @@ def incident_list_view(request):
     return render(request, 'discipline/incident_list.html', {'incidents': incidents, 'initial_query': request.GET.get('q', '')})
 
 @login_required(login_url='/auth/login/')
-@require_module_permission('disciplina')
+@require_permission('discipline.review')
 def search_incidents_view(request):
     repo = DjangoIncidentRepository()
-    if request.user.role in ['DIRECTOR', 'SUBDIRECTOR', 'SUPERUSER']:
-        incidents = GetAllIncidentsUseCase(repo).execute()
-    elif request.user.role == 'DOCENTE':
+    if request.user.role == 'DOCENTE':
         from apps.discipline.core.use_cases.manage_incidents import GetTeacherIncidentsUseCase
         incidents = GetTeacherIncidentsUseCase(repo).execute(request.user.id)
     else:
-        return HttpResponseForbidden()
+        incidents = GetAllIncidentsUseCase(repo).execute()
 
     # Normalizamos
     query = normalize_text(request.GET.get('q', ''))

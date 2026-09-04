@@ -12,7 +12,7 @@
             <p class="ui-page-subtitle">Registro centralizado de incidencias y reportes de aula.</p>
         </div>
         
-        {% if user.role == 'DOCENTE' %}
+        {% if 'discipline.create' in access_permissions %}
         <a href="{% url 'discipline:report_incident' %}" class="ui-button ui-button--primary w-full sm:w-auto">
             <i class="fa-solid fa-plus"></i> Nueva Incidencia
         </a>

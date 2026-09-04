@@ -3,6 +3,7 @@ from django.urls import reverse
 from django.utils.cache import add_never_cache_headers
 from django.http import HttpResponseForbidden, HttpResponse
 from functools import wraps
+from apps.users.permissions import has_permission
 
 class ForcePasswordChangeMiddleware:
     def __init__(self, get_response):
@@ -62,5 +63,16 @@ def require_module_permission(module_name):
             if module_name in request.user.module_permissions:
                 return view_func(request, *args, **kwargs)
             return HttpResponseForbidden("No tienes permiso para acceder a este módulo.")
+        return _wrapped_view
+    return decorator
+
+
+def require_permission(permission_code):
+    def decorator(view_func):
+        @wraps(view_func)
+        def _wrapped_view(request, *args, **kwargs):
+            if has_permission(request.user, permission_code):
+                return view_func(request, *args, **kwargs)
+            return HttpResponseForbidden("No tienes permiso para realizar esta acción.")
         return _wrapped_view
     return decorator

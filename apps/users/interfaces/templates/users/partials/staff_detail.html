@@ -37,107 +37,52 @@
     {% endif %}
 </div>
 
-<!-- Encabezado de la única sección funcional del detalle. -->
+<!-- Permisos funcionales -->
 <div class="px-6 py-3 border-b border-gray-100 bg-gray-50/70">
     <p class="ui-section-title text-blue-700">Permisos específicos</p>
 </div>
 
-<!-- CONTENIDO DE PERMISOS -->
 <div class="p-6 bg-white flex-grow overflow-y-auto">
-    
     <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6 flex items-start gap-3">
         <i class="fa-solid fa-circle-info text-blue-500 mt-0.5"></i>
         <div>
             <h4 class="text-xs font-black text-blue-900 uppercase tracking-wider">{{ selected_user.role }}</h4>
-            <p class="text-xs text-blue-700 font-medium mt-1">Permisos base asignados según el rol institucional. Puedes sobrescribir el acceso a módulos específicos a continuación.</p>
+            <p class="text-xs text-blue-700 font-medium mt-1">Cada acción se autoriza por separado. Al cambiar una opción, los accesos actuales de la cuenta se conservan y solo se modifica esa acción.</p>
         </div>
     </div>
 
-    <h3 class="text-xs font-black text-gray-500 uppercase tracking-widest mb-4">Módulos del Sistema</h3>
-    
-    <div class="space-y-3">
-        
-        <!-- Módulo Almacén -->
-        <div class="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-blue-200 transition-colors group">
-            <div class="flex items-center gap-4">
-                <div class="w-10 h-10 rounded-lg bg-gray-50 text-gray-400 flex items-center justify-center text-lg group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
-                    <i class="fa-solid fa-boxes-stacked"></i>
-                </div>
-                <div>
-                    <p class="text-sm font-black text-gray-900">Almacén e Inventario</p>
-                    <p class="text-[10px] font-bold text-gray-500 mt-0.5">Consultar catálogo y crear solicitudes de material.</p>
-                </div>
+    <div class="space-y-5">
+        {% for group in permission_groups %}
+        <section class="rounded-2xl border border-gray-200 overflow-hidden">
+            <div class="flex items-center gap-3 bg-gray-50 px-4 py-3 border-b border-gray-200">
+                <i class="{{ group.icon }} text-blue-600" aria-hidden="true"></i>
+                <h3 class="text-xs font-black text-gray-800 uppercase tracking-wider">{{ group.label }}</h3>
             </div>
-            <div class="flex items-center gap-4">
-                <span class="text-[10px] font-black uppercase tracking-wider hidden sm:inline {% if 'almacen' in selected_user.module_permissions %}text-emerald-500{% else %}text-red-500{% endif %}">
-                    {% if 'almacen' in selected_user.module_permissions %}Permitido{% else %}Denegado{% endif %}
-                </span>
-                <form hx-post="{% url 'users:toggle_permission' selected_user.id %}" hx-target="#staff-detail-content" hx-swap="innerHTML">
-                    {% csrf_token %}
-                    <input type="hidden" name="module" value="almacen">
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" class="sr-only peer" onchange="this.form.querySelector('button').click()" {% if 'almacen' in selected_user.module_permissions %}checked{% endif %}>
-                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                        <button type="submit" class="hidden"></button>
-                    </label>
-                </form>
-            </div>
-        </div>
-
-        <!-- Módulo Incidencias -->
-        <div class="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-blue-200 transition-colors group">
-            <div class="flex items-center gap-4">
-                <div class="w-10 h-10 rounded-lg bg-gray-50 text-gray-400 flex items-center justify-center text-lg group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
+            <div class="divide-y divide-gray-100">
+                {% for permission in group.permissions %}
+                <div class="flex items-center justify-between gap-4 p-4 hover:bg-blue-50/30 transition-colors">
+                    <div class="min-w-0">
+                        <p class="text-sm font-bold text-gray-900">{{ permission.label }}</p>
+                        <p class="text-[11px] font-medium text-gray-500 mt-1">{{ permission.description }}</p>
+                    </div>
+                    {% if selected_user.role == 'SUPERUSER' %}
+                    <span class="ui-badge bg-blue-50 text-blue-700 border-blue-200 flex-shrink-0">Acceso técnico</span>
+                    {% else %}
+                    <form hx-post="{% url 'users:toggle_permission' selected_user.id %}" hx-target="#staff-detail-content" hx-swap="innerHTML" class="flex-shrink-0">
+                        {% csrf_token %}
+                        <input type="hidden" name="permission" value="{{ permission.code }}">
+                        <label class="relative inline-flex items-center cursor-pointer" title="Cambiar {{ permission.label }}">
+                            <input type="checkbox" class="sr-only peer" onchange="this.form.querySelector('button').click()" {% if permission.enabled %}checked{% endif %}>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            <button type="submit" class="hidden"></button>
+                        </label>
+                    </form>
+                    {% endif %}
                 </div>
-                <div>
-                    <p class="text-sm font-black text-gray-900">Incidencias y Conducta</p>
-                    <p class="text-[10px] font-bold text-gray-500 mt-0.5">Registrar reportes disciplinarios de alumnos.</p>
-                </div>
+                {% endfor %}
             </div>
-            <div class="flex items-center gap-4">
-                <span class="text-[10px] font-black uppercase tracking-wider hidden sm:inline {% if 'disciplina' in selected_user.module_permissions %}text-emerald-500{% else %}text-red-500{% endif %}">
-                    {% if 'disciplina' in selected_user.module_permissions %}Permitido{% else %}Denegado{% endif %}
-                </span>
-                <form hx-post="{% url 'users:toggle_permission' selected_user.id %}" hx-target="#staff-detail-content" hx-swap="innerHTML">
-                    {% csrf_token %}
-                    <input type="hidden" name="module" value="disciplina">
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" class="sr-only peer" onchange="this.form.querySelector('button').click()" {% if 'disciplina' in selected_user.module_permissions %}checked{% endif %}>
-                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                        <button type="submit" class="hidden"></button>
-                    </label>
-                </form>
-            </div>
-        </div>
-
-        <!-- Módulo Portafolio -->
-        <div class="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-blue-200 transition-colors group">
-            <div class="flex items-center gap-4">
-                <div class="w-10 h-10 rounded-lg bg-gray-50 text-gray-400 flex items-center justify-center text-lg group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
-                    <i class="fa-solid fa-folder-open"></i>
-                </div>
-                <div>
-                    <p class="text-sm font-black text-gray-900">Portafolio Docente</p>
-                    <p class="text-[10px] font-bold text-gray-500 mt-0.5">Gestionar fichas académicas y tareas.</p>
-                </div>
-            </div>
-            <div class="flex items-center gap-4">
-                <span class="text-[10px] font-black uppercase tracking-wider hidden sm:inline {% if 'portafolio' in selected_user.module_permissions %}text-emerald-500{% else %}text-red-500{% endif %}">
-                    {% if 'portafolio' in selected_user.module_permissions %}Permitido{% else %}Denegado{% endif %}
-                </span>
-                <form hx-post="{% url 'users:toggle_permission' selected_user.id %}" hx-target="#staff-detail-content" hx-swap="innerHTML">
-                    {% csrf_token %}
-                    <input type="hidden" name="module" value="portafolio">
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" class="sr-only peer" onchange="this.form.querySelector('button').click()" {% if 'portafolio' in selected_user.module_permissions %}checked{% endif %}>
-                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                        <button type="submit" class="hidden"></button>
-                    </label>
-                </form>
-            </div>
-        </div>
-
+        </section>
+        {% endfor %}
     </div>
 </div>
 {% else %}

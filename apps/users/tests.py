@@ -1,6 +1,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from apps.users.infrastructure.models import User
+from apps.users.permissions import GRANULAR_PERMISSIONS_MARKER
 
 class SecurityRoleTests(TestCase):
     def setUp(self):
@@ -120,6 +121,41 @@ class SecurityRoleTests(TestCase):
         self.assertContains(response, 'Cargando usuario...')
         self.assertContains(response, 'hx-target="#staff-detail-content"')
         self.assertContains(response, 'hx-sync="#staff-detail-content:replace"')
+
+    def test_granular_permission_removes_inventory_without_removing_catalog(self):
+        subdirector = User.objects.create_user(
+            dni='22222222', role='SUBDIRECTOR', password_changed=True
+        )
+        self.client.force_login(self.director)
+
+        response = self.client.post(
+            reverse('users:toggle_permission', args=[subdirector.pk]),
+            {'permission': 'warehouse.manage'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        subdirector.refresh_from_db()
+        self.assertIn(GRANULAR_PERMISSIONS_MARKER, subdirector.module_permissions)
+        self.assertNotIn('warehouse.manage', subdirector.module_permissions)
+        self.assertIn('warehouse.view', subdirector.module_permissions)
+
+        self.client.force_login(subdirector)
+        self.assertEqual(self.client.get(reverse('warehouse:catalog')).status_code, 200)
+        self.assertEqual(self.client.get(reverse('warehouse:inventory_panel')).status_code, 403)
+
+    def test_incident_registration_and_review_can_be_assigned_separately(self):
+        subdirector = User.objects.create_user(
+            dni='22222223', role='SUBDIRECTOR', password_changed=True
+        )
+        self.client.force_login(self.director)
+        self.client.post(
+            reverse('users:toggle_permission', args=[subdirector.pk]),
+            {'permission': 'discipline.create'},
+        )
+
+        self.client.force_login(subdirector)
+        self.assertEqual(self.client.get(reverse('discipline:incident_list')).status_code, 200)
+        self.assertEqual(self.client.get(reverse('discipline:report_incident')).status_code, 403)
 
     def test_account_security_changes_password_and_keeps_current_session(self):
         self.docente.set_password('ClaveAnterior!2026')

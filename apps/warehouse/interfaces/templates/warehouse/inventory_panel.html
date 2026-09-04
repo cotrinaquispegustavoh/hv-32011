@@ -35,6 +35,22 @@
         </div>
     {% endif %}
 
+    <form method="get" class="ui-card p-4 mb-6 flex flex-col sm:flex-row gap-3" role="search">
+        <div class="relative flex-grow">
+            <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-gray-400" aria-hidden="true"></i>
+            <label for="inventory-search" class="sr-only">Buscar en el inventario</label>
+            <input id="inventory-search" type="search" name="q" value="{{ initial_query }}"
+                   placeholder="Buscar por material, categoría o ubicación..."
+                   class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <button type="submit" class="ui-button ui-button--primary sm:w-auto">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Buscar
+        </button>
+        {% if initial_query %}
+            <a href="{% url 'warehouse:inventory_panel' %}" class="ui-button ui-button--secondary sm:w-auto">Limpiar</a>
+        {% endif %}
+    </form>
+
     <!-- TABLA DE INVENTARIO -->
     <div class="ui-card overflow-hidden">
         <div class="overflow-x-auto">
@@ -87,7 +103,7 @@
                     <tr>
                         <td colspan="5" class="px-6 py-12 text-center text-gray-500 text-sm">
                             <i class="fa-solid fa-box-open text-3xl mb-2 text-gray-300 block"></i>
-                            No hay materiales registrados en el inventario.
+                            {% if initial_query %}No se encontraron materiales para “{{ initial_query }}”.{% else %}No hay materiales registrados en el inventario.{% endif %}
                         </td>
                     </tr>
                     {% endfor %}

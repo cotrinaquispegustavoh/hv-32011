@@ -26,10 +26,12 @@
                 <i class="fa-solid fa-download"></i>
             </a>
             
-            {% if user.role in 'DIRECTOR,SUPERUSER' %}
+            {% if 'documents.publish' in access_permissions %}
             <a href="{% url 'documents:edit' doc.id %}" class="w-8 h-8 flex items-center justify-center rounded-lg bg-white text-gray-500 hover:bg-amber-50 hover:text-amber-600 transition-colors border border-gray-200 hover:border-amber-200 shadow-sm" title="Editar">
                 <i class="fa-solid fa-pen"></i>
             </a>
+            {% endif %}
+            {% if 'documents.manage' in access_permissions %}
             <button hx-post="{% url 'documents:delete' doc.id %}" 
                     hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' 
                     hx-confirm="¿Estás seguro de eliminar este documento?" 

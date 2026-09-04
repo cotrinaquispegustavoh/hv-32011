@@ -13,16 +13,18 @@
             <p class="ui-page-subtitle">Consulta y administra documentos de la institución.</p>
         </div>
         
-        {% if user.role in 'DIRECTOR,SUBDIRECTOR,SUPERUSER' %}
         <div class="flex items-center gap-3">
+            {% if 'documents.manage' in access_permissions %}
             <a href="{% url 'documents:manage_categories' %}" class="ui-button ui-button--secondary">
                 <i class="fa-solid fa-folder-gear"></i> Categorías
             </a>
+            {% endif %}
+            {% if 'documents.publish' in access_permissions %}
             <a href="{% url 'documents:upload' %}" class="ui-button ui-button--primary">
                 <i class="fa-solid fa-plus"></i> Subir documento
             </a>
+            {% endif %}
         </div>
-        {% endif %}
     </div>
 
     {% if messages %}

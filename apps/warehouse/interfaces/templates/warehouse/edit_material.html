@@ -105,16 +105,14 @@
                             <div class="relative h-28 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
                                 <img src="{{ image_item.url }}" alt="Fotografía {{ forloop.counter }} de {{ material.name }}" class="w-full h-full object-fill">
                                 {% if image_item.is_main %}<span class="absolute left-1.5 bottom-1.5 rounded bg-slate-900/75 px-2 py-1 text-[9px] font-bold uppercase text-white">Portada</span>{% endif %}
-                                <button type="submit" name="delete_image_id" value="{{ image_item.id }}" formnovalidate
-                                        onclick="return confirm('¿Eliminar únicamente esta fotografía?')"
-                                        class="absolute right-1.5 top-1.5 w-8 h-8 rounded-full bg-red-600/90 text-white hover:bg-red-700 shadow-md"
-                                        aria-label="Eliminar fotografía {{ forloop.counter }} de {{ material.name }}">
-                                    <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
-                                </button>
+                                <label class="absolute right-1.5 top-1.5 flex items-center gap-1.5 rounded-lg bg-red-600/90 px-2.5 py-2 text-[10px] font-bold text-white shadow-md hover:bg-red-700 cursor-pointer">
+                                    <input type="checkbox" name="remove_image_ids" value="{{ image_item.id }}" class="accent-red-700">
+                                    <span>Eliminar</span>
+                                </label>
                             </div>
                         {% endfor %}
                     </div>
-                    <p class="text-xs font-bold text-gray-500 mb-4">Puedes añadir más fotografías sin reemplazar las actuales.</p>
+                    <p class="text-xs font-bold text-gray-500 mb-4">Marca las fotografías que deseas eliminar y confirma todo con “Guardar cambios”.</p>
                 {% else %}
                     <i class="fa-solid fa-image text-3xl text-gray-400 mb-3" aria-hidden="true"></i>
                     <p class="text-xs font-medium text-gray-500 mb-4">Puedes añadir una imagen para facilitar su identificación.</p>

@@ -4,18 +4,15 @@ from django.contrib.auth.decorators import login_required
 from django.utils.html import escape
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
-from apps.users.interfaces.middlewares import require_module_permission
+from apps.users.interfaces.middlewares import require_permission
 from apps.warehouse.infrastructure.repositories.warehouse_repository import DjangoMaterialRepository, DjangoLoanRequestRepository
 from apps.warehouse.core.use_cases.manage_loans import CreateLoanRequestUseCase, GetTeacherLoansUseCase
 from apps.core.infrastructure.repositories.core_repository import DjangoNotificationRepository
 from apps.core.core.use_cases.manage_notifications import NotifyAdminsUseCase
 
 @login_required(login_url='/auth/login/')
-@require_module_permission('almacen')
+@require_permission('warehouse.request')
 def request_material_view(request, material_id):
-    if request.user.role != 'DOCENTE':
-        return HttpResponseForbidden("Solo los docentes pueden solicitar materiales.")
-
     if request.method == 'POST':
         try:
             quantity = int(request.POST.get('quantity', 1))
@@ -48,7 +45,7 @@ def request_material_view(request, material_id):
                 notif_repo = DjangoNotificationRepository()
                 NotifyAdminsUseCase(notif_repo).execute(
                     title="Nueva Solicitud de Material",
-                    message=f"Un docente ha solicitado materiales. Revisa el panel de despacho.",
+                    message=f"Un usuario ha solicitado materiales. Revisa el panel de despacho.",
                     link="/almacen/despacho/"
                 )
 
@@ -74,11 +71,8 @@ def request_material_view(request, material_id):
     return HttpResponse("Método no permitido", status=405)
 
 @login_required(login_url='/auth/login/')
-@require_module_permission('almacen')
+@require_permission('warehouse.request')
 def teacher_loans_view(request):
-    if request.user.role != 'DOCENTE':
-        return redirect('core:dashboard')
-        
     repo = DjangoLoanRequestRepository()
     use_case = GetTeacherLoansUseCase(repo)
     loans = use_case.execute(request.user.id)

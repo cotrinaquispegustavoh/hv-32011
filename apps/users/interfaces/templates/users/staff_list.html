@@ -144,30 +144,28 @@
                         <input type="hidden" name="user_ids" :value="id">
                     </template>
 
-                    <p class="text-sm text-gray-500 font-medium">Selecciona los módulos a los que tendrán acceso los <strong x-text="selectedUsers.length" class="text-gray-900"></strong> usuarios seleccionados.</p>
+                    <p class="text-sm text-gray-500 font-medium">Selecciona exactamente las acciones habilitadas para los <strong x-text="selectedUsers.length" class="text-gray-900"></strong> usuarios seleccionados. Esta operación reemplaza su matriz actual.</p>
 
-                    <div class="space-y-3">
-                        <label class="flex items-center gap-3 p-4 border border-gray-200 rounded-2xl cursor-pointer hover:bg-gray-50 transition-colors">
-                            <input type="checkbox" name="modules" value="almacen" class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500">
-                            <div>
-                                <p class="font-black text-gray-800 text-sm">Módulo de Almacén</p>
-                                <p class="text-[10px] text-gray-400 uppercase font-bold mt-0.5">Catálogo y Solicitudes</p>
+                    <div class="space-y-4">
+                        {% for group in bulk_permission_groups %}
+                        <fieldset class="rounded-2xl border border-gray-200 overflow-hidden">
+                            <legend class="sr-only">{{ group.label }}</legend>
+                            <div class="bg-gray-50 px-4 py-3 text-xs font-black text-gray-800 uppercase tracking-wider border-b border-gray-200">
+                                <i class="{{ group.icon }} text-blue-600 mr-2" aria-hidden="true"></i>{{ group.label }}
                             </div>
-                        </label>
-                        <label class="flex items-center gap-3 p-4 border border-gray-200 rounded-2xl cursor-pointer hover:bg-gray-50 transition-colors">
-                            <input type="checkbox" name="modules" value="disciplina" class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500">
-                            <div>
-                                <p class="font-black text-gray-800 text-sm">Módulo de Disciplina</p>
-                                <p class="text-[10px] text-gray-400 uppercase font-bold mt-0.5">Registro de Incidencias</p>
+                            <div class="divide-y divide-gray-100">
+                                {% for permission in group.permissions %}
+                                <label class="flex items-start gap-3 p-3 cursor-pointer hover:bg-blue-50/30 transition-colors">
+                                    <input type="checkbox" name="permissions" value="{{ permission.code }}" class="w-5 h-5 mt-0.5 text-blue-600 rounded focus:ring-blue-500">
+                                    <span>
+                                        <span class="block font-bold text-gray-800 text-sm">{{ permission.label }}</span>
+                                        <span class="block text-[10px] text-gray-500 font-medium mt-0.5">{{ permission.description }}</span>
+                                    </span>
+                                </label>
+                                {% endfor %}
                             </div>
-                        </label>
-                        <label class="flex items-center gap-3 p-4 border border-gray-200 rounded-2xl cursor-pointer hover:bg-gray-50 transition-colors">
-                            <input type="checkbox" name="modules" value="portafolio" class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500">
-                            <div>
-                                <p class="font-black text-gray-800 text-sm">Módulo Académico</p>
-                                <p class="text-[10px] text-gray-400 uppercase font-bold mt-0.5">Portafolio Docente</p>
-                            </div>
-                        </label>
+                        </fieldset>
+                        {% endfor %}
                     </div>
 
                     <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl transition-all shadow-md active:scale-95 text-xs uppercase tracking-wider">

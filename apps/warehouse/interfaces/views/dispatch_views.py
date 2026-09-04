@@ -6,20 +6,18 @@ from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from apps.warehouse.infrastructure.repositories.warehouse_repository import DjangoMaterialRepository, DjangoLoanRequestRepository
 from apps.warehouse.core.use_cases.manage_loans import UpdateLoanStatusUseCase
+from apps.users.interfaces.middlewares import require_permission
 
 @login_required(login_url='/auth/login/')
+@require_permission('warehouse.dispatch')
 def dispatch_panel_view(request):
-    if request.user.role not in ['DIRECTOR', 'SUBDIRECTOR', 'APOYO', 'SUPERUSER']:
-        return HttpResponseForbidden("Acceso denegado.")
     loan_repo = DjangoLoanRequestRepository()
     active_loans = loan_repo.get_all_active()
     return render(request, 'warehouse/dispatch_panel.html', {'loans': active_loans})
 
 @login_required(login_url='/auth/login/')
+@require_permission('warehouse.dispatch')
 def update_loan_status_view(request, loan_id):
-    if request.user.role not in ['DIRECTOR', 'SUBDIRECTOR', 'APOYO', 'SUPERUSER']:
-        return HttpResponseForbidden("Acceso denegado.")
-
     if request.method == 'POST':
         new_status = request.POST.get('status')
         material_repo = DjangoMaterialRepository()

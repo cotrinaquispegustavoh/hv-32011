@@ -6,8 +6,10 @@ from django.core.files.storage import default_storage
 from apps.core.file_validation import UploadValidationError, validate_document_upload
 from apps.documents.infrastructure.repositories.document_repository import DjangoDocumentRepository
 from apps.documents.core.use_cases.manage_documents import GetAccessibleDocumentsUseCase, UploadDocumentUseCase, UpdateDocumentUseCase, DeleteDocumentUseCase
+from apps.users.interfaces.middlewares import require_permission
 
 @login_required(login_url='/auth/login/')
+@require_permission('documents.view')
 def document_list_view(request):
     repo = DjangoDocumentRepository()
     documents = GetAccessibleDocumentsUseCase(repo).execute(request.user.role)
@@ -15,6 +17,7 @@ def document_list_view(request):
     return render(request, 'documents/list.html', {'documents': documents, 'categories': categories})
 
 @login_required(login_url='/auth/login/')
+@require_permission('documents.view')
 def search_documents_view(request):
     query = request.GET.get('q', '').lower()
     category_id = request.GET.get('category_id', '')
@@ -29,8 +32,8 @@ def search_documents_view(request):
     return render(request, 'documents/partials/document_table.html', {'documents': documents})
 
 @login_required(login_url='/auth/login/')
+@require_permission('documents.manage')
 def manage_categories_view(request):
-    if request.user.role not in ['DIRECTOR', 'SUPERUSER']: return HttpResponse("No autorizado", status=403)
     repo = DjangoDocumentRepository()
     
     if request.method == 'POST':
@@ -60,8 +63,8 @@ def manage_categories_view(request):
     return render(request, 'documents/manage_categories.html', {'categories': categories})
 
 @login_required(login_url='/auth/login/')
+@require_permission('documents.publish')
 def upload_document_view(request):
-    if request.user.role not in ['DIRECTOR', 'SUBDIRECTOR', 'SUPERUSER']: return redirect('documents:list')
     repo = DjangoDocumentRepository()
 
     if request.method == 'POST':
@@ -95,8 +98,8 @@ def upload_document_view(request):
 
 # --- NUEVAS VISTAS: EDITAR Y ELIMINAR ---
 @login_required(login_url='/auth/login/')
+@require_permission('documents.publish')
 def edit_document_view(request, document_id):
-    if request.user.role not in ['DIRECTOR', 'SUBDIRECTOR', 'SUPERUSER']: return redirect('documents:list')
     repo = DjangoDocumentRepository()
     doc = repo.get_by_id(document_id)
     
@@ -133,9 +136,10 @@ def edit_document_view(request, document_id):
     return render(request, 'documents/edit.html', {'doc': doc, 'categories': categories})
 
 @login_required(login_url='/auth/login/')
+@require_permission('documents.manage')
 def delete_document_view(request, document_id):
-    if request.method == 'POST' and request.user.role in ['DIRECTOR', 'SUPERUSER']:
+    if request.method == 'POST':
         repo = DjangoDocumentRepository()
         DeleteDocumentUseCase(repo).execute(document_id)
         return HttpResponse("") # HTMX elimina la fila visualmente
-    return HttpResponse("No autorizado", status=403)
+    return HttpResponse("Método no permitido", status=405)

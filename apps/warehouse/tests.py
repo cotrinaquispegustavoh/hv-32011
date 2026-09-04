@@ -157,6 +157,7 @@ class WarehouseLogicTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Historial')
         self.assertContains(response, 'SOLICITAR')
+        self.assertNotContains(response, f'Editar {self.material.name}')
 
     def test_teacher_loan_history_displays_domain_entity_status(self):
         self.teacher.password_changed = True
@@ -194,6 +195,7 @@ class WarehouseLogicTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Gestionar inventario')
+        self.assertContains(response, f'Editar {self.material.name}')
         self.assertNotContains(response, '>SOLICITAR<', html=False)
         self.assertEqual(forbidden_request.status_code, 403)
         self.material.refresh_from_db()
@@ -213,6 +215,23 @@ class WarehouseLogicTests(TestCase):
         self.assertContains(response, 'multiple')
         self.assertContains(response, 'capture="environment"')
         self.assertContains(response, 'max-height: 90dvh')
+
+    def test_inventory_searches_by_name_category_and_location(self):
+        director = User.objects.create_user(
+            dni='11111119', role='DIRECTOR', password_changed=True
+        )
+        Material.objects.create(
+            name='Tambores rojos', category='Música', stock=2, unit='Pares',
+            state='OPERATIVO', location='Aula de arte', cycle='TODOS',
+        )
+        self.client.force_login(director)
+
+        response = self.client.get(reverse('warehouse:inventory_panel'), {'q': 'proyector'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Proyector Epson')
+        self.assertNotContains(response, 'Tambores rojos')
+        self.assertContains(response, 'value="proyector"')
 
     def test_edit_material_displays_invalid_image_error_on_same_view(self):
         director = User.objects.create_user(
@@ -325,17 +344,34 @@ class WarehouseLogicTests(TestCase):
             with self.captureOnCommitCallbacks(execute=True):
                 deletion = self.client.post(
                     reverse('warehouse:edit_material', args=[self.material.pk]),
-                    {'delete_image_id': primary_image.pk},
+                    {
+                        'name': 'Ábaco actualizado',
+                        'category': self.material.category,
+                        'stock': self.material.stock,
+                        'unit': self.material.unit,
+                        'state': self.material.state,
+                        'location': self.material.location,
+                        'cycle': self.material.cycle,
+                        'pedagogical_use': 'Uso actualizado',
+                        'remove_image_ids': [primary_image.pk],
+                        # Mismo nombre que la imagen eliminada, pero contenido nuevo.
+                        'images': webp_upload('frente.webp', 'green'),
+                    },
                 )
 
             self.assertRedirects(
                 deletion,
-                reverse('warehouse:edit_material', args=[self.material.pk]),
+                reverse('warehouse:inventory_panel'),
             )
             self.assertFalse(MaterialImage.objects.filter(pk=primary_image.pk).exists())
             self.assertFalse(primary_path.exists())
-            self.assertEqual(MaterialImage.objects.filter(material=self.material).count(), 2)
+            self.assertEqual(MaterialImage.objects.filter(material=self.material).count(), 3)
             self.assertEqual(
                 MaterialImage.objects.filter(material=self.material, is_main=True).count(),
                 1,
             )
+            self.material.refresh_from_db()
+            self.assertEqual(self.material.name, 'Ábaco actualizado')
+            self.assertEqual(self.material.pedagogical_use, 'Uso actualizado')
+            replacement = MaterialImage.objects.filter(material=self.material).order_by('-pk').first()
+            self.assertTrue(Path(replacement.image.path).exists())

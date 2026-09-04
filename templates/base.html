@@ -98,23 +98,28 @@
                 <div x-show="!sidebarCollapsed" class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 mt-6 px-2 whitespace-nowrap">Docencia</div>
                 <div x-show="sidebarCollapsed" class="text-center text-gray-600 mt-6 mb-2"><i class="fa-solid fa-ellipsis"></i></div>
                 
-                {% if 'almacen' in user.module_permissions %}
+                {% if 'warehouse.view' in access_permissions %}
                 <a href="{% url 'warehouse:catalog' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'almacen' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
                     <i class="fa-solid fa-boxes-stacked w-5 text-center"></i>
                     <span x-show="!sidebarCollapsed" class="whitespace-nowrap">Almacén</span>
                 </a>
                 {% endif %}
-                {% if 'disciplina' in user.module_permissions %}
+                {% if 'discipline.review' in access_permissions %}
                 <a href="{% url 'discipline:incident_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'disciplina' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
                     <i class="fa-solid fa-triangle-exclamation w-5 text-center"></i>
                     <span x-show="!sidebarCollapsed" class="whitespace-nowrap">Incidencias</span>
                 </a>
+                {% elif 'discipline.create' in access_permissions %}
+                <a href="{% url 'discipline:report_incident' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'disciplina' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''"><i class="fa-solid fa-triangle-exclamation w-5 text-center"></i><span x-show="!sidebarCollapsed" class="whitespace-nowrap">Registrar incidencia</span></a>
                 {% endif %}
-                {% if 'portafolio' in user.module_permissions %}
+                {% if 'portfolio.own' in access_permissions %}
                 <a href="{% url 'portfolio:list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'portafolio' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
                     <i class="fa-solid fa-folder-open w-5 text-center"></i>
                     <span x-show="!sidebarCollapsed" class="whitespace-nowrap">Portafolio Docente</span>
                 </a>
+                {% endif %}
+                {% if 'documents.view' in access_permissions %}
+                <a href="{% url 'documents:list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'documentos' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''"><i class="fa-solid fa-file-lines w-5 text-center"></i><span x-show="!sidebarCollapsed" class="whitespace-nowrap">Documentos</span></a>
                 {% endif %}
             {% endif %}
 
@@ -127,6 +132,7 @@
                     <i class="fa-solid fa-children w-5 text-center"></i>
                     <span x-show="!sidebarCollapsed" class="whitespace-nowrap">Mis Hijos</span>
                 </a>
+                {% if 'documents.view' in access_permissions %}<a href="{% url 'documents:list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'documentos' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''"><i class="fa-solid fa-file-lines w-5 text-center"></i><span x-show="!sidebarCollapsed" class="whitespace-nowrap">Documentos</span></a>{% endif %}
             {% endif %}
 
             <!-- BLOQUE DE ENLACES: DIRECTIVOS Y APOYO -->
@@ -138,26 +144,33 @@
                     <i class="fa-solid fa-users w-5 text-center"></i>
                     <span x-show="!sidebarCollapsed" class="whitespace-nowrap">Directorio Alumnos</span>
                 </a>
-                <a href="{% url 'warehouse:dispatch_panel' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'despacho' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
+                {% if 'warehouse.dispatch' in access_permissions %}<a href="{% url 'warehouse:dispatch_panel' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'despacho' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
                     <i class="fa-solid fa-truck-ramp-box w-5 text-center"></i>
                     <span x-show="!sidebarCollapsed" class="whitespace-nowrap">Despachos</span>
-                </a>
-                <a href="{% url 'warehouse:inventory_panel' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'inventario' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
+                </a>{% endif %}
+                {% if 'warehouse.manage' in access_permissions %}<a href="{% url 'warehouse:inventory_panel' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'inventario' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
                     <i class="fa-solid fa-boxes-packing w-5 text-center"></i>
                     <span x-show="!sidebarCollapsed" class="whitespace-nowrap">Inventario</span>
-                </a>
-                <a href="{% url 'documents:list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'documentos' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
+                </a>{% endif %}
+                {% if 'warehouse.view' in access_permissions %}<a href="{% url 'warehouse:catalog' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'catalogo' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
+                    <i class="fa-solid fa-grip w-5 text-center"></i>
+                    <span x-show="!sidebarCollapsed" class="whitespace-nowrap">Catálogo</span>
+                </a>{% endif %}
+                {% if 'discipline.review' in access_permissions %}<a href="{% url 'discipline:incident_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'disciplina' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
+                    <i class="fa-solid fa-triangle-exclamation w-5 text-center"></i>
+                    <span x-show="!sidebarCollapsed" class="whitespace-nowrap">Incidencias</span>
+                </a>{% elif 'discipline.create' in access_permissions %}<a href="{% url 'discipline:report_incident' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'disciplina' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''"><i class="fa-solid fa-triangle-exclamation w-5 text-center"></i><span x-show="!sidebarCollapsed" class="whitespace-nowrap">Registrar incidencia</span></a>{% endif %}
+                {% if 'documents.view' in access_permissions %}<a href="{% url 'documents:list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'documentos' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
                     <i class="fa-solid fa-file-lines w-5 text-center"></i>
                     <span x-show="!sidebarCollapsed" class="whitespace-nowrap">Documentos</span>
-                </a>
+                </a>{% endif %}
+                {% if 'portfolio.review' in access_permissions %}<a href="{% url 'portfolio:review_panel' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'revision' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
+                    <i class="fa-solid fa-magnifying-glass-chart w-5 text-center"></i>
+                    <span x-show="!sidebarCollapsed" class="whitespace-nowrap">Revisión Académica</span>
+                </a>{% endif %}
                 
                 <!-- Sub-bloque exclusivo para Director y Superuser -->
                 {% if user.role in 'DIRECTOR,SUPERUSER' %}
-                <a href="{% url 'portfolio:review_panel' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all {% if 'revision' in request.path %}bg-blue-600 text-white shadow-md{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
-                    <i class="fa-solid fa-magnifying-glass-chart w-5 text-center"></i>
-                    <span x-show="!sidebarCollapsed" class="whitespace-nowrap">Revisión Académica</span>
-                </a>
-                
                 <div x-show="!sidebarCollapsed" class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 mt-6 px-2 whitespace-nowrap">Administración</div>
                 <div x-show="sidebarCollapsed" class="text-center text-gray-600 mt-6 mb-2"><i class="fa-solid fa-ellipsis"></i></div>
                 
@@ -331,31 +344,36 @@
                 
                 {% if user.role == 'DOCENTE' %}
                     <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 mt-6 px-2">Módulos</div>
-                    {% if 'almacen' in user.module_permissions %}
+                    {% if 'warehouse.view' in access_permissions %}
                     <a href="{% url 'warehouse:catalog' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'almacen' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-boxes-stacked w-5 text-center"></i> Almacén</a>
                     {% endif %}
-                    {% if 'disciplina' in user.module_permissions %}
+                    {% if 'discipline.review' in access_permissions %}
                     <a href="{% url 'discipline:incident_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'disciplina' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-triangle-exclamation w-5 text-center"></i> Incidencias</a>
+                    {% elif 'discipline.create' in access_permissions %}
+                    <a href="{% url 'discipline:report_incident' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'disciplina' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-triangle-exclamation w-5 text-center"></i> Registrar incidencia</a>
                     {% endif %}
-                    {% if 'portafolio' in user.module_permissions %}
+                    {% if 'portfolio.own' in access_permissions %}
                     <a href="{% url 'portfolio:list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'portafolio' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-cloud-arrow-up w-5 text-center"></i> Portafolio</a>
                     {% endif %}
+                    {% if 'documents.view' in access_permissions %}<a href="{% url 'documents:list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'documentos' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-file-lines w-5 text-center"></i> Documentos</a>{% endif %}
                 {% endif %}
 
                 {% if user.role == 'APODERADO' %}
                     <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 mt-6 px-2">Familia</div>
                     <a href="{% url 'academics:parent_dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'apoderado' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-children w-5 text-center"></i> Mis Hijos</a>
+                    {% if 'documents.view' in access_permissions %}<a href="{% url 'documents:list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'documentos' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-file-lines w-5 text-center"></i> Documentos</a>{% endif %}
                 {% endif %}
 
                 {% if user.role in 'DIRECTOR,SUBDIRECTOR,APOYO,SUPERUSER' %}
                     <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 mt-6 px-2">Gestión Operativa</div>
                     <a href="{% url 'academics:student_directory' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'directorio' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-users w-5 text-center"></i> Directorio Alumnos</a>
-                    <a href="{% url 'warehouse:dispatch_panel' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'despacho' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-truck-ramp-box w-5 text-center"></i> Despachos</a>
-                    <a href="{% url 'warehouse:inventory_panel' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'inventario' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-boxes-packing w-5 text-center"></i> Inventario</a>
-                    <a href="{% url 'documents:list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'documentos' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-file-lines w-5 text-center"></i> Documentos</a>
+                    {% if 'warehouse.dispatch' in access_permissions %}<a href="{% url 'warehouse:dispatch_panel' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'despacho' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-truck-ramp-box w-5 text-center"></i> Despachos</a>{% endif %}
+                    {% if 'warehouse.manage' in access_permissions %}<a href="{% url 'warehouse:inventory_panel' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'inventario' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-boxes-packing w-5 text-center"></i> Inventario</a>{% endif %}
+                    {% if 'warehouse.view' in access_permissions %}<a href="{% url 'warehouse:catalog' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'catalogo' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-grip w-5 text-center"></i> Catálogo</a>{% endif %}
+                    {% if 'discipline.review' in access_permissions %}<a href="{% url 'discipline:incident_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'disciplina' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-triangle-exclamation w-5 text-center"></i> Incidencias</a>{% elif 'discipline.create' in access_permissions %}<a href="{% url 'discipline:report_incident' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'disciplina' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-triangle-exclamation w-5 text-center"></i> Registrar incidencia</a>{% endif %}
+                    {% if 'documents.view' in access_permissions %}<a href="{% url 'documents:list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'documentos' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-file-lines w-5 text-center"></i> Documentos</a>{% endif %}
+                    {% if 'portfolio.review' in access_permissions %}<a href="{% url 'portfolio:review_panel' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'revision' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-magnifying-glass-chart w-5 text-center"></i> Revisión Académica</a>{% endif %}
                     {% if user.role in 'DIRECTOR,SUPERUSER' %}
-                    <a href="{% url 'portfolio:review_panel' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'revision' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-magnifying-glass-chart w-5 text-center"></i> Revisión Académica</a>
-                    
                     <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 mt-6 px-2">Administración</div>
                     <a href="{% url 'users:staff_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'personal' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-users-gear w-5 text-center"></i> Usuarios y Permisos</a>
                     <a href="{% url 'assignments:panel' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm {% if 'asignaciones' in request.path %}bg-blue-600 text-white{% else %}text-gray-400{% endif %}"><i class="fa-solid fa-chalkboard-user w-5 text-center"></i> Asignar Aulas</a>

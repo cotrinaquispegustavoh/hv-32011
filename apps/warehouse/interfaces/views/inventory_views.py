@@ -9,6 +9,8 @@ from apps.warehouse.infrastructure.repositories.warehouse_repository import Djan
 from apps.warehouse.core.use_cases.manage_materials import SaveMaterialUseCase, DeleteMaterialUseCase
 from apps.warehouse.core.use_cases.import_materials import ImportMaterialUseCase
 from apps.core.file_validation import UploadValidationError, validate_csv_upload, validate_image_upload
+from apps.core.utils import normalize_text
+from apps.users.interfaces.middlewares import require_permission
 
 
 MAX_MATERIAL_IMAGES = 6
@@ -40,10 +42,8 @@ def _store_material_images(files):
 
 
 @login_required(login_url='/auth/login/')
+@require_permission('warehouse.manage')
 def inventory_panel_view(request):
-    if request.user.role not in ['DIRECTOR', 'SUBDIRECTOR', 'APOYO', 'SUPERUSER']:
-        return redirect('core:dashboard')
-
     repo = DjangoMaterialRepository()
 
     if request.method == 'POST':
@@ -121,13 +121,24 @@ def inventory_panel_view(request):
             return redirect('warehouse:inventory_panel')
 
     materials = repo.get_all()
-    return render(request, 'warehouse/inventory_panel.html', {'materials': materials})
+    raw_query = request.GET.get('q', '').strip()
+    query = normalize_text(raw_query)
+    if query:
+        materials = [
+            material for material in materials
+            if query in normalize_text(material.name)
+            or query in normalize_text(material.category)
+            or query in normalize_text(material.location)
+        ]
+    return render(
+        request,
+        'warehouse/inventory_panel.html',
+        {'materials': materials, 'initial_query': raw_query},
+    )
 
 @login_required(login_url='/auth/login/')
+@require_permission('warehouse.manage')
 def edit_material_view(request, material_id):
-    if request.user.role not in ['DIRECTOR', 'SUBDIRECTOR', 'APOYO', 'SUPERUSER']:
-        return redirect('core:dashboard')
-
     repo = DjangoMaterialRepository()
     material = repo.get_by_id(material_id)
 
@@ -136,18 +147,6 @@ def edit_material_view(request, material_id):
         return redirect('warehouse:inventory_panel')
 
     if request.method == 'POST':
-        delete_image_id = request.POST.get('delete_image_id')
-        if delete_image_id:
-            try:
-                deleted = repo.delete_image(material_id, int(delete_image_id))
-            except (TypeError, ValueError):
-                deleted = False
-            if deleted:
-                messages.success(request, 'La fotografía fue eliminada correctamente.')
-            else:
-                messages.error(request, 'No se encontró la fotografía solicitada.')
-            return redirect('warehouse:edit_material', material_id=material_id)
-
         name = request.POST.get('name')
         category = request.POST.get('category', 'General')
         stock = int(request.POST.get('stock', 0))
@@ -157,9 +156,17 @@ def edit_material_view(request, material_id):
         cycle = request.POST.get('cycle')
         pedagogical_use = request.POST.get('pedagogical_use', '')
         
+        existing_image_ids = {str(image['id']) for image in material.image_items}
+        remove_image_ids = {
+            image_id for image_id in request.POST.getlist('remove_image_ids')
+            if image_id in existing_image_ids
+        }
         uploaded_images = _uploaded_material_images(request)
         try:
-            _validate_material_images(uploaded_images, len(material.image_urls))
+            _validate_material_images(
+                uploaded_images,
+                len(material.image_urls) - len(remove_image_ids),
+            )
         except UploadValidationError as e:
             messages.error(request, str(e))
             return redirect('warehouse:edit_material', material_id=material_id)
@@ -168,10 +175,13 @@ def edit_material_view(request, material_id):
         
         try:
             image_paths = _store_material_images(uploaded_images)
-            SaveMaterialUseCase(repo).execute(
-                material_id, name, category, stock, unit, state, location, cycle,
-                pedagogical_use, image_paths,
-            )
+            with transaction.atomic():
+                for image_id in remove_image_ids:
+                    repo.delete_image(material_id, int(image_id))
+                SaveMaterialUseCase(repo).execute(
+                    material_id, name, category, stock, unit, state, location, cycle,
+                    pedagogical_use, image_paths,
+                )
             messages.success(request, 'Material actualizado correctamente.')
             return redirect('warehouse:inventory_panel')
         except Exception as e:
@@ -182,9 +192,10 @@ def edit_material_view(request, material_id):
     return render(request, 'warehouse/edit_material.html', {'material': material})
 
 @login_required(login_url='/auth/login/')
+@require_permission('warehouse.manage')
 def delete_material_view(request, material_id):
-    if request.method == 'POST' and request.user.role in ['DIRECTOR', 'SUBDIRECTOR', 'APOYO', 'SUPERUSER']:
+    if request.method == 'POST':
         repo = DjangoMaterialRepository()
         DeleteMaterialUseCase(repo).execute(material_id)
         return HttpResponse("") 
-    return HttpResponse("No autorizado", status=403)
+    return HttpResponse("Método no permitido", status=405)

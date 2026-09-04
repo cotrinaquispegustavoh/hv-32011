@@ -9,6 +9,19 @@ from apps.users.core.use_cases.manage_users import GetStaffListUseCase, ToggleUs
 from apps.users.core.use_cases.import_staff import ImportStaffUseCase
 from apps.core.file_validation import UploadValidationError, validate_csv_upload
 from apps.core.utils import normalize_text
+from apps.users.permissions import (
+    ALL_PERMISSION_CODES,
+    permission_groups_for,
+    permissions_for_edit,
+    sanitize_explicit_permissions,
+)
+
+
+def _staff_detail_context(user_detail):
+    return {
+        'selected_user': user_detail,
+        'permission_groups': permission_groups_for(user_detail) if user_detail else [],
+    }
 
 @login_required(login_url='/auth/login/')
 def staff_list_view(request):
@@ -80,7 +93,15 @@ def staff_list_view(request):
 
     staff = GetStaffListUseCase(repo).execute()
     first_user = staff[0] if staff else None
-    return render(request, 'users/staff_list.html', {'staff': staff, 'selected_user': first_user})
+    return render(
+        request,
+        'users/staff_list.html',
+        {
+            'staff': staff,
+            **_staff_detail_context(first_user),
+            'bulk_permission_groups': permission_groups_for(first_user) if first_user else [],
+        },
+    )
 
 @login_required(login_url='/auth/login/')
 def search_staff_view(request):
@@ -99,18 +120,24 @@ def staff_detail_view(request, user_id):
     if request.user.role not in ['DIRECTOR', 'SUPERUSER']: return HttpResponse("No autorizado", status=403)
     repo = DjangoUserRepository()
     user_detail = repo.get_by_id(user_id)
-    return render(request, 'users/partials/staff_detail.html', {'selected_user': user_detail})
+    return render(request, 'users/partials/staff_detail.html', _staff_detail_context(user_detail))
 
 @login_required(login_url='/auth/login/')
 def toggle_module_permission_view(request, user_id):
     if request.method == 'POST' and request.user.role in ['DIRECTOR', 'SUPERUSER']:
-        module = request.POST.get('module')
+        permission = request.POST.get('permission')
+        if permission not in ALL_PERMISSION_CODES:
+            return HttpResponse("Permiso no válido", status=400)
         repo = DjangoUserRepository()
         user_entity = repo.get_by_id(user_id)
         if user_entity:
-            perms = list(user_entity.module_permissions)
-            if module in perms: perms.remove(module)
-            else: perms.append(module)
+            if user_entity.role == 'SUPERUSER':
+                return HttpResponse("Los permisos técnicos no se pueden modificar.", status=400)
+            perms = permissions_for_edit(user_entity)
+            if permission in perms:
+                perms.remove(permission)
+            else:
+                perms.append(permission)
             user_entity.module_permissions = perms
             repo.save(user_entity)
         return staff_detail_view(request, user_id)
@@ -131,11 +158,11 @@ def toggle_status_view(request, user_id):
 def bulk_permissions_view(request):
     if request.method == 'POST' and request.user.role in ['DIRECTOR', 'SUPERUSER']:
         user_ids = request.POST.getlist('user_ids')
-        modules = request.POST.getlist('modules')
+        permissions = sanitize_explicit_permissions(request.POST.getlist('permissions'))
         user_ids = [int(id) for id in user_ids if id.isdigit()]
         repo = DjangoUserRepository()
         try:
-            BulkUpdatePermissionsUseCase(repo).execute(user_ids, modules)
+            BulkUpdatePermissionsUseCase(repo).execute(user_ids, permissions)
             query = normalize_text(request.POST.get('q', ''))
             role_filter = request.POST.get('role', '')
             staff = GetStaffListUseCase(repo).execute()
