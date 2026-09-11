@@ -60,7 +60,7 @@
         </div>
         <div class="flex items-center gap-2">
         {% if can_manage_inventory %}
-        <a href="{% url 'warehouse:edit_material' item.id %}"
+        <a href="{% url 'warehouse:edit_material' item.id %}?next={{ request.get_full_path|urlencode }}"
            class="ui-button ui-button--secondary text-xs"
            aria-label="Editar {{ item.name }}">
             <i class="fa-solid fa-pen" aria-hidden="true"></i> Editar

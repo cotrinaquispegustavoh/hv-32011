@@ -1,9 +1,14 @@
 import csv
+from pathlib import Path
+from urllib.parse import urlencode
+from uuid import uuid4
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import transaction
+from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.core.files.storage import default_storage # <-- IMPORTACIÓN CORREGIDA
 from apps.warehouse.infrastructure.repositories.warehouse_repository import DjangoMaterialRepository
 from apps.warehouse.core.use_cases.manage_materials import SaveMaterialUseCase, DeleteMaterialUseCase
@@ -35,10 +40,25 @@ def _validate_material_images(files, existing_count=0):
 
 
 def _store_material_images(files):
+    """Usa una ruta inmutable para que el navegador nunca reutilice una foto borrada."""
     return [
-        default_storage.save(f'materials/{uploaded_file.name}', uploaded_file)
+        default_storage.save(
+            f'materials/{uuid4().hex}{Path(uploaded_file.name).suffix.lower()}',
+            uploaded_file,
+        )
         for uploaded_file in files
     ]
+
+
+def _safe_return_url(request):
+    return_url = request.POST.get('next') or request.GET.get('next') or ''
+    if return_url and url_has_allowed_host_and_scheme(
+        url=return_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return return_url
+    return reverse('warehouse:inventory_panel')
 
 
 @login_required(login_url='/auth/login/')
@@ -141,6 +161,7 @@ def inventory_panel_view(request):
 def edit_material_view(request, material_id):
     repo = DjangoMaterialRepository()
     material = repo.get_by_id(material_id)
+    return_url = _safe_return_url(request)
 
     if not material:
         messages.error(request, "Material no encontrado.")
@@ -162,6 +183,10 @@ def edit_material_view(request, material_id):
             if image_id in existing_image_ids
         }
         uploaded_images = _uploaded_material_images(request)
+        replacing_main_image = bool(uploaded_images) and any(
+            image['is_main'] and str(image['id']) in remove_image_ids
+            for image in material.image_items
+        )
         try:
             _validate_material_images(
                 uploaded_images,
@@ -169,7 +194,8 @@ def edit_material_view(request, material_id):
             )
         except UploadValidationError as e:
             messages.error(request, str(e))
-            return redirect('warehouse:edit_material', material_id=material_id)
+            edit_url = reverse('warehouse:edit_material', args=[material_id])
+            return redirect(f"{edit_url}?{urlencode({'next': return_url})}")
 
         image_paths = []
         
@@ -177,19 +203,27 @@ def edit_material_view(request, material_id):
             image_paths = _store_material_images(uploaded_images)
             with transaction.atomic():
                 for image_id in remove_image_ids:
-                    repo.delete_image(material_id, int(image_id))
+                    repo.delete_image(
+                        material_id,
+                        int(image_id),
+                        promote_replacement=not replacing_main_image,
+                    )
                 SaveMaterialUseCase(repo).execute(
                     material_id, name, category, stock, unit, state, location, cycle,
                     pedagogical_use, image_paths,
                 )
             messages.success(request, 'Material actualizado correctamente.')
-            return redirect('warehouse:inventory_panel')
+            return redirect(return_url)
         except Exception as e:
             for image_path in image_paths:
                 default_storage.delete(image_path)
             messages.error(request, f'Error al actualizar: {str(e)}')
 
-    return render(request, 'warehouse/edit_material.html', {'material': material})
+    return render(
+        request,
+        'warehouse/edit_material.html',
+        {'material': material, 'return_url': return_url},
+    )
 
 @login_required(login_url='/auth/login/')
 @require_permission('warehouse.manage')

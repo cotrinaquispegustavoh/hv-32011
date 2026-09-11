@@ -76,7 +76,7 @@ class DjangoMaterialRepository(IMaterialRepository):
             return False
 
     @transaction.atomic
-    def delete_image(self, material_id: int, image_id: int) -> bool:
+    def delete_image(self, material_id: int, image_id: int, promote_replacement: bool = True) -> bool:
         image = MaterialImage.objects.filter(
             pk=image_id,
             material_id=material_id,
@@ -88,7 +88,7 @@ class DjangoMaterialRepository(IMaterialRepository):
         image_name = image.image.name
         image_storage = image.image.storage
         image.delete()
-        if was_main:
+        if was_main and promote_replacement:
             replacement = MaterialImage.objects.filter(material_id=material_id).order_by('pk').first()
             if replacement:
                 replacement.is_main = True

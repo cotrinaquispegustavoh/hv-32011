@@ -11,8 +11,8 @@
             <h1 class="ui-page-title md:hidden">Editar material</h1>
             <p class="ui-page-subtitle">Actualiza los datos de {{ material.name }}.</p>
         </div>
-        <a href="{% url 'warehouse:inventory_panel' %}" class="ui-button ui-button--secondary w-full sm:w-auto">
-            <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Volver al inventario
+        <a href="{{ return_url }}" class="ui-button ui-button--secondary w-full sm:w-auto">
+            <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Volver
         </a>
     </div>
 
@@ -39,6 +39,7 @@
 
         <form method="POST" enctype="multipart/form-data" action="{% url 'warehouse:edit_material' material.id %}" class="p-6 space-y-6">
             {% csrf_token %}
+            <input type="hidden" name="next" value="{{ return_url }}">
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -128,7 +129,7 @@
             </div>
 
             <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t border-gray-100">
-                <a href="{% url 'warehouse:inventory_panel' %}" class="ui-button ui-button--secondary">Cancelar</a>
+                <a href="{{ return_url }}" class="ui-button ui-button--secondary">Cancelar</a>
                 <button type="submit" class="ui-button ui-button--primary">
                     <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Guardar cambios
                 </button>

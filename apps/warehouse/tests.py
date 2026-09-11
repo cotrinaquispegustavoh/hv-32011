@@ -260,7 +260,10 @@ class WarehouseLogicTests(TestCase):
 
         self.assertRedirects(
             response,
-            reverse('warehouse:edit_material', args=[self.material.pk]),
+            (
+                f"{reverse('warehouse:edit_material', args=[self.material.pk])}"
+                '?next=%2Falmacen%2Finventario%2F'
+            ),
         )
         self.assertContains(response, 'Formato no permitido')
         self.assertContains(response, 'WEBP')
@@ -375,3 +378,83 @@ class WarehouseLogicTests(TestCase):
             self.assertEqual(self.material.pedagogical_use, 'Uso actualizado')
             replacement = MaterialImage.objects.filter(material=self.material).order_by('-pk').first()
             self.assertTrue(Path(replacement.image.path).exists())
+            self.assertTrue(replacement.is_main)
+
+    def test_edit_started_from_catalog_returns_to_catalog(self):
+        director = User.objects.create_user(
+            dni='11111116', role='DIRECTOR', password_changed=True
+        )
+        self.client.force_login(director)
+        catalog_url = reverse('warehouse:catalog')
+
+        catalog = self.client.get(catalog_url)
+        self.assertContains(catalog, 'next=/almacen/catalogo/')
+
+        response = self.client.post(
+            reverse('warehouse:edit_material', args=[self.material.pk]),
+            {
+                'name': 'Proyector actualizado',
+                'category': self.material.category,
+                'stock': self.material.stock,
+                'unit': self.material.unit,
+                'state': self.material.state,
+                'location': self.material.location,
+                'cycle': self.material.cycle,
+                'pedagogical_use': '',
+                'next': catalog_url,
+            },
+        )
+
+        self.assertRedirects(response, catalog_url)
+
+    def test_reuploading_same_filename_uses_a_new_uncached_url(self):
+        director = User.objects.create_user(
+            dni='11111117', role='DIRECTOR', password_changed=True
+        )
+        self.client.force_login(director)
+
+        def webp_upload(color):
+            content = BytesIO()
+            Image.new('RGB', (8, 8), color).save(content, format='WEBP')
+            return SimpleUploadedFile(
+                'material.webp', content.getvalue(), content_type='image/webp'
+            )
+
+        fields = {
+            'name': self.material.name,
+            'category': self.material.category,
+            'stock': self.material.stock,
+            'unit': self.material.unit,
+            'state': self.material.state,
+            'location': self.material.location,
+            'cycle': self.material.cycle,
+            'pedagogical_use': '',
+        }
+
+        with TemporaryDirectory() as temporary_media, self.settings(MEDIA_ROOT=temporary_media):
+            first_response = self.client.post(
+                reverse('warehouse:edit_material', args=[self.material.pk]),
+                {**fields, 'images': webp_upload('red')},
+            )
+            self.assertRedirects(first_response, reverse('warehouse:inventory_panel'))
+            first_image = MaterialImage.objects.get(material=self.material)
+            first_name = first_image.image.name
+            first_path = Path(first_image.image.path)
+
+            with self.captureOnCommitCallbacks(execute=True):
+                delete_response = self.client.post(
+                    reverse('warehouse:edit_material', args=[self.material.pk]),
+                    {**fields, 'remove_image_ids': [first_image.pk]},
+                )
+            self.assertRedirects(delete_response, reverse('warehouse:inventory_panel'))
+            self.assertFalse(first_path.exists())
+
+            second_response = self.client.post(
+                reverse('warehouse:edit_material', args=[self.material.pk]),
+                {**fields, 'images': webp_upload('blue')},
+            )
+            self.assertRedirects(second_response, reverse('warehouse:inventory_panel'))
+            second_image = MaterialImage.objects.get(material=self.material)
+
+            self.assertNotEqual(second_image.image.name, first_name)
+            self.assertTrue(Path(second_image.image.path).exists())
