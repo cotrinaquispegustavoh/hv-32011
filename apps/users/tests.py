@@ -22,6 +22,15 @@ class SecurityRoleTests(TestCase):
         # Verificamos que el sistema lo bloquee (403 Forbidden o 302 Redirect)
         self.assertIn(response.status_code, [302, 403])
 
+    def test_login_still_displays_current_credential_errors(self):
+        response = self.client.post(
+            reverse('users:login'),
+            {'dni': '00000000', 'password': 'incorrecta'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'DNI o contraseña incorrectos')
+
     def test_director_can_access_dispatch_panel(self):
         """Prueba que un Director sí pueda entrar al Panel de Despacho."""
         # Iniciamos sesión como director

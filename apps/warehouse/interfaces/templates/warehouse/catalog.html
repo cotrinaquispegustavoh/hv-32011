@@ -26,6 +26,16 @@
         </div>
     </div>
 
+    {% if messages %}
+        <div class="mb-6 space-y-3" aria-live="polite">
+            {% for message in messages %}
+                <div class="p-4 rounded-xl text-sm font-bold border {% if message.tags == 'error' %}bg-red-50 text-red-700 border-red-200{% else %}bg-emerald-50 text-emerald-700 border-emerald-200{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
     <!-- BUSCADOR Y FILTROS -->
     <div class="ui-card p-4 mb-6 flex flex-col sm:flex-row gap-4">
         <div class="relative flex-grow">
@@ -81,7 +91,9 @@
             maxStock: maxStock,
             imageCount: imageCount,
             imageIndex: 0,
+            imageViewerOpen: false,
             imageSwipeStartX: null,
+            imageSwipeSuppressUntil: 0,
             date: new Date().toISOString().split('T')[0],
             today: new Date().toISOString().split('T')[0],
             interval: null,
@@ -121,11 +133,16 @@
                 const distance = event.clientX - this.imageSwipeStartX;
                 this.imageSwipeStartX = null;
                 if (Math.abs(distance) < 40) return;
+                this.imageSwipeSuppressUntil = Date.now() + 250;
                 if (distance < 0) this.nextImage();
                 else this.previousImage();
             },
             cancelImageSwipe() {
                 this.imageSwipeStartX = null;
+            },
+            openImageViewer() {
+                if (Date.now() < this.imageSwipeSuppressUntil) return;
+                this.imageViewerOpen = true;
             },
 
             formatToISO(hour12, min, ampm) {

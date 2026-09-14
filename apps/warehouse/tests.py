@@ -340,6 +340,9 @@ class WarehouseLogicTests(TestCase):
             catalog = self.client.get(reverse('warehouse:catalog'))
             self.assertContains(catalog, 'Ver imagen siguiente')
             self.assertContains(catalog, 'object-fill')
+            self.assertContains(catalog, 'Ampliar imágenes')
+            self.assertContains(catalog, 'x-teleport="body"')
+            self.assertContains(catalog, 'object-contain')
 
             primary_image = MaterialImage.objects.get(material=self.material, is_main=True)
             primary_path = Path(primary_image.image.path)
@@ -403,9 +406,39 @@ class WarehouseLogicTests(TestCase):
                 'pedagogical_use': '',
                 'next': catalog_url,
             },
+            follow=True,
         )
 
         self.assertRedirects(response, catalog_url)
+        self.assertContains(response, 'Material actualizado correctamente')
+
+    def test_login_does_not_display_a_pending_success_message(self):
+        director = User.objects.create_user(
+            dni='11111118', role='DIRECTOR', password_changed=True
+        )
+        self.client.force_login(director)
+        self.client.post(
+            reverse('warehouse:edit_material', args=[self.material.pk]),
+            {
+                'name': self.material.name,
+                'category': self.material.category,
+                'stock': self.material.stock,
+                'unit': self.material.unit,
+                'state': self.material.state,
+                'location': self.material.location,
+                'cycle': self.material.cycle,
+                'pedagogical_use': '',
+            },
+        )
+
+        session = self.client.session
+        for key in ('_auth_user_id', '_auth_user_backend', '_auth_user_hash'):
+            session.pop(key, None)
+        session.save()
+
+        login = self.client.get(reverse('users:login'))
+        self.assertEqual(login.status_code, 200)
+        self.assertNotContains(login, 'Material actualizado correctamente')
 
     def test_reuploading_same_filename_uses_a_new_uncached_url(self):
         director = User.objects.create_user(

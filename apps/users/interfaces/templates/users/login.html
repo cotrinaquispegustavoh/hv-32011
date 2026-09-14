@@ -30,10 +30,12 @@
         {% if messages %}
             <div class="space-y-3">
                 {% for message in messages %}
+                    {% if message.tags == 'error' %}
                     <div class="p-4 rounded-2xl text-xs font-bold flex items-center gap-2 border {% if message.tags == 'error' %}bg-red-50 border-red-100 text-red-800{% else %}bg-green-50 border-green-100 text-green-800{% endif %}">
                         <i class="fa-solid {% if message.tags == 'error' %}fa-circle-exclamation text-red-500{% else %}fa-circle-check text-green-500{% endif %}"></i>
                         {{ message }}
                     </div>
+                    {% endif %}
                 {% endfor %}
             </div>
         {% endif %}

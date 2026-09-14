@@ -14,6 +14,7 @@
                      src="{{ image_url }}"
                      alt="Imagen {{ forloop.counter }} de {{ item.name }}"
                      class="absolute inset-0 w-full h-full object-fill"
+                     @click.stop="openImageViewer()"
                      draggable="false"
                      {% if forloop.first %}loading="eager"{% else %}loading="lazy"{% endif %}>
             {% endfor %}
@@ -31,6 +32,9 @@
                     {% endfor %}
                 </div>
             {% endif %}
+            <button type="button" @pointerdown.stop @click.stop="imageViewerOpen = true" class="absolute left-3 bottom-3 z-10 w-8 h-8 rounded-full bg-slate-900/65 hover:bg-slate-900 text-white flex items-center justify-center" aria-label="Ampliar imágenes de {{ item.name }}">
+                <i class="fa-solid fa-expand"></i>
+            </button>
         {% else %}
             <i class="fa-solid fa-image text-4xl text-gray-200"></i>
         {% endif %}
@@ -79,6 +83,50 @@
         {% endif %}
         </div>
     </div>
+
+    {% if item.image_urls %}
+    <template x-teleport="body">
+        <div x-show="imageViewerOpen" x-cloak
+             @keydown.escape.window="imageViewerOpen = false"
+             @click.self="imageViewerOpen = false"
+             class="fixed inset-0 z-[150] flex items-center justify-center bg-slate-950/90 p-3 sm:p-6"
+             role="dialog" aria-modal="true" aria-label="Imágenes ampliadas de {{ item.name }}">
+            <div class="relative w-full max-w-6xl h-[82vh] sm:h-[88vh] flex flex-col overflow-hidden rounded-2xl bg-slate-950 shadow-2xl border border-white/10">
+                <div class="flex items-center justify-between gap-4 px-4 py-3 text-white border-b border-white/10">
+                    <div class="min-w-0">
+                        <p class="font-bold truncate">{{ item.name }}</p>
+                        <p class="text-xs text-slate-400" x-text="`${imageIndex + 1} de ${imageCount}`"></p>
+                    </div>
+                    <button type="button" @click="imageViewerOpen = false" class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center" aria-label="Cerrar imagen ampliada">
+                        <i class="fa-solid fa-xmark text-xl" aria-hidden="true"></i>
+                    </button>
+                </div>
+
+                <div class="relative flex-1 min-h-0 flex items-center justify-center overflow-hidden select-none"
+                     style="touch-action: pan-y;"
+                     @pointerdown="startImageSwipe($event)"
+                     @pointerup="finishImageSwipe($event)"
+                     @pointercancel="cancelImageSwipe()"
+                     @dragstart.prevent>
+                    {% for image_url in item.image_urls %}
+                        <img x-show="imageIndex === {{ forloop.counter0 }}" {% if not forloop.first %}x-cloak{% endif %}
+                             src="{{ image_url }}" alt="Imagen ampliada {{ forloop.counter }} de {{ item.name }}"
+                             class="max-w-full max-h-full w-auto h-auto object-contain" draggable="false">
+                    {% endfor %}
+
+                    {% if item.image_urls|length > 1 %}
+                        <button type="button" @pointerdown.stop @click.stop="previousImage()" class="absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-black/55 text-white hover:bg-black/80 border border-white/20" aria-label="Ver imagen anterior">
+                            <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" @pointerdown.stop @click.stop="nextImage()" class="absolute right-3 sm:right-5 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-black/55 text-white hover:bg-black/80 border border-white/20" aria-label="Ver imagen siguiente">
+                            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </template>
+    {% endif %}
 
     {% if can_request_material %}
     <!-- MODAL DE RESERVA -->
