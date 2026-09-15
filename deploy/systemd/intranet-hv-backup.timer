@@ -1,0 +1,11 @@
+[Unit]
+Description=Respaldo diario de Intranet HV
+
+[Timer]
+OnCalendar=*-*-* 02:15:00 America/Lima
+Persistent=true
+RandomizedDelaySec=10m
+Unit=intranet-hv-backup.service
+
+[Install]
+WantedBy=timers.target

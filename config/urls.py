@@ -1,8 +1,6 @@
 from django.contrib import admin
 from django.urls import path, include, re_path
-from django.conf import settings
-from django.conf.urls.static import static
-from django.views.static import serve
+from apps.core.interfaces.views.media_views import protected_media_view
 
 urlpatterns = [
     path('django-admin/', admin.site.urls),
@@ -16,13 +14,7 @@ urlpatterns = [
     path('academico/', include('apps.academics.urls')),
     path('', include('apps.core.urls')),
     
-    # --- PARCHE PARA SERVIDOR DE PRUEBAS (RENDER) ---
-    # Forzamos a Django a mostrar las imágenes subidas por los usuarios 
-    # incluso cuando DEBUG=False (Producción).
-    re_path(r'^media/(?P<path>.*)$', serve, {
-        'document_root': settings.MEDIA_ROOT,
-    }),
+    # Conserva las URLs actuales, pero exige autenticación y permiso antes de
+    # entregar cualquier archivo subido.
+    re_path(r'^media/(?P<path>.*)$', protected_media_view, name='protected_media'),
 ]
-
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

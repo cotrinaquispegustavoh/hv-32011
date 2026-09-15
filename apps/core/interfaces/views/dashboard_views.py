@@ -39,6 +39,7 @@ MODEL_NAMES_ES = {
     'TeacherAssignment': 'Asignación docente',
     'User': 'Usuario',
     'InstitutionalEvent': 'Evento institucional',
+    'LoginThrottle': 'Protección de acceso',
 }
 
 

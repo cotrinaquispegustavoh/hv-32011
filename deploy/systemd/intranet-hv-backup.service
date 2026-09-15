@@ -1,0 +1,17 @@
+[Unit]
+Description=Respaldo de PostgreSQL y archivos de Intranet HV
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/var/www/intranet-hv
+EnvironmentFile=-/etc/intranet-hv-backup.env
+ExecStart=/var/www/intranet-hv/deploy/backup_intranet.sh
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+
+[Install]
+WantedBy=multi-user.target

@@ -7,21 +7,38 @@ from django.contrib.messages import get_messages
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
+from apps.users.security import (
+    clear_successful_account_throttle,
+    get_client_ip,
+    login_is_allowed,
+    register_login_failure,
+)
+
 @never_cache
 def login_view(request):
     if request.user.is_authenticated:
         return redirect('core:dashboard')
 
     if request.method == 'POST':
-        dni = request.POST.get('dni')
+        dni = (request.POST.get('dni') or '').strip()
         password = request.POST.get('password')
+        client_ip = get_client_ip(request)
+
+        if not login_is_allowed(dni, client_ip):
+            messages.error(
+                request,
+                'Demasiados intentos de acceso. Espera unos minutos e inténtalo nuevamente.',
+            )
+            return render(request, 'users/login.html', status=429)
         
         user = authenticate(request, dni=dni, password=password)
         
         if user is not None:
+            clear_successful_account_throttle(dni)
             login(request, user)
             return redirect('core:dashboard')
         else:
+            register_login_failure(dni, client_ip)
             messages.error(request, 'DNI o contraseña incorrectos.')
 
     return render(request, 'users/login.html')

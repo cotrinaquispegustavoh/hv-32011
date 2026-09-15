@@ -139,6 +139,13 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# Los archivos subidos nunca se exponen como una carpeta pública. En el VPS,
+# Django autoriza el acceso y Nginx realiza la transferencia eficiente mediante
+# una ubicación ``internal``. El valor False mantiene el desarrollo local
+# funcional usando FileResponse.
+PROTECTED_MEDIA_USE_X_ACCEL = env.bool('PROTECTED_MEDIA_USE_X_ACCEL', default=False)
+PROTECTED_MEDIA_INTERNAL_URL = '/_protected_media'
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'users.User'
 
@@ -146,6 +153,14 @@ AUTH_USER_MODEL = 'users.User'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True 
 SESSION_COOKIE_AGE = 1800 
 SESSION_SAVE_EVERY_REQUEST = True
+
+# --- PROTECCIÓN CONTRA FUERZA BRUTA ---
+LOGIN_RATE_WINDOW_SECONDS = env.int('LOGIN_RATE_WINDOW_SECONDS', default=900)
+LOGIN_RATE_ACCOUNT_ATTEMPTS = env.int('LOGIN_RATE_ACCOUNT_ATTEMPTS', default=5)
+LOGIN_RATE_IP_ATTEMPTS = env.int('LOGIN_RATE_IP_ATTEMPTS', default=30)
+LOGIN_RATE_LOCK_SECONDS = env.int('LOGIN_RATE_LOCK_SECONDS', default=900)
+LOGIN_RATE_MAX_LOCK_SECONDS = env.int('LOGIN_RATE_MAX_LOCK_SECONDS', default=3600)
+TRUSTED_PROXY_IPS = env.list('TRUSTED_PROXY_IPS', default=['127.0.0.1', '::1'])
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 

@@ -11,7 +11,7 @@ from apps.core.realtime import broadcast_notification
 from apps.core.interfaces.middlewares import get_current_user
 
 # Añadimos 'Migration' y 'Group' a la lista de ignorados
-IGNORE_MODELS = ['AuditLog', 'InternalNotification', 'Session', 'LogEntry', 'ContentType', 'Permission', 'Migration', 'Group']
+IGNORE_MODELS = ['AuditLog', 'InternalNotification', 'LoginThrottle', 'Session', 'LogEntry', 'ContentType', 'Permission', 'Migration', 'Group']
 
 
 @receiver(post_save, sender=InternalNotification)

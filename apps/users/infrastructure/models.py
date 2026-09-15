@@ -59,3 +59,27 @@ class User(AbstractUser):
         if self.role == 'APOYO' and self.support_role:
             return f"{self.dni} - {base_role} ({self.support_role})"
         return f"{self.dni} - {base_role}"
+
+
+class LoginThrottle(models.Model):
+    """Contador persistente y anonimizado para limitar intentos de acceso."""
+
+    SCOPE_CHOICES = [
+        ('ACCOUNT', 'Cuenta'),
+        ('IP', 'Dirección IP'),
+    ]
+
+    key = models.CharField('Clave anónima', max_length=64, unique=True)
+    scope = models.CharField('Ámbito', max_length=10, choices=SCOPE_CHOICES)
+    failures = models.PositiveIntegerField('Intentos fallidos', default=0)
+    window_started_at = models.DateTimeField('Inicio de ventana')
+    blocked_until = models.DateTimeField('Bloqueado hasta', null=True, blank=True)
+    updated_at = models.DateTimeField('Última actualización', auto_now=True)
+
+    class Meta:
+        app_label = 'users'
+        verbose_name = 'Límite de acceso'
+        verbose_name_plural = 'Límites de acceso'
+
+    def __str__(self):
+        return f'{self.scope}: {self.key[:10]}…'

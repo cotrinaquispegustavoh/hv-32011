@@ -1,7 +1,9 @@
-from django.test import TestCase, Client
+from django.test import TestCase, Client, RequestFactory, override_settings
 from django.urls import reverse
-from apps.users.infrastructure.models import User
+from apps.core.infrastructure.models import AuditLog
+from apps.users.infrastructure.models import LoginThrottle, User
 from apps.users.permissions import GRANULAR_PERMISSIONS_MARKER
+from apps.users.security import get_client_ip
 
 class SecurityRoleTests(TestCase):
     def setUp(self):
@@ -201,3 +203,56 @@ class SecurityRoleTests(TestCase):
         self.assertContains(response, 'contraseña antigua es incorrecta')
         self.docente.refresh_from_db()
         self.assertTrue(self.docente.check_password('ClaveAnterior!2026'))
+
+    @override_settings(
+        LOGIN_RATE_ACCOUNT_ATTEMPTS=2,
+        LOGIN_RATE_IP_ATTEMPTS=100,
+        LOGIN_RATE_WINDOW_SECONDS=900,
+        LOGIN_RATE_LOCK_SECONDS=900,
+        LOGIN_RATE_MAX_LOCK_SECONDS=3600,
+    )
+    def test_repeated_failures_temporarily_block_login_and_create_audit_event(self):
+        credentials = {'dni': self.docente.dni, 'password': 'incorrecta'}
+
+        self.assertEqual(self.client.post(reverse('users:login'), credentials).status_code, 200)
+        self.assertEqual(self.client.post(reverse('users:login'), credentials).status_code, 200)
+        blocked = self.client.post(reverse('users:login'), credentials)
+
+        self.assertEqual(blocked.status_code, 429)
+        self.assertContains(blocked, 'Demasiados intentos de acceso', status_code=429)
+        self.assertTrue(LoginThrottle.objects.filter(scope='ACCOUNT').exists())
+        self.assertTrue(AuditLog.objects.filter(action='LOGIN_BLOCKED').exists())
+
+    @override_settings(
+        LOGIN_RATE_ACCOUNT_ATTEMPTS=5,
+        LOGIN_RATE_IP_ATTEMPTS=100,
+    )
+    def test_successful_login_clears_only_the_account_failure_counter(self):
+        self.docente.set_password('ClaveDocente!2026')
+        self.docente.save(update_fields=['password'])
+        self.client.post(
+            reverse('users:login'),
+            {'dni': self.docente.dni, 'password': 'incorrecta'},
+        )
+
+        response = self.client.post(
+            reverse('users:login'),
+            {'dni': self.docente.dni, 'password': 'ClaveDocente!2026'},
+        )
+
+        self.assertRedirects(response, reverse('core:dashboard'))
+        self.assertFalse(LoginThrottle.objects.filter(scope='ACCOUNT').exists())
+        self.assertTrue(LoginThrottle.objects.filter(scope='IP').exists())
+
+    @override_settings(TRUSTED_PROXY_IPS=['127.0.0.1'])
+    def test_forwarded_ip_is_only_trusted_from_the_configured_proxy(self):
+        factory = RequestFactory()
+        proxied = factory.get(
+            '/', REMOTE_ADDR='127.0.0.1', HTTP_X_FORWARDED_FOR='203.0.113.7'
+        )
+        untrusted = factory.get(
+            '/', REMOTE_ADDR='198.51.100.9', HTTP_X_FORWARDED_FOR='203.0.113.7'
+        )
+
+        self.assertEqual(get_client_ip(proxied), '203.0.113.7')
+        self.assertEqual(get_client_ip(untrusted), '198.51.100.9')

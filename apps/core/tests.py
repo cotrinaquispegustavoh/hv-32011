@@ -1,5 +1,6 @@
 import asyncio
 import json
+import tempfile
 from datetime import date
 from io import BytesIO
 from unittest.mock import patch
@@ -9,7 +10,7 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 from PIL import Image
 
@@ -30,6 +31,8 @@ from apps.core.infrastructure.models import (
 )
 from apps.core.interfaces.forms import InstitutionalAnnouncementForm, InstitutionalEventForm
 from apps.core.realtime import user_notification_group
+from apps.documents.infrastructure.models import DocumentCategory, InstitutionalDocument
+from apps.users.permissions import GRANULAR_PERMISSIONS_MARKER
 from apps.users.infrastructure.models import User
 
 
@@ -696,3 +699,94 @@ class ComplementaryFeaturesTests(TestCase):
         self.assertEqual(event['alert_type'], 'notification')
         self.assertEqual(event['notification_id'], notification.pk)
         self.assertEqual(event['title'], 'Aviso WebSocket')
+
+
+class ProtectedMediaTests(TestCase):
+    @staticmethod
+    def _close_stream(response):
+        for closer in response._resource_closers:
+            closer()
+        response._resource_closers.clear()
+
+    def setUp(self):
+        self.media_directory = tempfile.TemporaryDirectory()
+        self.settings_override = override_settings(
+            MEDIA_ROOT=self.media_directory.name,
+            PROTECTED_MEDIA_USE_X_ACCEL=False,
+        )
+        self.settings_override.enable()
+        self.addCleanup(self.settings_override.disable)
+        self.addCleanup(self.media_directory.cleanup)
+
+        self.director = User.objects.create_user(
+            dni='31313131', password='ClaveDirector!2026', role='DIRECTOR',
+            password_changed=True,
+        )
+        self.teacher = User.objects.create_user(
+            dni='41414141', password='ClaveDocente!2026', role='DOCENTE',
+            password_changed=True,
+            module_permissions=[GRANULAR_PERMISSIONS_MARKER, 'documents.view'],
+        )
+        self.parent = User.objects.create_user(
+            dni='51515151', password='ClaveFamilia!2026', role='APODERADO',
+            password_changed=True,
+            module_permissions=[GRANULAR_PERMISSIONS_MARKER, 'documents.view'],
+        )
+        category = DocumentCategory.objects.create(name='Dirección')
+        self.private_document = InstitutionalDocument.objects.create(
+            title='Documento reservado',
+            category=category,
+            access_level='DIRECTIVE',
+            current_file=SimpleUploadedFile('reservado.pdf', b'%PDF-1.4\n%%EOF'),
+            uploaded_by=self.director,
+        )
+
+    def test_anonymous_media_request_redirects_to_login(self):
+        response = self.client.get(self.private_document.current_file.url)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse('users:login'), response.url)
+
+    def test_document_permission_is_enforced_on_the_file_itself(self):
+        self.client.force_login(self.parent)
+        denied = self.client.get(self.private_document.current_file.url)
+        self.assertEqual(denied.status_code, 404)
+
+        self.client.force_login(self.director)
+        allowed = self.client.get(self.private_document.current_file.url)
+        self.assertEqual(allowed.status_code, 200)
+        self.assertIn('private', allowed['Cache-Control'])
+        self.assertIn('no-store', allowed['Cache-Control'])
+        self._close_stream(allowed)
+
+    def test_announcement_image_respects_its_audience(self):
+        announcement = InstitutionalAnnouncement.objects.create(
+            title='Solo docentes',
+            message='Contenido interno',
+            audience='TEACHERS',
+            image=SimpleUploadedFile('docentes.png', b'not-decoded-by-storage'),
+            created_by=self.director,
+        )
+
+        self.client.force_login(self.parent)
+        self.assertEqual(self.client.get(announcement.image.url).status_code, 404)
+
+        self.client.force_login(self.teacher)
+        response = self.client.get(announcement.image.url)
+        self.assertEqual(response.status_code, 200)
+        self._close_stream(response)
+
+    @override_settings(
+        PROTECTED_MEDIA_USE_X_ACCEL=True,
+        PROTECTED_MEDIA_INTERNAL_URL='/_protected_media',
+    )
+    def test_nginx_transfer_is_internal_after_authorization(self):
+        self.client.force_login(self.director)
+
+        response = self.client.get(self.private_document.current_file.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response['X-Accel-Redirect'],
+            f'/_protected_media/{self.private_document.current_file.name}',
+        )

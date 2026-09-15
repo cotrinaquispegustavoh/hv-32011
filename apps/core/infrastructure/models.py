@@ -66,6 +66,7 @@ class AuditLog(models.Model):
         ('HARD_DELETE', 'Eliminación Física'),
         ('RESTORE', 'Restauración'),
         ('LOGIN', 'Inicio de Sesión'),
+        ('LOGIN_BLOCKED', 'Acceso bloqueado'),
         ('LOGOUT', 'Cierre de Sesión'),
         ('PERMISSIONS', 'Cambio de Permisos'),
     ]
