@@ -2,8 +2,81 @@ from django.test import TestCase, Client, RequestFactory, override_settings
 from django.urls import reverse
 from apps.core.infrastructure.models import AuditLog
 from apps.users.infrastructure.models import LoginThrottle, User
+from apps.users.core.use_cases.import_staff import ImportStaffUseCase
 from apps.users.permissions import GRANULAR_PERMISSIONS_MARKER
 from apps.users.security import get_client_ip
+
+
+class _ImportStaffRepository:
+    def __init__(self):
+        self.saved_user = None
+        self.password = None
+
+    def get_by_dni(self, dni):
+        return None
+
+    def save(self, user):
+        user.id = 1
+        self.saved_user = user
+        return user
+
+    def set_password(self, user_id, password):
+        self.password = password
+
+
+class ImportStaffNormalizationTests(TestCase):
+    def setUp(self):
+        self.repository = _ImportStaffRepository()
+        self.use_case = ImportStaffUseCase(self.repository)
+
+    def test_import_preserves_leading_zero_and_normalizes_spanish_names(self):
+        created, _ = self.use_case.execute({
+            'dni': '1234567',
+            'nombres': 'mARÍA DEL cARMEN',
+            'apellidos': 'DE LA cRUZ',
+            'correo': 'PERSONA@EJEMPLO.EDU.PE',
+            'rol': 'SUB DIRECTOR',
+        })
+
+        self.assertTrue(created)
+        self.assertEqual(self.repository.saved_user.dni, '01234567')
+        self.assertEqual(self.repository.saved_user.first_name, 'María del Carmen')
+        self.assertEqual(self.repository.saved_user.last_name, 'De la Cruz')
+        self.assertEqual(self.repository.saved_user.email, 'persona@ejemplo.edu.pe')
+        self.assertEqual(self.repository.saved_user.role, 'SUBDIRECTOR')
+        self.assertEqual(self.repository.password, '01234567')
+
+    def test_import_maps_teacher_specialty_without_losing_it(self):
+        self.use_case.execute({
+            'dni': '12345678',
+            'nombres': 'ANA',
+            'apellidos': 'PÉREZ',
+            'correo': '',
+            'rol': 'DOCENTE EDUCACIÓN FÍSICA',
+        })
+
+        self.assertEqual(self.repository.saved_user.role, 'DOCENTE')
+        self.assertEqual(self.repository.saved_user.support_role, 'Educación Física')
+
+        self.use_case.execute({
+            'dni': '87654321',
+            'nombres': 'LUIS',
+            'apellidos': 'RAMÍREZ',
+            'correo': '',
+            'rol': 'DOCENTE',
+            'cargo_especifico': 'IP',
+        })
+        self.assertEqual(self.repository.saved_user.support_role, 'IP')
+
+    def test_import_rejects_unknown_role_instead_of_assigning_docente(self):
+        with self.assertRaisesMessage(ValueError, "El rol 'ROL DESCONOCIDO' no es válido."):
+            self.use_case.execute({
+                'dni': '12345678',
+                'nombres': 'Ana',
+                'apellidos': 'Pérez',
+                'correo': '',
+                'rol': 'ROL DESCONOCIDO',
+            })
 
 class SecurityRoleTests(TestCase):
     def setUp(self):
