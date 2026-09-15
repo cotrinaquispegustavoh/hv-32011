@@ -1,105 +1,412 @@
 {% extends 'base.html' %}
 
-{% block title %}Nueva Incidencia — I.E. 32011{% endblock %}
+{% block title %}Nueva incidencia — I.E. 32011{% endblock %}
 {% block header_title %}Nueva incidencia{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto animate-in fade-in duration-500">
-    
+<div class="max-w-5xl mx-auto animate-in fade-in duration-300">
     <div class="mb-6">
         <a href="{% url 'core:dashboard' %}" class="inline-flex items-center gap-2 text-xs font-black text-slate-400 hover:text-slate-900 uppercase tracking-widest transition-colors">
-            <i class="fa-solid fa-arrow-left"></i> Volver al Panel
+            <i class="fa-solid fa-arrow-left"></i> Volver al panel
         </a>
     </div>
 
-    <div class="ui-card p-6 md:p-8 relative overflow-hidden">
-        
-        <div class="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-sky-600 to-sky-900"></div>
+    <form action="{% url 'discipline:report_incident' %}" method="POST" enctype="multipart/form-data" class="space-y-5" novalidate>
+        {% csrf_token %}
 
-        <div class="flex items-center gap-4 mb-8">
-            <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-xl border border-amber-100 flex-shrink-0">
-                <i class="fa-solid fa-clipboard-list"></i>
-            </div>
-            <div>
-                <h2 class="text-2xl font-black text-slate-900 tracking-tight">Registro de Incidencia Escolar</h2>
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">Reporte oficial para la dirección y tutoría</p>
-            </div>
+        {% if form.errors %}
+        <div class="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700" role="alert">
+            <p class="font-black">Revisa los campos señalados antes de registrar.</p>
+            {% if form.non_field_errors %}{{ form.non_field_errors }}{% endif %}
         </div>
+        {% endif %}
 
-        <form action="{% url 'discipline:report_incident' %}" method="POST" enctype="multipart/form-data" class="space-y-6">
-            {% csrf_token %}
+        <section class="ui-card p-5 md:p-7">
+            <div class="flex items-start gap-3 mb-6">
+                <div class="w-10 h-10 rounded-xl bg-sky-50 text-sky-700 flex items-center justify-center"><i class="fa-solid fa-user-graduate"></i></div>
+                <div>
+                    <h2 class="text-lg font-black text-slate-900">Estudiante involucrado</h2>
+                    <p class="text-sm text-slate-500">Busca y verifica el aula antes de continuar.</p>
+                </div>
+            </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
-                <!-- Selector de Alumno -->
-                <div class="col-span-1 md:col-span-2">
-                    <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Estudiante involucrado</label>
+            {% if not is_teacher_scope %}
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div>
+                    <label for="grade-filter" class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Grado (opcional)</label>
+                    <select id="grade-filter" class="block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold">
+                        <option value="">Todos los grados</option>
+                        {% for grade in available_grades %}<option value="{{ grade }}">{{ grade }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="section-filter" class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Sección (opcional)</label>
+                    <select id="section-filter" class="block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold">
+                        <option value="">Todas las secciones</option>
+                        {% for section in available_sections %}<option value="{{ section.id }}">{{ section.display_name }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="md:col-span-1"></div>
+            </div>
+            {% else %}
+            <div class="mb-4">
+                <label for="section-filter" class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Mis aulas autorizadas</label>
+                {% if available_sections|length > 1 %}
+                <select id="section-filter" class="block w-full md:w-80 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold">
+                    <option value="">Todas mis aulas</option>
+                    {% for section in available_sections %}<option value="{{ section.id }}">{{ section.display_name }}</option>{% endfor %}
+                </select>
+                {% elif available_sections %}
+                <div class="inline-flex items-center gap-2 rounded-xl bg-sky-50 border border-sky-100 px-4 py-2.5 text-sm font-bold text-sky-800">
+                    <i class="fa-solid fa-school"></i> {{ available_sections.0.display_name }}
+                </div>
+                <input type="hidden" id="section-filter" value="{{ available_sections.0.id }}">
+                {% else %}
+                <p class="rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm font-semibold text-amber-800">No tienes aulas asignadas para el año actual. Dirección debe registrar una asignación antes de que puedas reportar incidencias.</p>
+                <input type="hidden" id="section-filter" value="">
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div class="relative">
+                <label for="student-search" class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Buscar por nombres, apellidos o DNI</label>
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-4 text-slate-400"></i>
+                    <input id="student-search" type="search" autocomplete="off"
+                           placeholder="Escribe al menos 2 caracteres..."
+                           class="block w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+                           aria-controls="student-results" aria-autocomplete="list">
+                </div>
+                <div id="student-results" class="hidden absolute z-30 left-0 right-0 mt-2 max-h-72 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl" role="listbox"></div>
+            </div>
+            <input type="hidden" name="student" id="student-id" value="{{ form.student.value|default:'' }}">
+            <div id="selected-student" class="hidden mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4"></div>
+            {% if form.student.errors %}<div class="mt-2 text-sm font-semibold text-red-600">{{ form.student.errors }}</div>{% endif %}
+        </section>
+
+        <section class="ui-card p-5 md:p-7">
+            <h2 class="text-lg font-black text-slate-900 mb-5">Datos de la incidencia</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                    <label for="{{ form.occurred_at.id_for_label }}" class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Fecha y hora</label>
+                    {{ form.occurred_at }}
+                    {% if form.occurred_at.errors %}<div class="mt-1 text-sm text-red-600">{{ form.occurred_at.errors }}</div>{% endif %}
+                </div>
+                <div>
+                    <label for="{{ form.location.id_for_label }}" class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Lugar</label>
+                    {{ form.location }}
+                    {% if form.location.errors %}<div class="mt-1 text-sm text-red-600">{{ form.location.errors }}</div>{% endif %}
+                </div>
+                <div id="other-location-wrap" class="hidden md:col-span-2">
+                    <label for="{{ form.other_location.id_for_label }}" class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Especificar otro lugar</label>
+                    {{ form.other_location }}
+                    {% if form.other_location.errors %}<div class="mt-1 text-sm text-red-600">{{ form.other_location.errors }}</div>{% endif %}
+                </div>
+            </div>
+        </section>
+
+        <section class="ui-card p-5 md:p-7">
+            <h2 class="text-lg font-black text-slate-900 mb-5">Clasificación</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div>
+                    <label for="{{ form.category.id_for_label }}" class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Categoría</label>
+                    {{ form.category }}
+                    {% if form.category.errors %}<div class="mt-1 text-sm text-red-600">{{ form.category.errors }}</div>{% endif %}
+                </div>
+                <div>
+                    <label for="{{ form.subtype.id_for_label }}" class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Subtipo</label>
+                    {{ form.subtype }}
+                    {% if form.subtype.errors %}<div class="mt-1 text-sm text-red-600">{{ form.subtype.errors }}</div>{% endif %}
+                </div>
+                <div>
+                    <label for="{{ form.severity.id_for_label }}" class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Gravedad</label>
+                    {{ form.severity }}
+                    {% if form.severity.errors %}<div class="mt-1 text-sm text-red-600">{{ form.severity.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="mt-4 rounded-xl bg-slate-50 border border-slate-100 p-3 text-xs text-slate-600 grid grid-cols-1 md:grid-cols-3 gap-2">
+                <span><strong>Leve:</strong> impacto menor, sin lesión ni riesgo importante.</span>
+                <span><strong>Moderada:</strong> reiteración o consecuencia relevante.</span>
+                <span><strong>Grave:</strong> riesgo, lesión o intervención inmediata.</span>
+            </div>
+        </section>
+
+        <section class="ui-card p-5 md:p-7">
+            <h2 class="text-lg font-black text-slate-900 mb-5">Detalle</h2>
+            <div class="space-y-5">
+                <div>
+                    <label for="{{ form.description.id_for_label }}" class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Descripción de la incidencia</label>
+                    {{ form.description }}
+                    <p class="mt-1 text-xs text-slate-400">Registra hechos observables, sin suposiciones ni calificativos.</p>
+                    {% if form.description.errors %}<div class="mt-1 text-sm text-red-600">{{ form.description.errors }}</div>{% endif %}
+                </div>
+
+                <div>
+                    <label for="additional-search" class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Otros estudiantes involucrados (opcional)</label>
                     <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                            <i class="fa-solid fa-graduation-cap text-sm"></i>
-                        </div>
-                        <select name="student_id" required
-                                class="block w-full pl-11 pr-10 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer">
-                            <option value="" disabled selected hidden>Selecciona un alumno...</option>
-                            {% for student in students %}
-                                <option value="{{ student.id }}">{{ student.last_name }}, {{ student.first_name }}</option>
-                            {% empty %}
-                                <option value="" disabled>No hay alumnos registrados en el sistema</option>
-                            {% endfor %}
-                        </select>
-                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-400">
-                            <i class="fa-solid fa-chevron-down text-xs"></i>
-                        </div>
+                        <input id="additional-search" type="search" autocomplete="off" placeholder="Buscar otro estudiante..."
+                               class="block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold">
+                        <div id="additional-results" class="hidden absolute z-20 left-0 right-0 mt-2 max-h-64 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl"></div>
                     </div>
+                    <div id="additional-students" class="flex flex-wrap gap-2 mt-3"></div>
+                    <div id="additional-inputs"></div>
+                    {% if form.additional_students.errors %}<div class="mt-1 text-sm text-red-600">{{ form.additional_students.errors }}</div>{% endif %}
                 </div>
 
-                <!-- Gravedad -->
                 <div>
-                    <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Gravedad</label>
-                    <select name="severity" required
-                            class="block w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all cursor-pointer">
-                        <option value="LEVE">Leve</option>
-                        <option value="MODERADA">Moderada</option>
-                        <option value="GRAVE">Grave</option>
-                    </select>
+                    <label for="{{ form.additional_people.id_for_label }}" class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Personas externas o no registradas (opcional)</label>
+                    {{ form.additional_people }}
+                    {% if form.additional_people.errors %}<div class="mt-1 text-sm text-red-600">{{ form.additional_people.errors }}</div>{% endif %}
                 </div>
-
-                <!-- Subtipo -->
                 <div>
-                    <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Tipo de caso</label>
-                    <select name="subtype" required
-                            class="block w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all cursor-pointer">
-                        <option value="CONDUCTA">Conducta / Disciplina</option>
-                        <option value="RENDIMIENTO">Rendimiento Académico</option>
-                        <option value="ASISTENCIA">Inasistencia / Tardanza</option>
-                        <option value="SALUD">Salud / Emergencia</option>
-                    </select>
+                    <label for="{{ form.immediate_action.id_for_label }}" class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Acción inmediata realizada</label>
+                    {{ form.immediate_action }}
+                    {% if form.immediate_action.errors %}<div class="mt-1 text-sm text-red-600">{{ form.immediate_action.errors }}</div>{% endif %}
                 </div>
-
-                <!-- Descripción -->
-                <div class="col-span-1 md:col-span-2">
-                    <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Descripción detallada de los hechos</label>
-                    <textarea name="description" rows="4" required
-                              placeholder="Describe de manera objetiva lo sucedido..."
-                              class="block w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all resize-none"></textarea>
-                </div>
-
-                <!-- Evidencia (Archivo) -->
-                <div class="col-span-1 md:col-span-2">
-                    <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Evidencia Adjunta (Opcional)</label>
-                    <input type="file" name="evidence" accept="image/*,.pdf"
-                           class="block w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100 transition-all cursor-pointer border border-slate-200 rounded-2xl bg-slate-50">
-                </div>
-
             </div>
+        </section>
 
-            <div class="flex items-center justify-end gap-4 pt-4 border-t border-slate-100">
-                <button type="submit" class="ui-button ui-button--primary text-xs uppercase tracking-wider">
-                    <i class="fa-solid fa-cloud-arrow-up text-sm"></i> Registrar Caso
-                </button>
+        <section class="ui-card p-5 md:p-7">
+            <h2 class="text-lg font-black text-slate-900 mb-5">Seguimiento y evidencia</h2>
+            <div class="space-y-5">
+                <fieldset>
+                    <legend class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">¿Requiere seguimiento?</legend>
+                    <div class="flex gap-3">
+                        <label class="flex-1 md:flex-none rounded-xl border border-slate-200 px-5 py-3 cursor-pointer">
+                            <input type="radio" name="requires_follow_up" value="false" {% if form.requires_follow_up.value != 'true' %}checked{% endif %}> <span class="ml-2 font-bold text-sm">No</span>
+                        </label>
+                        <label class="flex-1 md:flex-none rounded-xl border border-slate-200 px-5 py-3 cursor-pointer">
+                            <input type="radio" name="requires_follow_up" value="true" {% if form.requires_follow_up.value == 'true' %}checked{% endif %}> <span class="ml-2 font-bold text-sm">Sí</span>
+                        </label>
+                    </div>
+                    {% if form.requires_follow_up.errors %}<div class="mt-1 text-sm text-red-600">{{ form.requires_follow_up.errors }}</div>{% endif %}
+                </fieldset>
+                <div id="referral-wrap" class="hidden">
+                    <label for="{{ form.referred_to.id_for_label }}" class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Derivar a</label>
+                    {{ form.referred_to }}
+                    {% if form.referred_to.errors %}<div class="mt-1 text-sm text-red-600">{{ form.referred_to.errors }}</div>{% endif %}
+                </div>
+                <div>
+                    <label for="{{ form.additional_observations.id_for_label }}" class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Observaciones adicionales (opcional)</label>
+                    {{ form.additional_observations }}
+                </div>
+                <div>
+                    <label for="{{ form.evidence.id_for_label }}" class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Evidencia o archivo adjunto (opcional)</label>
+                    {{ form.evidence }}
+                    <p class="mt-1 text-xs text-slate-400">PDF, JPG, JPEG o PNG. Máximo 10 MB.</p>
+                    {% if form.evidence.errors %}<div class="mt-1 text-sm text-red-600">{{ form.evidence.errors }}</div>{% endif %}
+                </div>
             </div>
+        </section>
 
-        </form>
-    </div>
+        <div class="flex flex-col-reverse sm:flex-row justify-end gap-3">
+            <a href="{% url 'core:dashboard' %}" class="ui-button ui-button--secondary justify-center">Cancelar</a>
+            <button type="submit" class="ui-button ui-button--primary justify-center">
+                <i class="fa-solid fa-shield-halved"></i> Registrar incidencia
+            </button>
+        </div>
+    </form>
 </div>
+
+{{ category_subtypes|json_script:"category-subtypes-data" }}
+{{ selected_student|json_script:"selected-student-data" }}
+{{ selected_additional_students|json_script:"selected-additional-data" }}
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const studentUrl = "{% url 'discipline:student_search' %}";
+    const sectionUrl = "{% url 'discipline:section_search' %}";
+    const isTeacher = {{ is_teacher_scope|yesno:"true,false" }};
+    const gradeFilter = document.getElementById('grade-filter');
+    const sectionFilter = document.getElementById('section-filter');
+    const studentSearch = document.getElementById('student-search');
+    const studentResults = document.getElementById('student-results');
+    const studentId = document.getElementById('student-id');
+    const selectedStudentBox = document.getElementById('selected-student');
+    const additionalSearch = document.getElementById('additional-search');
+    const additionalResults = document.getElementById('additional-results');
+    const additionalBox = document.getElementById('additional-students');
+    const additionalInputs = document.getElementById('additional-inputs');
+    const subtypes = JSON.parse(document.getElementById('category-subtypes-data').textContent);
+    const initialStudent = JSON.parse(document.getElementById('selected-student-data').textContent);
+    let additionalStudents = JSON.parse(document.getElementById('selected-additional-data').textContent) || [];
+    let studentTimer;
+    let additionalTimer;
+
+    const escapeHtml = (value) => {
+        const element = document.createElement('div');
+        element.textContent = value || '';
+        return element.innerHTML;
+    };
+
+    const paramsFor = (query) => {
+        const params = new URLSearchParams({q: query});
+        if (gradeFilter && gradeFilter.value) params.set('grade', gradeFilter.value);
+        if (sectionFilter && sectionFilter.value) params.set('section_id', sectionFilter.value);
+        return params;
+    };
+
+    const resultMarkup = (student, index, extraButton = false) => `
+        <button type="button" data-result-index="${index}"
+                class="student-result w-full text-left px-4 py-3 hover:bg-sky-50 border-b border-slate-100 last:border-0 flex items-center justify-between gap-3">
+            <span>
+                <strong class="block text-sm text-slate-900">${escapeHtml(student.name)}</strong>
+                <span class="text-xs text-slate-500">${escapeHtml(student.section)}${student.dni ? ' · DNI ' + escapeHtml(student.dni) : ''}</span>
+            </span>
+            <i class="fa-solid ${extraButton ? 'fa-plus' : 'fa-chevron-right'} text-sky-600"></i>
+        </button>`;
+
+    const showPrimary = (student) => {
+        if (!student) {
+            selectedStudentBox.classList.add('hidden');
+            selectedStudentBox.innerHTML = '';
+            studentId.value = '';
+            return;
+        }
+        studentId.value = student.id;
+        selectedStudentBox.innerHTML = `
+            <div class="flex items-center justify-between gap-3">
+                <div>
+                    <p class="text-sm font-black text-emerald-900">${escapeHtml(student.name)}</p>
+                    <p class="text-xs font-semibold text-emerald-700 mt-1"><i class="fa-solid fa-school mr-1"></i>${escapeHtml(student.section)}</p>
+                </div>
+                <button type="button" id="clear-student" class="w-9 h-9 rounded-lg bg-white text-slate-500 border border-emerald-200" aria-label="Cambiar estudiante"><i class="fa-solid fa-xmark"></i></button>
+            </div>`;
+        selectedStudentBox.classList.remove('hidden');
+        document.getElementById('clear-student').addEventListener('click', () => showPrimary(null));
+    };
+
+    const renderAdditional = () => {
+        additionalBox.innerHTML = additionalStudents.map(student => `
+            <span class="inline-flex items-center gap-2 rounded-lg bg-sky-50 border border-sky-100 px-3 py-2 text-xs font-bold text-sky-800">
+                ${escapeHtml(student.name)} · ${escapeHtml(student.section)}
+                <button type="button" data-remove="${student.id}" class="text-sky-500 hover:text-red-600" aria-label="Quitar"><i class="fa-solid fa-xmark"></i></button>
+            </span>`).join('');
+        additionalInputs.innerHTML = additionalStudents.map(student =>
+            `<input type="hidden" name="additional_students" value="${student.id}">`
+        ).join('');
+        additionalBox.querySelectorAll('[data-remove]').forEach(button => {
+            button.addEventListener('click', () => {
+                additionalStudents = additionalStudents.filter(item => String(item.id) !== button.dataset.remove);
+                renderAdditional();
+            });
+        });
+    };
+
+    const loadStudents = async (query, target, additional = false) => {
+        if (query.length < 2 && !(sectionFilter && sectionFilter.value) && !(gradeFilter && gradeFilter.value) && !isTeacher) {
+            target.innerHTML = '<p class="p-4 text-sm text-slate-500">Escribe al menos 2 caracteres o selecciona un filtro.</p>';
+            target.classList.remove('hidden');
+            return;
+        }
+        target.innerHTML = '<p class="p-4 text-sm text-slate-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Buscando...</p>';
+        target.classList.remove('hidden');
+        try {
+            const response = await fetch(`${studentUrl}?${paramsFor(query)}`, {headers: {'X-Requested-With': 'XMLHttpRequest'}});
+            if (!response.ok) throw new Error('search');
+            const data = await response.json();
+            const results = additional
+                ? data.results.filter(item => String(item.id) !== String(studentId.value) && !additionalStudents.some(selected => String(selected.id) === String(item.id)))
+                : data.results;
+            target.innerHTML = results.length
+                ? results.map((item, index) => resultMarkup(item, index, additional)).join('')
+                : '<p class="p-4 text-sm text-slate-500">No se encontraron estudiantes.</p>';
+            target.querySelectorAll('.student-result').forEach(button => {
+                button.addEventListener('click', () => {
+                    const student = results[Number(button.dataset.resultIndex)];
+                    if (additional) {
+                        additionalStudents.push(student);
+                        renderAdditional();
+                        additionalSearch.value = '';
+                    } else {
+                        showPrimary(student);
+                        studentSearch.value = '';
+                    }
+                    target.classList.add('hidden');
+                });
+            });
+        } catch {
+            target.innerHTML = '<p class="p-4 text-sm text-red-600">No se pudo realizar la búsqueda.</p>';
+        }
+    };
+
+    studentSearch.addEventListener('input', () => {
+        clearTimeout(studentTimer);
+        studentTimer = setTimeout(() => loadStudents(studentSearch.value.trim(), studentResults), 300);
+    });
+    studentSearch.addEventListener('focus', () => {
+        if (isTeacher || studentSearch.value.trim().length >= 2) {
+            loadStudents(studentSearch.value.trim(), studentResults);
+        }
+    });
+    additionalSearch.addEventListener('input', () => {
+        clearTimeout(additionalTimer);
+        additionalTimer = setTimeout(() => loadStudents(additionalSearch.value.trim(), additionalResults, true), 300);
+    });
+
+    const clearStudentSelection = () => {
+        showPrimary(null);
+        additionalStudents = [];
+        renderAdditional();
+        loadStudents(studentSearch.value.trim(), studentResults);
+    };
+
+    if (gradeFilter) {
+        gradeFilter.addEventListener('change', async () => {
+            const params = new URLSearchParams();
+            if (gradeFilter.value) params.set('grade', gradeFilter.value);
+            const response = await fetch(`${sectionUrl}?${params}`);
+            if (response.ok) {
+                const data = await response.json();
+                sectionFilter.innerHTML = '<option value="">Todas las secciones</option>' +
+                    data.results.map(section => `<option value="${section.id}">${escapeHtml(section.name)}</option>`).join('');
+            }
+            clearStudentSelection();
+        });
+    }
+    if (sectionFilter) sectionFilter.addEventListener('change', clearStudentSelection);
+
+    const category = document.getElementById('{{ form.category.id_for_label }}');
+    const subtype = document.getElementById('{{ form.subtype.id_for_label }}');
+    const updateSubtypes = () => {
+        const previous = subtype.value;
+        const options = subtypes[category.value] || [];
+        subtype.innerHTML = '<option value="">Seleccionar subtipo</option>' + options.map(option =>
+            `<option value="${option.value}">${escapeHtml(option.label)}</option>`
+        ).join('');
+        subtype.value = options.some(option => option.value === previous) ? previous : '';
+    };
+    category.addEventListener('change', updateSubtypes);
+    updateSubtypes();
+
+    const location = document.getElementById('{{ form.location.id_for_label }}');
+    const otherLocation = document.getElementById('{{ form.other_location.id_for_label }}');
+    const otherLocationWrap = document.getElementById('other-location-wrap');
+    const updateLocation = () => {
+        const visible = location.value === 'OTRO';
+        otherLocationWrap.classList.toggle('hidden', !visible);
+        if (!visible) otherLocation.value = '';
+    };
+    location.addEventListener('change', updateLocation);
+    updateLocation();
+
+    const referralWrap = document.getElementById('referral-wrap');
+    const referredTo = document.getElementById('{{ form.referred_to.id_for_label }}');
+    const updateFollowUp = () => {
+        const required = document.querySelector('[name="requires_follow_up"]:checked')?.value === 'true';
+        referralWrap.classList.toggle('hidden', !required);
+        if (!required) referredTo.value = '';
+    };
+    document.querySelectorAll('[name="requires_follow_up"]').forEach(input => input.addEventListener('change', updateFollowUp));
+    updateFollowUp();
+
+    document.addEventListener('click', event => {
+        if (!studentResults.contains(event.target) && event.target !== studentSearch) studentResults.classList.add('hidden');
+        if (!additionalResults.contains(event.target) && event.target !== additionalSearch) additionalResults.classList.add('hidden');
+    });
+
+    showPrimary(initialStudent);
+    renderAdditional();
+});
+</script>
 {% endblock %}

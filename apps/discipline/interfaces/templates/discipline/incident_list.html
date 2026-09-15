@@ -28,8 +28,8 @@
                    hx-get="{% url 'discipline:search_incidents' %}" 
                    hx-trigger="keyup changed delay:300ms, search" 
                    hx-target="#tabla-incidencias" 
-                   hx-include="[name='severity'], [name='subtype']"
-                   placeholder="Buscar por nombre del alumno o descripción..." 
+                   hx-include="[name='severity'], [name='category']"
+                   placeholder="Buscar por código, estudiante o descripción..."
                    class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow">
         </div>
         
@@ -37,7 +37,7 @@
                 hx-get="{% url 'discipline:search_incidents' %}" 
                 hx-trigger="change" 
                 hx-target="#tabla-incidencias" 
-                hx-include="[name='q'], [name='subtype']"
+                hx-include="[name='q'], [name='category']"
                 class="w-full sm:w-48 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white cursor-pointer transition-shadow">
             <option value="">Todas las gravedades</option>
             <option value="LEVE">Leve</option>
@@ -45,17 +45,18 @@
             <option value="GRAVE">Grave</option>
         </select>
 
-        <select name="subtype" 
+        <select name="category"
                 hx-get="{% url 'discipline:search_incidents' %}" 
                 hx-trigger="change" 
                 hx-target="#tabla-incidencias" 
                 hx-include="[name='q'], [name='severity']"
                 class="w-full sm:w-48 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white cursor-pointer transition-shadow">
             <option value="">Todos los tipos</option>
-            <option value="CONDUCTA">Conducta</option>
-            <option value="RENDIMIENTO">Rendimiento</option>
-            <option value="ASISTENCIA">Asistencia</option>
-            <option value="SALUD">Salud</option>
+            <option value="CONDUCTA_INADECUADA">Conducta inadecuada</option>
+            <option value="AGRESION">Agresión</option>
+            <option value="ACOSO_INTIMIDACION">Acoso o intimidación</option>
+            <option value="DANO_INCUMPLIMIENTO">Daño o incumplimiento</option>
+            <option value="RIESGO_SITUACION_ESPECIAL">Riesgo o situación especial</option>
         </select>
     </div>
 

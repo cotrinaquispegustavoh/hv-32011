@@ -14,10 +14,11 @@ def hard_delete_action(modeladmin, request, queryset):
 
 @admin.register(Incident)
 class IncidentAdmin(admin.ModelAdmin):
-    list_display = ('student', 'severity', 'subtype', 'reported_by', 'date_reported', 'is_deleted')
-    list_filter = ('severity', 'subtype', 'date_reported', 'is_deleted')
-    search_fields = ('student__first_name', 'student__last_name', 'description')
-    date_hierarchy = 'date_reported'
+    list_display = ('code', 'student', 'category', 'subtype', 'severity', 'reported_by', 'occurred_at', 'status', 'is_deleted')
+    list_filter = ('category', 'subtype', 'severity', 'status', 'requires_follow_up', 'occurred_at', 'is_deleted')
+    search_fields = ('code', 'student__dni', 'student__first_name', 'student__last_name', 'description')
+    date_hierarchy = 'occurred_at'
+    readonly_fields = ('code', 'academic_year', 'date_reported', 'updated_at')
     
     # Añadimos ambas acciones al menú
     actions = [soft_delete_action, hard_delete_action]

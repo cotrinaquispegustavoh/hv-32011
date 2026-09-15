@@ -20,7 +20,7 @@ class GetDirectorMetricsUseCase:
         total_students = Student.objects.count()
         active_teachers = User.objects.filter(role='DOCENTE', is_active=True).count()
         pending_loans = LoanRequest.objects.filter(status='PENDING').count()
-        incidents_today = Incident.objects.filter(date_reported__date=today).count()
+        incidents_today = Incident.objects.filter(occurred_at__date=today).count()
         available_materials = Material.objects.aggregate(total=Sum('stock'))['total'] or 0
 
         loans_qs = LoanRequest.objects.filter(request_date__date__gte=thirty_days_ago) \
@@ -39,7 +39,7 @@ class GetDirectorMetricsUseCase:
             chart_data.append(loans_dict.get(d, 0))
 
         def get_incident_counts(start_date):
-            qs = Incident.objects.filter(date_reported__date__gte=start_date).values('severity').annotate(count=Count('id'))
+            qs = Incident.objects.filter(occurred_at__date__gte=start_date).values('severity').annotate(count=Count('id'))
             counts = {'LEVE': 0, 'MODERADA': 0, 'GRAVE': 0}
             total = 0
             for item in qs:
