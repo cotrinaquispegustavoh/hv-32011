@@ -26,15 +26,20 @@
         </div>
     </div>
     
-    {% if selected_user.id != request.user.id and selected_user.role != 'SUPERUSER' %}
-    <form hx-post="{% url 'users:toggle_status' selected_user.id %}" hx-target="#staff-detail-content" hx-swap="innerHTML">
-        {% csrf_token %}
-        <button type="submit" class="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors border shadow-sm
-            {% if selected_user.is_active %}bg-white text-red-600 border-red-200 hover:bg-red-50{% else %}bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700{% endif %}">
-            {% if selected_user.is_active %}<i class="fa-solid fa-ban mr-1"></i> Suspender Acceso{% else %}<i class="fa-solid fa-check mr-1"></i> Reactivar Acceso{% endif %}
-        </button>
-    </form>
-    {% endif %}
+    <div class="flex flex-wrap items-center gap-2">
+        {% if selected_user.id != request.user.id and selected_user.role != 'SUPERUSER' and selected_user.role != 'DIRECTOR' or request.user.is_superuser and selected_user.id != request.user.id %}
+        <a href="{% url 'users:admin_password_reset' %}?dni={{ selected_user.dni }}" class="ui-button ui-button--secondary text-xs"><i class="fa-solid fa-key" aria-hidden="true"></i> Restablecer acceso</a>
+        {% endif %}
+        {% if selected_user.id != request.user.id and selected_user.role != 'SUPERUSER' %}
+        <form hx-post="{% url 'users:toggle_status' selected_user.id %}" hx-target="#staff-detail-content" hx-swap="innerHTML">
+            {% csrf_token %}
+            <button type="submit" class="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors border shadow-sm
+                {% if selected_user.is_active %}bg-white text-red-600 border-red-200 hover:bg-red-50{% else %}bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700{% endif %}">
+                {% if selected_user.is_active %}<i class="fa-solid fa-ban mr-1"></i> Suspender Acceso{% else %}<i class="fa-solid fa-check mr-1"></i> Reactivar Acceso{% endif %}
+            </button>
+        </form>
+        {% endif %}
+    </div>
 </div>
 
 <!-- Permisos funcionales -->

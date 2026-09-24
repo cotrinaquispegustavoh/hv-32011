@@ -162,6 +162,29 @@ LOGIN_RATE_LOCK_SECONDS = env.int('LOGIN_RATE_LOCK_SECONDS', default=900)
 LOGIN_RATE_MAX_LOCK_SECONDS = env.int('LOGIN_RATE_MAX_LOCK_SECONDS', default=3600)
 TRUSTED_PROXY_IPS = env.list('TRUSTED_PROXY_IPS', default=['127.0.0.1', '::1'])
 
+# --- RECUPERACIÓN DE CONTRASEÑA ---
+# En desarrollo los mensajes quedan en memoria para pruebas. En el VPS se debe
+# definir EMAIL_BACKEND y las credenciales SMTP en .env.
+EMAIL_BACKEND = env(
+    'EMAIL_BACKEND',
+    default=(
+        'django.core.mail.backends.locmem.EmailBackend'
+        if DEBUG
+        else 'django.core.mail.backends.smtp.EmailBackend'
+    ),
+)
+EMAIL_HOST = env('EMAIL_HOST', default='localhost')
+EMAIL_PORT = env.int('EMAIL_PORT', default=587)
+EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)
+EMAIL_USE_SSL = env.bool('EMAIL_USE_SSL', default=False)
+EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='Intranet HV <no-reply@intranet-hv.sytes.net>')
+PASSWORD_RESET_TIMEOUT = env.int('PASSWORD_RESET_TIMEOUT', default=1800)
+PASSWORD_RESET_RATE_WINDOW_SECONDS = env.int('PASSWORD_RESET_RATE_WINDOW_SECONDS', default=3600)
+PASSWORD_RESET_ACCOUNT_ATTEMPTS = env.int('PASSWORD_RESET_ACCOUNT_ATTEMPTS', default=3)
+PASSWORD_RESET_IP_ATTEMPTS = env.int('PASSWORD_RESET_IP_ATTEMPTS', default=10)
+
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 if not DEBUG:

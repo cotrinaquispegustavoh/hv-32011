@@ -11,9 +11,12 @@
             <p class="ui-page-subtitle">Consulta rápida de estudiantes, tutores y contactos de emergencia.</p>
         </div>
         {% if user.role == 'DIRECTOR' or user.role == 'SUBDIRECTOR' or user.role == 'SUPERUSER' %}
-        <button @click="modalCsv = true" class="ui-button ui-button--primary w-full sm:w-auto">
-            <i class="fa-solid fa-file-csv"></i> Importar Matrícula
-        </button>
+        <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            {% if user.role == 'DIRECTOR' or user.role == 'SUPERUSER' %}<a href="{% url 'users:admin_password_reset' %}" class="ui-button ui-button--secondary w-full sm:w-auto"><i class="fa-solid fa-key" aria-hidden="true"></i> Restablecer apoderado</a>{% endif %}
+            <button @click="modalCsv = true" class="ui-button ui-button--primary w-full sm:w-auto">
+                <i class="fa-solid fa-file-csv"></i> Importar Matrícula
+            </button>
+        </div>
         {% endif %}
     </div>
 

@@ -25,6 +25,9 @@
             <p class="ui-page-subtitle">Administración de accesos y seguridad del equipo institucional.</p>
         </div>
         <div class="flex items-center gap-3 w-full sm:w-auto">
+            <a href="{% url 'users:admin_password_reset' %}" class="ui-button ui-button--secondary flex-1 sm:flex-none">
+                <i class="fa-solid fa-key text-amber-600" aria-hidden="true"></i> <span class="hidden sm:inline">Restablecer acceso</span><span class="sm:hidden">Acceso</span>
+            </a>
             <button @click="modalCsv = true" class="ui-button ui-button--secondary flex-1 sm:flex-none">
                 <i class="fa-solid fa-file-csv text-emerald-600"></i> <span class="hidden sm:inline">Importar CSV</span><span class="sm:hidden">Importar</span>
             </button>

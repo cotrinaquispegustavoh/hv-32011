@@ -1,3 +1,7 @@
+import re
+
+from django.core import mail
+from django.contrib.sessions.models import Session
 from django.test import TestCase, Client, RequestFactory, override_settings
 from django.urls import reverse
 from apps.core.infrastructure.models import AuditLog
@@ -77,6 +81,135 @@ class ImportStaffNormalizationTests(TestCase):
                 'correo': '',
                 'rol': 'ROL DESCONOCIDO',
             })
+
+
+@override_settings(
+    EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+    PASSWORD_RESET_RATE_WINDOW_SECONDS=3600,
+    PASSWORD_RESET_ACCOUNT_ATTEMPTS=3,
+    PASSWORD_RESET_IP_ATTEMPTS=10,
+)
+class PasswordRecoveryTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            dni='45678912',
+            role='DOCENTE',
+            first_name='María',
+            last_name='Ramos',
+            email='maria@example.edu.pe',
+            password='ClaveAnterior!2026',
+            password_changed=True,
+        )
+        self.director = User.objects.create_user(
+            dni='11111111',
+            role='DIRECTOR',
+            password='ClaveDirector!2026',
+            password_changed=True,
+        )
+
+    def _request_reset(self, dni='45678912', email='maria@example.edu.pe'):
+        return self.client.post(
+            reverse('users:password_reset_request'),
+            {'dni': dni, 'email': email},
+        )
+
+    def test_matching_identity_receives_single_use_reset_link(self):
+        response = self._request_reset()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Si el DNI y el correo coinciden')
+        self.assertEqual(len(mail.outbox), 1)
+        reset_url = re.search(r'https?://[^\s]+', mail.outbox[0].body).group(0)
+
+        self.assertEqual(self.client.get(reset_url).status_code, 200)
+        changed = self.client.post(reset_url, {
+            'new_password1': 'NuevaClaveSegura!2026',
+            'new_password2': 'NuevaClaveSegura!2026',
+        })
+
+        self.assertRedirects(changed, reverse('users:login'))
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password('NuevaClaveSegura!2026'))
+        self.assertTrue(self.user.password_changed)
+        self.assertTrue(AuditLog.objects.filter(
+            action='PASSWORD_RESET',
+            object_id=str(self.user.pk),
+        ).exists())
+        self.assertContains(self.client.get(reset_url), 'Enlace inválido o vencido')
+
+    def test_unknown_or_mismatched_identity_uses_the_same_public_response(self):
+        unknown = self._request_reset('99999999', 'nadie@example.edu.pe')
+        mismatched = self._request_reset('45678912', 'otro@example.edu.pe')
+
+        self.assertContains(unknown, 'Si el DNI y el correo coinciden')
+        self.assertContains(mismatched, 'Si el DNI y el correo coinciden')
+        self.assertEqual(len(mail.outbox), 0)
+
+    @override_settings(PASSWORD_RESET_ACCOUNT_ATTEMPTS=1)
+    def test_recovery_requests_are_rate_limited_without_revealing_it(self):
+        first = self._request_reset()
+        second = self._request_reset()
+
+        self.assertContains(first, 'Si el DNI y el correo coinciden')
+        self.assertContains(second, 'Si el DNI y el correo coinciden')
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertTrue(AuditLog.objects.filter(action='RESET_BLOCKED').exists())
+
+    def test_director_generates_temporary_password_and_forces_change(self):
+        active_session = Client()
+        active_session.force_login(self.user)
+        session_key = active_session.session.session_key
+        self.client.force_login(self.director)
+
+        response = self.client.post(
+            reverse('users:admin_password_reset'),
+            {'dni': self.user.dni},
+        )
+
+        temporary_password = response.context['temporary_password']
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(temporary_password)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password(temporary_password))
+        self.assertFalse(self.user.password_changed)
+        self.assertFalse(Session.objects.filter(pk=session_key).exists())
+        audit = AuditLog.objects.get(action='ADMIN_RESET', object_id=str(self.user.pk))
+        self.assertNotIn(temporary_password, str(audit.changes))
+
+    def test_director_cannot_reset_director_or_own_account(self):
+        other_director = User.objects.create_user(
+            dni='11111112',
+            role='DIRECTOR',
+            password='OtraClave!2026',
+            password_changed=True,
+        )
+        self.client.force_login(self.director)
+
+        other_response = self.client.post(
+            reverse('users:admin_password_reset'),
+            {'dni': other_director.dni},
+        )
+        own_response = self.client.post(
+            reverse('users:admin_password_reset'),
+            {'dni': self.director.dni},
+        )
+
+        self.assertContains(other_response, 'Solo un superusuario')
+        self.assertContains(own_response, 'utiliza la sección Seguridad')
+        self.assertFalse(AuditLog.objects.filter(action='ADMIN_RESET').exists())
+
+    def test_non_director_cannot_use_administrative_reset(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('users:admin_password_reset'))
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_login_exposes_recovery_link(self):
+        response = self.client.get(reverse('users:login'))
+
+        self.assertContains(response, reverse('users:password_reset_request'))
+
 
 class SecurityRoleTests(TestCase):
     def setUp(self):

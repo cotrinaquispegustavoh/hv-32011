@@ -67,6 +67,8 @@ class LoginThrottle(models.Model):
     SCOPE_CHOICES = [
         ('ACCOUNT', 'Cuenta'),
         ('IP', 'Dirección IP'),
+        ('RESET_ACC', 'Recuperación por cuenta'),
+        ('RESET_IP', 'Recuperación por IP'),
     ]
 
     key = models.CharField('Clave anónima', max_length=64, unique=True)

@@ -1,7 +1,71 @@
 from django import forms
-from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
 
 from apps.users.infrastructure.models import User
+
+
+INPUT_CLASS = (
+    "w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium "
+    "focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+)
+
+
+class PasswordRecoveryRequestForm(forms.Form):
+    dni = forms.RegexField(
+        label="DNI o código de usuario",
+        regex=r"^\d{8}$",
+        max_length=8,
+        error_messages={"invalid": "Ingresa un DNI de ocho dígitos."},
+        widget=forms.TextInput(attrs={
+            "autocomplete": "username",
+            "inputmode": "numeric",
+            "maxlength": "8",
+            "class": INPUT_CLASS,
+            "placeholder": "Ej. 45678912",
+        }),
+    )
+    email = forms.EmailField(
+        label="Correo registrado",
+        widget=forms.EmailInput(attrs={
+            "autocomplete": "email",
+            "class": INPUT_CLASS,
+            "placeholder": "nombre@correo.com",
+        }),
+    )
+
+    def clean_email(self):
+        return self.cleaned_data["email"].strip().lower()
+
+
+class PasswordRecoverySetForm(SetPasswordForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        labels = {
+            "new_password1": "Nueva contraseña",
+            "new_password2": "Confirmar nueva contraseña",
+        }
+        for name, field in self.fields.items():
+            field.label = labels[name]
+            field.widget.attrs.update({
+                "class": INPUT_CLASS,
+                "autocomplete": "new-password",
+            })
+
+
+class AdministrativePasswordResetForm(forms.Form):
+    dni = forms.RegexField(
+        label="DNI o código de usuario",
+        regex=r"^\d{8}$",
+        max_length=8,
+        error_messages={"invalid": "Ingresa un DNI de ocho dígitos."},
+        widget=forms.TextInput(attrs={
+            "autocomplete": "off",
+            "inputmode": "numeric",
+            "maxlength": "8",
+            "class": INPUT_CLASS,
+            "placeholder": "DNI del docente, personal o apoderado",
+        }),
+    )
 
 
 class UserProfileForm(forms.ModelForm):
@@ -27,12 +91,8 @@ class UserProfileForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        input_class = (
-            "w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium "
-            "focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-        )
         for field in self.fields.values():
-            field.widget.attrs["class"] = input_class
+            field.widget.attrs["class"] = INPUT_CLASS
 
     def clean_first_name(self):
         value = self.cleaned_data["first_name"].strip()
@@ -50,10 +110,6 @@ class UserProfileForm(forms.ModelForm):
 class AccountPasswordChangeForm(PasswordChangeForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        input_class = (
-            "w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium "
-            "focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-        )
         labels = {
             'old_password': 'Contraseña actual',
             'new_password1': 'Nueva contraseña',
@@ -67,6 +123,6 @@ class AccountPasswordChangeForm(PasswordChangeForm):
         for name, field in self.fields.items():
             field.label = labels[name]
             field.widget.attrs.update({
-                'class': input_class,
+                'class': INPUT_CLASS,
                 'autocomplete': autocomplete[name],
             })

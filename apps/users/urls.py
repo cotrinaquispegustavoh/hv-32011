@@ -8,6 +8,17 @@ urlpatterns = [
     path('login/', auth_views.login_view, name='login'),
     path('logout/', auth_views.logout_view, name='logout'),
     path('cambiar-password/', auth_views.password_change_view, name='password_change'),
+    path('recuperar-password/', auth_views.password_reset_request_view, name='password_reset_request'),
+    path(
+        'recuperar-password/<uidb64>/<token>/',
+        auth_views.password_reset_confirm_view,
+        name='password_reset_confirm',
+    ),
+    path(
+        'restablecer-acceso/',
+        auth_views.administrative_password_reset_view,
+        name='admin_password_reset',
+    ),
     path('perfil/', profile_views.profile_view, name='profile'),
     path('seguridad/', profile_views.security_view, name='security'),
     

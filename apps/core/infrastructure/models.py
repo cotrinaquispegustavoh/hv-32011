@@ -67,6 +67,10 @@ class AuditLog(models.Model):
         ('RESTORE', 'Restauración'),
         ('LOGIN', 'Inicio de Sesión'),
         ('LOGIN_BLOCKED', 'Acceso bloqueado'),
+        ('RESET_REQUEST', 'Solicitud de recuperación'),
+        ('RESET_BLOCKED', 'Recuperación bloqueada'),
+        ('PASSWORD_RESET', 'Contraseña recuperada'),
+        ('ADMIN_RESET', 'Restablecimiento administrativo'),
         ('LOGOUT', 'Cierre de Sesión'),
         ('PERMISSIONS', 'Cambio de Permisos'),
     ]

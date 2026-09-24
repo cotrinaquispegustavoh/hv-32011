@@ -22,6 +22,32 @@ Una petición anónima a `/media/...` debe redirigir al login. Una cuenta sin el
 permiso correspondiente debe recibir 404. No se debe crear un `location
 /media/` público en Nginx.
 
+## Correo para recuperar contraseñas
+
+La recuperación autónoma necesita una cuenta SMTP transaccional. Añadir al
+`.env` del VPS los datos entregados por el proveedor, sin versionar la clave:
+
+```dotenv
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.proveedor.example
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_USE_SSL=False
+EMAIL_HOST_USER=usuario-smtp
+EMAIL_HOST_PASSWORD=clave-smtp
+DEFAULT_FROM_EMAIL=Intranet HV <no-reply@dominio-institucional.pe>
+PASSWORD_RESET_TIMEOUT=1800
+PASSWORD_RESET_RATE_WINDOW_SECONDS=3600
+PASSWORD_RESET_ACCOUNT_ATTEMPTS=3
+PASSWORD_RESET_IP_ATTEMPTS=10
+```
+
+Usar TLS con puerto 587 o SSL con puerto 465, nunca ambos simultáneamente.
+Después de reiniciar el servicio, solicitar una recuperación con una cuenta de
+prueba y comprobar recepción, carpeta de correo no deseado y caducidad del
+enlace. Si SMTP no está configurado, el restablecimiento administrativo por
+DNI continúa disponible para director y superusuario.
+
 ## Respaldo diario
 
 El respaldo incluye un `pg_dump` en formato custom, la carpeta `media`, el
